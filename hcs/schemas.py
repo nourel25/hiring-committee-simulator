@@ -14,7 +14,10 @@ class Check(BaseModel):
 Decision = Literal["strong_no", "lean_no", "lean_hire", "strong_hire"]
 
 class Review(BaseModel):
-    checks: list[Check] = Field(description="One entry per check, in the order given.")
+    checks: list[Check] = Field(
+            min_length=1,
+            description="One entry per check, in the order given.",
+        )
     decision: Decision = Field(description="The overall decision, made after judging every check.")
     
     
