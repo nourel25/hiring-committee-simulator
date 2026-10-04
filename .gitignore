@@ -1,2 +1,4 @@
 .venv
 LEARNING.md
+__pycache__/
+*.pyc
