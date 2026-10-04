@@ -18,6 +18,5 @@ class Review(BaseModel):
             min_length=1,
             description="One entry per check, in the order given.",
         )
-    decision: Decision = Field(description="The overall decision, made after judging every check.")
     
     
