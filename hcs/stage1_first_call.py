@@ -1,5 +1,20 @@
 """Stage 1: send a CV snippet to the local model and get back a validated Review."""
 
+import time
+
+from openai import OpenAI
+from openai.types.chat import ChatCompletion
+
+from hcs.schemas import Review
+
+
+OLLAMA_BASE_URL = "http://localhost:11434/v1"
+MODEL = "qwen2.5:7b"
+TEMPERATURE = 0
+SEED = 42
+MAX_TOKENS = 500
+
+
 CV_TEXT = """
 Backend Developer, fintech startup (2022-present)
 - Built and maintain 6 REST APIs in Python (FastAPI) serving 50,000 daily users
@@ -62,4 +77,43 @@ def build_messages(cv_text: str, checks: list[dict[str, str]]) -> list[dict[str,
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": build_user_message(cv_text, checks)},
     ]
+
+
+def call_model(
+    client: OpenAI,
+    messages: list[dict[str, str]]
+) -> tuple[ChatCompletion, float]:
     
+    """Send one request; return the raw response and how many seconds it took."""
+    start_time = time.perf_counter()
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=messages,
+        temperature=TEMPERATURE,
+        max_tokens=MAX_TOKENS,
+        seed=SEED,
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "review",
+                "schema": Review.model_json_schema(),
+            },
+        }
+    )
+    seconds = time.perf_counter() - start_time
+    return response, seconds
+    
+    
+def main() -> None:
+    client = OpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama")  
+    messages = build_messages(CV_TEXT, CHECKS)
+    response, seconds = call_model(client, messages)
+    
+    choice = response.choices[0]
+    print(f"Finished: {choice.finish_reason} in {seconds:.1f}s")
+    print(f"Tokens: {response.usage.prompt_tokens} in, {response.usage.completion_tokens} out")
+    print(choice.message.content)  
+    
+    
+if __name__ == "__main__":
+    main()

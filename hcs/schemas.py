@@ -7,7 +7,6 @@ class Check(BaseModel):
     check: str = Field(description="The check's text, copied exactly from the input.")
     evidence: str | None = Field(
         max_length=200,
-        default=None,
         description="An exact quote from the CV relevant to this check, or null if the CV has none.",
     )
     passed: bool = Field(description="True only if the evidence clearly proves the check.") 
