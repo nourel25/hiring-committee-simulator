@@ -1,9 +1,7 @@
 """Send a CV snippet to the local model and get back a validated Review."""
 
-from pydantic import ValidationError
-
 from hcs.agents import tech_lead
-from hcs.llm import call_model, make_client
+from hcs.llm import LLMOutputError, get_structured, make_client
 from hcs.policies import (
     apply_evidence_policy,
     apply_truth_check,
@@ -53,32 +51,25 @@ EXPECTED = {
 def main() -> None:
     client = make_client()
     messages = tech_lead.build_messages(CV_TEXT, CHECKS)
-    response, seconds = call_model(
-        client,
-        messages,
-        response_model=Review,
-        model=tech_lead.MODEL,
-        temperature=tech_lead.TEMPERATURE,
-        seed=tech_lead.SEED,
-        max_tokens=tech_lead.MAX_TOKENS,
-    )
-
-    choice = response.choices[0]
-    print(f"Finished: {choice.finish_reason} in {seconds:.1f}s")
-    print(f"Tokens: {response.usage.prompt_tokens} in, {response.usage.completion_tokens} out")
-
-    if choice.finish_reason == "length":
-        print(
-            f"Cut off at max_tokens ({tech_lead.MAX_TOKENS}): the JSON is incomplete, so it was not validated."
-        )
-        return
-
     try:
-        review = Review.model_validate_json(choice.message.content)
-    except ValidationError as error:
-        print("The reply did not match the Review schema:")
-        print(error)
+        result = get_structured(
+            client,
+            messages,
+            response_model=Review,
+            model=tech_lead.MODEL,
+            temperature=tech_lead.TEMPERATURE,
+            seed=tech_lead.SEED,
+            max_tokens=tech_lead.MAX_TOKENS,
+        )
+    except LLMOutputError as error:
+        print(f"Gave up after {error.attempts} attempt(s): {error}")
+        print(f"Last reply: {error.raw_reply!r}")
         return
+
+    print(f"Done in {result.attempts} attempt(s), {result.seconds:.1f}s")
+    print(f"Tokens: {result.prompt_tokens} in, {result.completion_tokens} out")
+
+    review = result.parsed
 
     policy_changes = apply_evidence_policy(review)
     print(f"Evidence policy: {policy_changes} pass(es) without evidence changed to fail")
