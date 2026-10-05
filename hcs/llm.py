@@ -121,8 +121,8 @@ def get_structured(
                     attempts=attempt,
                     raw_reply=raw_reply,
                 ) from error
-                conversation.append({"role": "assistant", "content": raw_reply})
-                conversation.append({"role": "user", "content": REPAIR_PROMPT.format(error=error)})
+            conversation.append({"role": "assistant", "content": raw_reply})
+            conversation.append({"role": "user", "content": REPAIR_PROMPT.format(error=error)})
             continue
 
         return CallResult(
