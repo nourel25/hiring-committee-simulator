@@ -33,6 +33,7 @@ CHECKS = [
 ]
 
 # The answer key, written before any model run.
+# Scoring rule: passed is always scored; evidence only when expected passed is true.
 EXPECTED = {
     "TL1": {
         "passed": True,
