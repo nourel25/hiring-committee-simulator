@@ -3,7 +3,13 @@
 from pydantic import ValidationError
 
 from hcs.llm import call_model, make_client
-from hcs.schemas import Check, Decision, Review
+from hcs.policies import (
+    apply_evidence_policy,
+    apply_truth_check,
+    compute_score,
+    score_to_decision,
+)
+from hcs.schemas import Review
 
 
 MODEL = "qwen2.5:7b"
@@ -75,71 +81,6 @@ def build_messages(cv_text: str, checks: list[dict[str, str]]) -> list[dict[str,
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": build_user_message(cv_text, checks)},
     ]
-
-
-def has_evidence(check: Check) -> bool:
-    """True only if the check carries a real quote, not None and not blank."""
-    return check.evidence is not None and check.evidence.strip() != ""
-
-
-def apply_evidence_policy(review: Review) -> int:
-    """A pass without evidence counts as a fail. Returns how many checks were changed."""
-    changed = 0
-    for check in review.checks:
-        if check.passed and not has_evidence(check):
-            check.passed = False
-            changed += 1
-    return changed
-
-
-# Characters models sometimes write instead of the plain ones in the CV.
-LOOKALIKES = str.maketrans({
-    "\u2018": "'",  # left single quote
-    "\u2019": "'",  # right single quote (curly apostrophe)
-    "\u201c": '"',  # left double quote
-    "\u201d": '"',  # right double quote
-    "\u2013": "-",  # en dash
-    "\u2014": "-",  # em dash
-})
-
-
-def normalize(text: str) -> str:
-    """Make text comparable: plain characters, single spaces, no capitals."""
-    return " ".join(text.translate(LOOKALIKES).split()).casefold()
-
-
-def quote_in_cv(quote: str, cv_text: str) -> bool:
-    """True if the quote appears in the CV once both are normalised."""
-    return normalize(quote) in normalize(cv_text)
-
-
-def apply_truth_check(review: Review, cv_text: str) -> int:
-    """A pass whose quote is not in the CV counts as a fail. Returns how many checks were changed."""
-    changed = 0
-    for check in review.checks:
-        if has_evidence(check) and not quote_in_cv(check.evidence, cv_text):
-            print(f"Warning: {check.id} quote not found in the CV: {check.evidence!r}")
-            if check.passed:
-                check.passed = False
-                changed += 1
-    return changed
-
-
-def compute_score(review: Review) -> int:
-    """Share of checks passed, on a 0-10 scale (all checks weighted equally)."""
-    passed = sum(1 for check in review.checks if check.passed)
-    return passed / len(review.checks) * 10
-
-
-def score_to_decision(score: float) -> Decision:
-    """Map a 0-10 score to a decision using the design doc's bands."""    
-    if score < 4:
-        return "strong_no"
-    if score < 6:
-        return "lean_no"
-    if score < 8:
-        return "lean_hire"
-    return "strong_hire"
 
     
 def main() -> None:
