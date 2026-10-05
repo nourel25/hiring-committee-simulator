@@ -1,5 +1,6 @@
 """Stage 1: send a CV snippet to the local model and get back a validated Review."""
 
+from email.mime import text
 import time
 
 from openai import OpenAI
@@ -97,6 +98,39 @@ def apply_evidence_policy(review: Review) -> int:
     return changed
 
 
+# Characters models sometimes write instead of the plain ones in the CV.
+LOOKALIKES = str.maketrans({
+    "\u2018": "'",  # left single quote
+    "\u2019": "'",  # right single quote (curly apostrophe)
+    "\u201c": '"',  # left double quote
+    "\u201d": '"',  # right double quote
+    "\u2013": "-",  # en dash
+    "\u2014": "-",  # em dash
+})
+
+
+def normalize(text: str) -> str:
+    """Make text comparable: plain characters, single spaces, no capitals."""
+    return " ".join(text.translate(LOOKALIKES).split()).casefold()
+
+
+def quote_in_cv(quote: str, cv_text: str) -> bool:
+    """True if the quote appears in the CV once both are normalised."""
+    return normalize(quote) in normalize(cv_text)
+
+
+def apply_truth_check(review: Review, cv_text: str) -> int:
+    """A pass whose quote is not in the CV counts as a fail. Returns how many checks were changed."""
+    changed = 0
+    for check in review.checks:
+        if has_evidence(check) and not quote_in_cv(check.evidence, cv_text):
+            print(f"Warning: {check.id} quote not found in the CV: {check.evidence!r}")
+            if check.passed:
+                check.passed = False
+                changed += 1
+    return changed
+
+
 def call_model(
     client: OpenAI,
     messages: list[dict[str, str]]
@@ -142,8 +176,11 @@ def main() -> None:
         print(error)
         return
     
-    changed = apply_evidence_policy(review)
-    print(f"Evidence policy: {changed} pass(es) without evidence changed to fail")
+    policy_changes = apply_evidence_policy(review)
+    print(f"Evidence policy: {policy_changes} pass(es) without evidence changed to fail")
+    
+    truth_changes = apply_truth_check(review, CV_TEXT)
+    print(f"Truth check: {truth_changes} pass(es) with a quote not in the CV changed to fail")
     
     for check in review.checks:
         print(f"{check.id}: passed={check.passed}, evidence={check.evidence!r}")
