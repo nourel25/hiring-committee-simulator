@@ -5,6 +5,8 @@ import time
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
 
+from pydantic import ValidationError
+
 from hcs.schemas import Review
 
 
@@ -113,8 +115,22 @@ def main() -> None:
     choice = response.choices[0]
     print(f"Finished: {choice.finish_reason} in {seconds:.1f}s")
     print(f"Tokens: {response.usage.prompt_tokens} in, {response.usage.completion_tokens} out")
-    print(choice.message.content)  
     
+    if choice.finish_reason == "length":   
+        print(f"Cut off at max_tokens ({MAX_TOKENS}): the JSON is incomplete, so it was not validated.")
+        return 
     
+    try:
+        review = Review.model_validate_json(choice.message.content)
+    except ValidationError as error:
+        print("The reply did not match the Review schema:")
+        print(error)
+        return
+    
+    for check in review.checks:
+        print(f"{check.id}: passed={check.passed}, evidence={check.evidence!r}")
+    
+        
 if __name__ == "__main__":
     main()
+    
