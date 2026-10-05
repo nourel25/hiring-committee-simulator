@@ -1,17 +1,11 @@
 """Stage 1: send a CV snippet to the local model and get back a validated Review."""
 
-from email.mime import text
-import time
-
-from openai import OpenAI
-from openai.types.chat import ChatCompletion
-
 from pydantic import ValidationError
 
+from hcs.llm import call_model, make_client
 from hcs.schemas import Check, Decision, Review
 
 
-OLLAMA_BASE_URL = "http://localhost:11434/v1"
 MODEL = "qwen2.5:7b"
 TEMPERATURE = 0
 SEED = 42
@@ -147,36 +141,19 @@ def score_to_decision(score: float) -> Decision:
         return "lean_hire"
     return "strong_hire"
 
-
-def call_model(
-    client: OpenAI,
-    messages: list[dict[str, str]]
-) -> tuple[ChatCompletion, float]:
-    
-    """Send one request; return the raw response and how many seconds it took."""
-    start_time = time.perf_counter()
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=messages,
-        temperature=TEMPERATURE,
-        max_tokens=MAX_TOKENS,
-        seed=SEED,
-        response_format={
-            "type": "json_schema",
-            "json_schema": {
-                "name": "review",
-                "schema": Review.model_json_schema(),
-            },
-        }
-    )
-    seconds = time.perf_counter() - start_time
-    return response, seconds
-    
     
 def main() -> None:
-    client = OpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama")  
+    client = make_client()
     messages = build_messages(CV_TEXT, CHECKS)
-    response, seconds = call_model(client, messages)
+    response, seconds = call_model(
+        client, 
+        messages,
+        response_model=Review,
+        model=MODEL,
+        temperature=TEMPERATURE,
+        seed=SEED,
+        max_tokens=MAX_TOKENS
+    )
     
     choice = response.choices[0]
     print(f"Finished: {choice.finish_reason} in {seconds:.1f}s")
