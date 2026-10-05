@@ -8,7 +8,7 @@ from openai.types.chat import ChatCompletion
 
 from pydantic import ValidationError
 
-from hcs.schemas import Check, Review
+from hcs.schemas import Check, Decision, Review
 
 
 OLLAMA_BASE_URL = "http://localhost:11434/v1"
@@ -131,6 +131,23 @@ def apply_truth_check(review: Review, cv_text: str) -> int:
     return changed
 
 
+def compute_score(review: Review) -> int:
+    """Share of checks passed, on a 0-10 scale (all checks weighted equally)."""
+    passed = sum(1 for check in review.checks if check.passed)
+    return passed / len(review.checks) * 10
+
+
+def score_to_decision(score: float) -> Decision:
+    """Map a 0-10 score to a decision using the design doc's bands."""    
+    if score < 4:
+        return "strong_no"
+    if score < 6:
+        return "lean_no"
+    if score < 8:
+        return "lean_hire"
+    return "strong_hire"
+
+
 def call_model(
     client: OpenAI,
     messages: list[dict[str, str]]
@@ -185,6 +202,9 @@ def main() -> None:
     for check in review.checks:
         print(f"{check.id}: passed={check.passed}, evidence={check.evidence!r}")
     
+    score = compute_score(review)
+    decision = score_to_decision(score)
+    print(f"Score: {score:.1f}/10 -> {decision}")
         
 if __name__ == "__main__":
     main()
