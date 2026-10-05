@@ -3,14 +3,16 @@
 from hcs.schemas import Check, Decision, Review
 
 # Characters models sometimes write instead of the plain ones in the CV.
-LOOKALIKES = str.maketrans({
-    "\u2018": "'",  # left single quote
-    "\u2019": "'",  # right single quote (curly apostrophe)
-    "\u201c": '"',  # left double quote
-    "\u201d": '"',  # right double quote
-    "\u2013": "-",  # en dash
-    "\u2014": "-",  # em dash
-})
+LOOKALIKES = str.maketrans(
+    {
+        "\u2018": "'",  # left single quote
+        "\u2019": "'",  # right single quote (curly apostrophe)
+        "\u201c": '"',  # left double quote
+        "\u201d": '"',  # right double quote
+        "\u2013": "-",  # en dash
+        "\u2014": "-",  # em dash
+    }
+)
 
 
 def has_evidence(check: Check) -> bool:

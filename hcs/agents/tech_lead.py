@@ -34,4 +34,3 @@ def build_messages(cv_text: str, checks: list[dict[str, str]]) -> list[dict[str,
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": build_user_message(cv_text, checks)},
     ]
-    
