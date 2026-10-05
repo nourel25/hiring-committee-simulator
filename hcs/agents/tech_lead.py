@@ -6,6 +6,7 @@ MODEL = "qwen2.5:7b"
 TEMPERATURE = 0
 SEED = 42
 MAX_TOKENS = 500
+MAX_RETRIES = 1
 
 SYSTEM_PROMPT = """
 You are a senior tech lead. You check a candidate's CV against a checklist of requirements.

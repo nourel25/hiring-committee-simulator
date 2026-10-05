@@ -1,5 +1,8 @@
 """Send a CV snippet to the local model and get back a validated Review."""
 
+import uuid
+from datetime import datetime, timezone
+
 from hcs.agents import tech_lead
 from hcs.llm import LLMOutputError, get_structured, make_client
 from hcs.policies import (
@@ -8,6 +11,7 @@ from hcs.policies import (
     compute_score,
     score_to_decision,
 )
+from hcs.runlog import RUNS_PATH, RunRecord, append_run
 from hcs.schemas import Review
 
 CV_TEXT = """
@@ -51,6 +55,20 @@ EXPECTED = {
 def main() -> None:
     client = make_client()
     messages = tech_lead.build_messages(CV_TEXT, CHECKS)
+
+    common = {
+        "run_id": uuid.uuid4().hex,
+        "started_at": datetime.now(timezone.utc),
+        "agent": "tech_lead",
+        "prompt_version": tech_lead.PROMPT_VERSION,
+        "model": tech_lead.MODEL,
+        "temperature": tech_lead.TEMPERATURE,
+        "seed": tech_lead.SEED,
+        "max_tokens": tech_lead.MAX_TOKENS,
+        "max_retries": tech_lead.MAX_RETRIES,
+        "messages": messages,
+    }
+
     try:
         result = get_structured(
             client,
@@ -60,10 +78,21 @@ def main() -> None:
             temperature=tech_lead.TEMPERATURE,
             seed=tech_lead.SEED,
             max_tokens=tech_lead.MAX_TOKENS,
+            max_retries=tech_lead.MAX_RETRIES,
         )
     except LLMOutputError as error:
         print(f"Gave up after {error.attempts} attempt(s): {error}")
         print(f"Last reply: {error.raw_reply!r}")
+        append_run(
+            RunRecord(
+                **common,
+                status="error",
+                error=str(error),
+                attempts=error.attempts,
+                raw_reply=error.raw_reply,
+            )
+        )
+        print(f"Logged failed run {common['run_id']} to {RUNS_PATH}")
         return
 
     print(f"Done in {result.attempts} attempt(s), {result.seconds:.1f}s")
@@ -85,6 +114,25 @@ def main() -> None:
     score = compute_score(review)
     decision = score_to_decision(score)
     print(f"Score: {score:.1f}/10 -> {decision}")
+
+    append_run(
+        RunRecord(
+            **common,
+            status="ok",
+            attempts=result.attempts,
+            seconds=result.seconds,
+            prompt_tokens=result.prompt_tokens,
+            completion_tokens=result.completion_tokens,
+            raw_reply=result.raw_reply,
+            evidence_policy_changes=policy_changes,
+            truth_check_changes=truth_changes,
+            missing_quotes=missing_quotes,
+            review=review,
+            score=score,
+            decision=decision,
+        )
+    )
+    print(f"Logged run {common['run_id']} to {RUNS_PATH}")
 
 
 if __name__ == "__main__":
