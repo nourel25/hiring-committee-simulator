@@ -1,4 +1,4 @@
-"""Stage 1: send a CV snippet to the local model and get back a validated Review."""
+"""Send a CV snippet to the local model and get back a validated Review."""
 
 from pydantic import ValidationError
 
