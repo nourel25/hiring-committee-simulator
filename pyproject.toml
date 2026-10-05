@@ -1,0 +1,10 @@
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+# Prompt text and test data contain long lines on purpose; the formatter handles code lines.
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
