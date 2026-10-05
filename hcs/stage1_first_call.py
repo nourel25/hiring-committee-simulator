@@ -7,7 +7,7 @@ from openai.types.chat import ChatCompletion
 
 from pydantic import ValidationError
 
-from hcs.schemas import Review
+from hcs.schemas import Check, Review
 
 
 OLLAMA_BASE_URL = "http://localhost:11434/v1"
@@ -82,6 +82,21 @@ def build_messages(cv_text: str, checks: list[dict[str, str]]) -> list[dict[str,
     ]
 
 
+def has_evidence(check: Check) -> bool:
+    """True only if the check carries a real quote, not None and not blank."""
+    return check.evidence is not None and check.evidence.strip() != ""
+
+
+def apply_evidence_policy(review: Review) -> int:
+    """A pass without evidence counts as a fail. Returns how many checks were changed."""
+    changed = 0
+    for check in review.checks:
+        if check.passed and not has_evidence(check):
+            check.passed = False
+            changed += 1
+    return changed
+
+
 def call_model(
     client: OpenAI,
     messages: list[dict[str, str]]
@@ -126,6 +141,9 @@ def main() -> None:
         print("The reply did not match the Review schema:")
         print(error)
         return
+    
+    changed = apply_evidence_policy(review)
+    print(f"Evidence policy: {changed} pass(es) without evidence changed to fail")
     
     for check in review.checks:
         print(f"{check.id}: passed={check.passed}, evidence={check.evidence!r}")

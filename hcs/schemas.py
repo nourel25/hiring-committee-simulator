@@ -1,7 +1,8 @@
 from typing import Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 class Check(BaseModel):
+    model_config = ConfigDict(validate_assignment=True)
      
     id: str = Field(description="The check's id, copied exactly from the input, e.g. 'TL1'.")
     check: str = Field(description="The check's text, copied exactly from the input.")
