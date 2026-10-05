@@ -74,8 +74,10 @@ def main() -> None:
     policy_changes = apply_evidence_policy(review)
     print(f"Evidence policy: {policy_changes} pass(es) without evidence changed to fail")
 
-    truth_changes = apply_truth_check(review, CV_TEXT)
+    truth_changes, missing_quotes = apply_truth_check(review, CV_TEXT)
     print(f"Truth check: {truth_changes} pass(es) with a quote not in the CV changed to fail")
+    if missing_quotes:
+        print(f"Quotes not found in the CV: {', '.join(missing_quotes)}")
 
     for check in review.checks:
         print(f"{check.id}: passed={check.passed}, evidence={check.evidence!r}")

@@ -40,16 +40,17 @@ def quote_in_cv(quote: str, cv_text: str) -> bool:
     return normalize(quote) in normalize(cv_text)
 
 
-def apply_truth_check(review: Review, cv_text: str) -> int:
-    """A pass whose quote is not in the CV counts as a fail. Returns how many checks were changed."""
+def apply_truth_check(review: Review, cv_text: str) -> tuple[int, list[str]]:
+    """A pass whose quote is not in the CV counts as a fail. Returns (changed count, ids of checks whose quote was not found)."""
     changed = 0
+    missing: list[str] = []
     for check in review.checks:
         if has_evidence(check) and not quote_in_cv(check.evidence, cv_text):
-            print(f"Warning: {check.id} quote not found in the CV: {check.evidence!r}")
+            missing.append(check.id)
             if check.passed:
                 check.passed = False
                 changed += 1
-    return changed
+    return changed, missing
 
 
 def compute_score(review: Review) -> float:

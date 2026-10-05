@@ -44,19 +44,30 @@ def test_normalize_ignores_case_spacing_and_lookalike_dashes():
 def test_truth_check_fails_a_pass_with_a_paraphrase():
     review = Review(checks=[make_check("Made the database design", True)])
 
-    changed = apply_truth_check(review, CV)
+    changed, missing = apply_truth_check(review, CV)
 
     assert changed == 1
+    assert missing == ["T1"]
     assert review.checks[0].passed is False
 
 
-def test_truth_check_only_warns_on_a_failed_check():
+def test_truth_check_flags_but_keeps_a_failed_check():
     review = Review(checks=[make_check("Ran Kubernetes clusters", False)])
 
-    changed = apply_truth_check(review, CV)
+    changed, missing = apply_truth_check(review, CV)
 
     assert changed == 0
+    assert missing == ["T1"]
     assert review.checks[0].passed is False
+
+
+def test_truth_check_accepts_a_real_quote():
+    review = Review(checks=[make_check("Designed the PostgreSQL schema", True)])
+
+    result = apply_truth_check(review, CV)
+
+    assert result == (0, [])
+    assert review.checks[0].passed is True
 
 
 def test_compute_score_is_share_passed_times_ten():
