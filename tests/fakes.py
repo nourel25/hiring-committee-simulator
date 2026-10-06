@@ -43,15 +43,17 @@ def make_response(content: str, finish_reason: str = "stop") -> SimpleNamespace:
 
 
 class FakeClient:
-    """Stands in for OpenAI: returns scripted responses and records the messages it was sent."""
+    """Stands in for OpenAI: returns scripted responses and records what each call was sent."""
 
     def __init__(self, replies: list[SimpleNamespace]) -> None:
         self.replies = list(replies)
         self.calls: list[list[dict[str, str]]] = []
+        self.kwargs: list[dict] = []
         self.chat = SimpleNamespace(completions=SimpleNamespace(create=self._create))
 
     def _create(self, **kwargs) -> SimpleNamespace:
         if not self.replies:
             raise AssertionError("Unexpected extra call to the model")
         self.calls.append(list(kwargs["messages"]))
+        self.kwargs.append(kwargs)
         return self.replies.pop(0)

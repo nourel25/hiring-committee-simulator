@@ -25,6 +25,8 @@ def review_case(
     case: Case,
     checklist: Checklist,
     runs_path: Path = RUNS_PATH,
+    temperature: float = tech_lead.TEMPERATURE,
+    seed: int = tech_lead.SEED,
 ) -> RunRecord:
     """Run the tech lead on one case, log the result, and return the logged record."""
     messages = tech_lead.build_messages(case.cv, checklist.items)
@@ -35,8 +37,8 @@ def review_case(
         "case_id": case.id,
         "prompt_version": tech_lead.PROMPT_VERSION,
         "model": tech_lead.MODEL,
-        "temperature": tech_lead.TEMPERATURE,
-        "seed": tech_lead.SEED,
+        "temperature": temperature,
+        "seed": seed,
         "max_tokens": tech_lead.MAX_TOKENS,
         "max_retries": tech_lead.MAX_RETRIES,
         "messages": messages,
@@ -48,8 +50,8 @@ def review_case(
             messages,
             response_model=Review,
             model=tech_lead.MODEL,
-            temperature=tech_lead.TEMPERATURE,
-            seed=tech_lead.SEED,
+            temperature=temperature,
+            seed=seed,
             max_tokens=tech_lead.MAX_TOKENS,
             max_retries=tech_lead.MAX_RETRIES,
         )

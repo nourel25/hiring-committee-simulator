@@ -1,5 +1,6 @@
 """Compare a run with its case's answer key. Pure functions: no model calls, no files."""
 
+import statistics
 from dataclasses import dataclass
 
 from hcs.cases import Case
@@ -77,4 +78,62 @@ def format_row(report: CaseReport) -> str:
     return (
         f"{report.case_id:<14}{report.label:<12}{score:>6}  "
         f"{decision:<12}{report.expected_decision:<12}{checks:>7}  {ok}"
+    )
+
+
+@dataclass
+class RepeatSummary:
+    """How one case behaved across repeated runs."""
+
+    case_id: str
+    label: str
+    runs: int
+    errors: int
+    scores: list[float]
+    decisions_ok: int
+    check_misses: dict[str, int]
+
+
+def summarize_repeats(reports: list[CaseReport]) -> RepeatSummary:
+    """Combine the reports of repeated runs of one case."""
+    check_misses: dict[str, int] = {}
+    for report in reports:
+        for check_id in report.passed_wrong:
+            check_misses[check_id] = check_misses.get(check_id, 0) + 1
+
+    return RepeatSummary(
+        case_id=reports[0].case_id,
+        label=reports[0].label,
+        runs=len(reports),
+        errors=sum(1 for report in reports if report.status == "error"),
+        scores=[report.score for report in reports if report.score is not None],
+        decisions_ok=sum(1 for report in reports if report.decision_ok),
+        check_misses=check_misses,
+    )
+
+
+NOISE_HEADER = (
+    f"{'case':<14}{'label':<12}{'mean':>6}{'sd':>6}{'min-max':>12}  {'decisions':>9}  misses"
+)
+
+
+def format_summary(summary: RepeatSummary) -> str:
+    """One line of the noise table: score spread, decision stability, checks that disagreed."""
+    if summary.scores:
+        mean = statistics.mean(summary.scores)
+        sd = statistics.stdev(summary.scores) if len(summary.scores) > 1 else 0.0
+        span = f"{min(summary.scores):.1f}-{max(summary.scores):.1f}"
+        stats = f"{mean:>6.1f}{sd:>6.1f}{span:>12}"
+    else:
+        stats = f"{'-':>6}{'-':>6}{'-':>12}"
+
+    decisions = f"{summary.decisions_ok}/{summary.runs}"
+    misses = ", ".join(
+        f"{check_id} {count}/{summary.runs}"
+        for check_id, count in sorted(summary.check_misses.items())
+    )
+    failed = f" ({summary.errors} failed)" if summary.errors else ""
+    return (
+        f"{summary.case_id:<14}{summary.label:<12}{stats}  "
+        f"{decisions:>9}  {misses or 'none'}{failed}"
     )

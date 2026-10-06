@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from hcs.evaluation import compare, evidence_matches
+from hcs.evaluation import CaseReport, compare, evidence_matches, summarize_repeats
 from hcs.pipeline import review_case
 from hcs.runlog import RunRecord
 from tests.fakes import TINY_CASE, TINY_CHECKLIST, TINY_REPLY, FakeClient, make_response
@@ -57,3 +57,36 @@ def test_a_failed_run_is_reported_not_skipped(tmp_path):
     assert report.evidence_wrong == ["M1"]
     assert report.decision is None
     assert report.decision_ok is False
+
+
+def make_report(score: float | None, decision: str | None, passed_wrong: list[str]) -> CaseReport:
+    """A CaseReport for TINY_CASE (expected lean_hire) with only the fields a test cares about."""
+    return CaseReport(
+        case_id="case-1",
+        label="good",
+        status="ok" if decision else "error",
+        seconds=1.0,
+        score=score,
+        decision=decision,
+        expected_decision="lean_hire",
+        decision_ok=decision == "lean_hire",
+        total_checks=2,
+        passed_wrong=passed_wrong,
+        evidence_wrong=[],
+    )
+
+
+def test_summarize_repeats_counts_scores_decisions_failures_and_misses():
+    reports = [
+        make_report(7.5, "lean_hire", []),
+        make_report(0.0, "strong_no", ["M1"]),
+        make_report(None, None, ["M1"]),
+    ]
+
+    summary = summarize_repeats(reports)
+
+    assert summary.runs == 3
+    assert summary.errors == 1
+    assert summary.scores == [7.5, 0.0]
+    assert summary.decisions_ok == 1
+    assert summary.check_misses == {"M1": 2}
