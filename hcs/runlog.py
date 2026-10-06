@@ -45,6 +45,7 @@ class RunRecord(BaseModel):
     evidence_policy_changes: int | None = None
     truth_check_changes: int | None = None
     missing_quotes: list[str] = []
+    failed_must_haves: list[str] = []
     review: Review | None = None
     score: float | None = None
     decision: Decision | None = None

@@ -1,11 +1,13 @@
 """The tech-lead reviewer: its prompt, its model settings and how it builds messages."""
 
+from hcs.schemas import ChecklistItem
+
 PROMPT_VERSION = "reviewer-v1"
 
 MODEL = "qwen2.5:7b"
 TEMPERATURE = 0
 SEED = 42
-MAX_TOKENS = 500
+MAX_TOKENS = 1000
 MAX_RETRIES = 1
 
 SYSTEM_PROMPT = """
@@ -23,15 +25,15 @@ Reply with JSON only, in the required format.
 """.strip()
 
 
-def build_user_message(cv_text: str, checks: list[dict[str, str]]) -> str:
-    """Wrap the CV in <cv> tags and list the checks underneath it."""
-    check_lines = [f"- {check['id']}: {check['text']}" for check in checks]
+def build_user_message(cv_text: str, checklist: list[ChecklistItem]) -> str:
+    """Wrap the CV in <cv> tags and list the checks underneath it. Importance is not shown."""
+    check_lines = [f"- {item.id}: {item.text}" for item in checklist]
     return f"<cv>\n{cv_text}\n</cv>\n\nChecks:\n" + "\n".join(check_lines)
 
 
-def build_messages(cv_text: str, checks: list[dict[str, str]]) -> list[dict[str, str]]:
+def build_messages(cv_text: str, checklist: list[ChecklistItem]) -> list[dict[str, str]]:
     """Return a fresh messages list for one reviewer call."""
     return [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": build_user_message(cv_text, checks)},
+        {"role": "user", "content": build_user_message(cv_text, checklist)},
     ]

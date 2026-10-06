@@ -9,10 +9,11 @@ from hcs.policies import (
     apply_evidence_policy,
     apply_truth_check,
     compute_score,
-    score_to_decision,
+    decide,
+    failed_must_haves,
 )
 from hcs.runlog import RUNS_PATH, RunRecord, append_run
-from hcs.schemas import Review
+from hcs.schemas import ChecklistItem, Review
 
 CV_TEXT = """
 Backend Developer, fintech startup (2022-present)
@@ -25,36 +26,76 @@ Junior Python Developer, digital agency (2021-2022)
 - Fixed bugs and added features to Django websites for client projects
 """.strip()
 
-CHECKS = [
-    {"id": "TL1", "text": "Has designed (not just used) a database schema for a production system"},
-    {
-        "id": "TL2",
-        "text": "Has led or mentored other engineers (people leadership, not technical ownership)",
-    },
-    {"id": "TL3", "text": "Has run services on Kubernetes in production"},
+# Built from the "Backend Engineer (Python), Payments Platform" posting.
+CHECKLIST = [
+    ChecklistItem(
+        id="TL1",
+        text="Has built backend services in Python in a professional role",
+        importance="must",
+    ),
+    ChecklistItem(
+        id="TL2",
+        text="Has maintained REST APIs that serve real users in production",
+        importance="must",
+    ),
+    ChecklistItem(
+        id="TL3",
+        text="Has designed (not just queried) a relational database schema",
+        importance="must",
+    ),
+    ChecklistItem(
+        id="TL4",
+        text="Has deployed services to production themselves",
+        importance="must",
+    ),
+    ChecklistItem(
+        id="TL5",
+        text="Has monitored production services or taken part in an on-call rotation",
+        importance="nice",
+    ),
+    ChecklistItem(
+        id="TL6",
+        text="Has run containerised services on an orchestration platform such as Kubernetes",
+        importance="nice",
+    ),
+    ChecklistItem(
+        id="TL7",
+        text="Has measurably improved the performance of a system",
+        importance="nice",
+    ),
+    ChecklistItem(
+        id="TL8",
+        text="Has mentored or led other engineers (people leadership, not technical ownership)",
+        importance="nice",
+    ),
 ]
+
+
+APIS_LINE = "Built and maintain 6 REST APIs in Python (FastAPI) serving 50,000 daily users"
+DOCKER_LINE = "Containerised services with Docker and deployed them to a single cloud VM"
+
 
 # The answer key, written before any model run.
 # Scoring rule: passed is always scored; evidence only when expected passed is true.
+# Expected: 13/16 -> 8.1 -> strong_hire (no must-have fails).
 EXPECTED = {
-    "TL1": {
+    "TL1": {"passed": True, "evidence": APIS_LINE},
+    "TL2": {"passed": True, "evidence": APIS_LINE},
+    "TL3": {"passed": True, "evidence": "Designed the PostgreSQL schema for the payments service"},
+    "TL4": {"passed": True, "evidence": DOCKER_LINE},
+    "TL5": {"passed": False, "evidence": None},
+    "TL6": {"passed": False, "evidence": DOCKER_LINE},
+    "TL7": {
         "passed": True,
-        "evidence": "Designed the PostgreSQL schema for the payments service",
+        "evidence": "Cut average API response time by 40% by adding Redis caching",
     },
-    "TL2": {
-        "passed": False,
-        "evidence": None,
-    },
-    "TL3": {
-        "passed": False,
-        "evidence": "Containerised services with Docker and deployed them to a single cloud VM",
-    },
+    "TL8": {"passed": False, "evidence": None},
 }
 
 
 def main() -> None:
     client = make_client()
-    messages = tech_lead.build_messages(CV_TEXT, CHECKS)
+    messages = tech_lead.build_messages(CV_TEXT, CHECKLIST)
 
     common = {
         "run_id": uuid.uuid4().hex,
@@ -111,9 +152,12 @@ def main() -> None:
     for check in review.checks:
         print(f"{check.id}: passed={check.passed}, evidence={check.evidence!r}")
 
-    score = compute_score(review)
-    decision = score_to_decision(score)
+    score = compute_score(review, CHECKLIST)
+    failed = failed_must_haves(review, CHECKLIST)
+    decision = decide(score, failed)
     print(f"Score: {score:.1f}/10 -> {decision}")
+    if failed:
+        print(f"Failed must-haves: {', '.join(failed)}")
 
     append_run(
         RunRecord(
@@ -127,6 +171,7 @@ def main() -> None:
             evidence_policy_changes=policy_changes,
             truth_check_changes=truth_changes,
             missing_quotes=missing_quotes,
+            failed_must_haves=failed,
             review=review,
             score=score,
             decision=decision,

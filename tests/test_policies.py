@@ -6,17 +6,27 @@ from hcs.policies import (
     apply_evidence_policy,
     apply_truth_check,
     compute_score,
+    decide,
+    failed_must_haves,
     normalize,
     score_to_decision,
 )
-from hcs.schemas import Check, Review
+from hcs.schemas import Check, ChecklistItem, Review
 
 CV = "Designed the PostgreSQL schema for the payments service (2022-present)"
 
 
-def make_check(evidence: str | None, passed: bool) -> Check:
-    """Build a Check with placeholder id and text, so each test states only what matters."""
-    return Check(id="T1", check="placeholder", evidence=evidence, passed=passed)
+# Total weight 3 + 3 + 1 = 7.
+CHECKLIST = [
+    ChecklistItem(id="M1", text="must one", importance="must"),
+    ChecklistItem(id="M2", text="must two", importance="must"),
+    ChecklistItem(id="N1", text="nice one", importance="nice"),
+]
+
+
+def make_check(evidence: str | None, passed: bool, check_id: str = "T1") -> Check:
+    """Build a Check with placeholder text, so each test states only what matters."""
+    return Check(id=check_id, check="placeholder", evidence=evidence, passed=passed)
 
 
 def test_pass_without_evidence_becomes_fail():
@@ -70,12 +80,41 @@ def test_truth_check_accepts_a_real_quote():
     assert review.checks[0].passed is True
 
 
-def test_compute_score_is_share_passed_times_ten():
+def test_compute_score_weights_must_haves_three_times():
     review = Review(
-        checks=[make_check("x", True), make_check(None, False), make_check(None, False)]
+        checks=[
+            make_check("x", True, "M1"),
+            make_check(None, False, "M2"),
+            make_check("x", True, "N1"),
+        ]
     )
 
-    assert compute_score(review) == pytest.approx(10 / 3)
+    assert compute_score(review, CHECKLIST) == pytest.approx(40 / 7)
+
+
+def test_compute_score_counts_a_missing_item_as_failed():
+    review = Review(checks=[make_check("x", True, "M1"), make_check("x", True, "N1")])
+
+    assert compute_score(review, CHECKLIST) == pytest.approx(40 / 7)
+
+
+def test_compute_score_counts_a_repeated_item_once():
+    review = Review(
+        checks=[
+            make_check("x", True, "M1"),
+            make_check("x", True, "M1"),
+            make_check("x", True, "M2"),
+            make_check("x", True, "N1"),
+        ]
+    )
+
+    assert compute_score(review, CHECKLIST) == pytest.approx(10)
+
+
+def test_failed_must_haves_lists_failed_and_missing_must_haves_only():
+    review = Review(checks=[make_check(None, False, "M1"), make_check(None, False, "N1")])
+
+    assert failed_must_haves(review, CHECKLIST) == ["M1", "M2"]
 
 
 @pytest.mark.parametrize(
@@ -93,3 +132,17 @@ def test_compute_score_is_share_passed_times_ten():
 )
 def test_score_to_decision_bands(score, expected):
     assert score_to_decision(score) == expected
+
+
+@pytest.mark.parametrize(
+    ("score", "failed", "expected"),
+    [
+        (8.1, [], "strong_hire"),
+        (8.1, ["M2"], "lean_no"),
+        (6.5, ["M2"], "lean_no"),
+        (6.5, [], "lean_hire"),
+        (3.0, ["M2"], "strong_no"),
+    ],
+)
+def test_decide_caps_at_lean_no_when_a_must_have_failed(score, failed, expected):
+    assert decide(score, failed) == expected

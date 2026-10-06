@@ -1,6 +1,6 @@
 """Rules applied to a reviewer's reply after the model answers. Agent-independent."""
 
-from hcs.schemas import Check, Decision, Review
+from hcs.schemas import Check, ChecklistItem, Decision, Review
 
 # Characters models sometimes write instead of the plain ones in the CV.
 LOOKALIKES = str.maketrans(
@@ -53,10 +53,31 @@ def apply_truth_check(review: Review, cv_text: str) -> tuple[int, list[str]]:
     return changed, missing
 
 
-def compute_score(review: Review) -> float:
-    """Share of checks passed, on a 0-10 scale (all checks weighted equally)."""
-    passed = sum(1 for check in review.checks if check.passed)
-    return passed / len(review.checks) * 10
+# Points per check: a must-have counts three times as much as a nice-to-have.
+WEIGHTS = {"must": 3, "nice": 1}
+
+
+def results_by_id(review: Review) -> dict[str, bool]:
+    """Map each check id in the reply to whether it passed."""
+    return {check.id: check.passed for check in review.checks}
+
+
+def compute_score(review: Review, checklist: list[ChecklistItem]) -> float:
+    """Weighted share of checklist items passed, on a 0-10 scale. Missing items count as failed."""
+    results = results_by_id(review)
+    total = sum(WEIGHTS[item.importance] for item in checklist)
+    passed = sum(WEIGHTS[item.importance] for item in checklist if results.get(item.id, False))
+    return passed / total * 10
+
+
+def failed_must_haves(review: Review, checklist: list[ChecklistItem]) -> list[str]:
+    """Ids of must-have items that did not pass, including any the reply left out."""
+    results = results_by_id(review)
+    return [
+        item.id
+        for item in checklist
+        if item.importance == "must" and not results.get(item.id, False)
+    ]
 
 
 def score_to_decision(score: float) -> Decision:
@@ -68,3 +89,11 @@ def score_to_decision(score: float) -> Decision:
     if score < 8:
         return "lean_hire"
     return "strong_hire"
+
+
+def decide(score: float, failed: list[str]) -> Decision:
+    """Score bands, but any failed must-have caps the decision at lean_no."""
+    decision = score_to_decision(score)
+    if failed and decision in ("lean_hire", "strong_hire"):
+        return "lean_no"
+    return decision

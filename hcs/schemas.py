@@ -24,3 +24,13 @@ class Review(BaseModel):
         min_length=1,
         description="One entry per check, in the order given.",
     )
+
+
+class ChecklistItem(BaseModel):
+    """One requirement a reviewer checks. Importance is used by code only, never shown to the model."""
+
+    id: str = Field(description="Short unique id, e.g. 'TL1'.")
+    text: str = Field(description="One observable requirement, phrased positively.")
+    importance: Literal["must", "nice"] = Field(
+        description="'must' = required by the posting; 'nice' = a bonus."
+    )
