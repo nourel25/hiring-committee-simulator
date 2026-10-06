@@ -1,0 +1,50 @@
+# Answer key written before any model run.
+# Scoring rule: passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "poor-1"
+label = "poor"
+checklist = "backend_payments"
+# TL7 only (1) = 1/16 = 0.6 -> strong_no.
+expected_decision = "strong_no"
+
+cv = """
+Data Analyst, retail chain (2022-present)
+- Automated weekly sales reports with Python scripts and pandas
+- Write SQL queries against the sales database to feed Power BI dashboards
+- Cut monthly report generation from 3 hours to 20 minutes by rewriting the pandas pipeline
+- Present findings to regional managers every quarter
+
+Junior Analyst, market research firm (2020-2022)
+- Cleaned survey data in Excel and Python notebooks
+"""
+
+[expected.TL1]
+# Trap: Python at work, but scripts, not backend services.
+passed = false
+evidence = "Automated weekly sales reports with Python scripts and pandas"
+
+[expected.TL2]
+passed = false
+
+[expected.TL3]
+# Trap: querying an existing database is not designing one.
+passed = false
+evidence = "Write SQL queries against the sales database to feed Power BI dashboards"
+
+[expected.TL4]
+passed = false
+
+[expected.TL5]
+passed = false
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+passed = true
+evidence = "Cut monthly report generation from 3 hours to 20 minutes by rewriting the pandas pipeline"
+
+[expected.TL8]
+# Trap: presenting to managers is not leading engineers.
+passed = false
+evidence = "Present findings to regional managers every quarter"

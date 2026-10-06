@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime, timezone
 
 from hcs.agents import tech_lead
+from hcs.cases import load_case, load_checklist
 from hcs.llm import LLMOutputError, get_structured, make_client
 from hcs.policies import (
     apply_evidence_policy,
@@ -13,89 +14,16 @@ from hcs.policies import (
     failed_must_haves,
 )
 from hcs.runlog import RUNS_PATH, RunRecord, append_run
-from hcs.schemas import ChecklistItem, Review
+from hcs.schemas import Review
 
-CV_TEXT = """
-Backend Developer, fintech startup (2022-present)
-- Built and maintain 6 REST APIs in Python (FastAPI) serving 50,000 daily users
-- Designed the PostgreSQL schema for the payments service and led its migration from MySQL
-- Cut average API response time by 40% by adding Redis caching
-- Containerised services with Docker and deployed them to a single cloud VM
-
-Junior Python Developer, digital agency (2021-2022)
-- Fixed bugs and added features to Django websites for client projects
-""".strip()
-
-# Built from the "Backend Engineer (Python), Payments Platform" posting.
-CHECKLIST = [
-    ChecklistItem(
-        id="TL1",
-        text="Has built backend services in Python in a professional role",
-        importance="must",
-    ),
-    ChecklistItem(
-        id="TL2",
-        text="Has maintained REST APIs that serve real users in production",
-        importance="must",
-    ),
-    ChecklistItem(
-        id="TL3",
-        text="Has designed (not just queried) a relational database schema",
-        importance="must",
-    ),
-    ChecklistItem(
-        id="TL4",
-        text="Has deployed services to production themselves",
-        importance="must",
-    ),
-    ChecklistItem(
-        id="TL5",
-        text="Has monitored production services or taken part in an on-call rotation",
-        importance="nice",
-    ),
-    ChecklistItem(
-        id="TL6",
-        text="Has run containerised services on an orchestration platform such as Kubernetes",
-        importance="nice",
-    ),
-    ChecklistItem(
-        id="TL7",
-        text="Has measurably improved the performance of a system",
-        importance="nice",
-    ),
-    ChecklistItem(
-        id="TL8",
-        text="Has mentored or led other engineers (people leadership, not technical ownership)",
-        importance="nice",
-    ),
-]
-
-
-APIS_LINE = "Built and maintain 6 REST APIs in Python (FastAPI) serving 50,000 daily users"
-DOCKER_LINE = "Containerised services with Docker and deployed them to a single cloud VM"
-
-
-# The answer key, written before any model run.
-# Scoring rule: passed is always scored; evidence only when expected passed is true.
-# Expected: 13/16 -> 8.1 -> strong_hire (no must-have fails).
-EXPECTED = {
-    "TL1": {"passed": True, "evidence": APIS_LINE},
-    "TL2": {"passed": True, "evidence": APIS_LINE},
-    "TL3": {"passed": True, "evidence": "Designed the PostgreSQL schema for the payments service"},
-    "TL4": {"passed": True, "evidence": DOCKER_LINE},
-    "TL5": {"passed": False, "evidence": None},
-    "TL6": {"passed": False, "evidence": DOCKER_LINE},
-    "TL7": {
-        "passed": True,
-        "evidence": "Cut average API response time by 40% by adding Redis caching",
-    },
-    "TL8": {"passed": False, "evidence": None},
-}
+CASE_ID = "good-1"
 
 
 def main() -> None:
+    case = load_case(CASE_ID)
+    checklist = load_checklist(case.checklist)
     client = make_client()
-    messages = tech_lead.build_messages(CV_TEXT, CHECKLIST)
+    messages = tech_lead.build_messages(case.cv, checklist.items)
 
     common = {
         "run_id": uuid.uuid4().hex,
@@ -144,7 +72,7 @@ def main() -> None:
     policy_changes = apply_evidence_policy(review)
     print(f"Evidence policy: {policy_changes} pass(es) without evidence changed to fail")
 
-    truth_changes, missing_quotes = apply_truth_check(review, CV_TEXT)
+    truth_changes, missing_quotes = apply_truth_check(review, case.cv)
     print(f"Truth check: {truth_changes} pass(es) with a quote not in the CV changed to fail")
     if missing_quotes:
         print(f"Quotes not found in the CV: {', '.join(missing_quotes)}")
@@ -152,8 +80,8 @@ def main() -> None:
     for check in review.checks:
         print(f"{check.id}: passed={check.passed}, evidence={check.evidence!r}")
 
-    score = compute_score(review, CHECKLIST)
-    failed = failed_must_haves(review, CHECKLIST)
+    score = compute_score(review, checklist.items)
+    failed = failed_must_haves(review, checklist.items)
     decision = decide(score, failed)
     print(f"Score: {score:.1f}/10 -> {decision}")
     if failed:

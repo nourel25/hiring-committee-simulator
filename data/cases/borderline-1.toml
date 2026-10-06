@@ -1,0 +1,54 @@
+# Answer key written before any model run.
+# Scoring rule: passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "borderline-1"
+label = "borderline"
+checklist = "backend_payments"
+# TL1, TL2, TL4 (9) + TL5, TL6, TL8 (3) = 12/16 = 7.5 -> lean_hire by band,
+# but must-have TL3 fails, so the gate caps it at lean_no.
+expected_decision = "lean_no"
+
+cv = """
+Software Engineer, logistics platform (2021-present)
+- Develop and maintain the Python microservices behind our public REST API, used by 12,000 merchants
+- Release our services to the live environment through a GitLab CI pipeline several times a week
+- Moved the services from virtual machines onto the company's Kubernetes cluster
+- Wrote complex SQL reporting queries and added fields to existing Django models
+- Take a week of out-of-hours support each month and respond to production alerts in Grafana
+- Coach two junior engineers through weekly pairing sessions and code reviews
+
+Python Developer, e-commerce agency (2019-2021)
+- Built Django features for client online shops
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Develop and maintain the Python microservices behind our public REST API, used by 12,000 merchants"
+
+[expected.TL2]
+passed = true
+evidence = "Develop and maintain the Python microservices behind our public REST API, used by 12,000 merchants"
+
+[expected.TL3]
+# Trap: adding fields to existing models and writing queries is not designing a schema.
+passed = false
+evidence = "Wrote complex SQL reporting queries and added fields to existing Django models"
+
+[expected.TL4]
+passed = true
+evidence = "Release our services to the live environment through a GitLab CI pipeline several times a week"
+
+[expected.TL5]
+passed = true
+evidence = "Take a week of out-of-hours support each month and respond to production alerts in Grafana"
+
+[expected.TL6]
+passed = true
+evidence = "Moved the services from virtual machines onto the company's Kubernetes cluster"
+
+[expected.TL7]
+passed = false
+
+[expected.TL8]
+passed = true
+evidence = "Coach two junior engineers through weekly pairing sessions and code reviews"

@@ -1,0 +1,51 @@
+# Answer key written before any model run.
+# Scoring rule: passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "good-1"
+label = "good"
+checklist = "backend_payments"
+# 4 must (12) + TL7 (1) = 13/16 = 8.1 -> strong_hire; no must-have fails.
+expected_decision = "strong_hire"
+
+cv = """
+Backend Developer, fintech startup (2022-present)
+- Built and maintain 6 REST APIs in Python (FastAPI) serving 50,000 daily users
+- Designed the PostgreSQL schema for the payments service and led its migration from MySQL
+- Cut average API response time by 40% by adding Redis caching
+- Containerised services with Docker and deployed them to a single cloud VM
+
+Junior Python Developer, digital agency (2021-2022)
+- Fixed bugs and added features to Django websites for client projects
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Built and maintain 6 REST APIs in Python (FastAPI) serving 50,000 daily users"
+
+[expected.TL2]
+passed = true
+evidence = "Built and maintain 6 REST APIs in Python (FastAPI) serving 50,000 daily users"
+
+[expected.TL3]
+passed = true
+evidence = "Designed the PostgreSQL schema for the payments service"
+
+[expected.TL4]
+passed = true
+evidence = "Containerised services with Docker and deployed them to a single cloud VM"
+
+[expected.TL5]
+passed = false
+
+[expected.TL6]
+# Trap: Docker on one VM is not orchestration.
+passed = false
+evidence = "Containerised services with Docker and deployed them to a single cloud VM"
+
+[expected.TL7]
+passed = true
+evidence = "Cut average API response time by 40% by adding Redis caching"
+
+[expected.TL8]
+# Trap: leading a migration is technical ownership, not leading people.
+passed = false

@@ -1,0 +1,50 @@
+# Tech-lead checklist for one posting.
+# The tech lead's checks test what the candidate did; named tools, industries and
+# year counts are lookups for code. Importance is used by code only, never shown to the model.
+name = "backend_payments"
+posting = "Backend Engineer (Python), Payments Platform (mid-level)"
+
+# Must-haves: weight 3. Any failed must-have caps the decision at lean_no.
+
+[[items]]
+id = "TL1"
+text = "Has built backend services in Python in a professional role"
+importance = "must"
+
+[[items]]
+id = "TL2"
+text = "Has maintained REST APIs that serve real users in production"
+importance = "must"
+
+[[items]]
+id = "TL3"
+text = "Has designed (not just queried) a relational database schema"
+importance = "must"
+
+[[items]]
+id = "TL4"
+text = "Has deployed services to production themselves"
+importance = "must"
+
+# Nice-to-haves: weight 1.
+# TL5 is a requirement in the posting, demoted here because CVs rarely mention it.
+
+[[items]]
+id = "TL5"
+text = "Has monitored production services or taken part in an on-call rotation"
+importance = "nice"
+
+[[items]]
+id = "TL6"
+text = "Has run containerised services on an orchestration platform such as Kubernetes"
+importance = "nice"
+
+[[items]]
+id = "TL7"
+text = "Has measurably improved the performance of a system"
+importance = "nice"
+
+[[items]]
+id = "TL8"
+text = "Has mentored or led other engineers (people leadership, not technical ownership)"
+importance = "nice"
