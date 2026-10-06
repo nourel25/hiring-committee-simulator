@@ -1,6 +1,35 @@
-"""Test doubles shared by several test files: a fake OpenAI client with scripted replies."""
+"""Test doubles and sample data shared by several test files."""
 
 from types import SimpleNamespace
+
+from hcs.cases import Case, Checklist, ExpectedCheck
+from hcs.schemas import ChecklistItem
+
+TINY_CHECKLIST = Checklist(
+    name="tiny",
+    posting="Test posting",
+    items=[
+        ChecklistItem(id="M1", text="must one", importance="must"),
+        ChecklistItem(id="N1", text="nice one", importance="nice"),
+    ],
+)
+TINY_CASE = Case(
+    id="case-1",
+    label="good",
+    checklist="tiny",
+    expected_decision="lean_hire",
+    cv="Built the payments API",
+    expected={
+        "M1": ExpectedCheck(passed=True, evidence="Built the payments API"),
+        "N1": ExpectedCheck(passed=False),
+    },
+)
+# M1 passes with a real quote (3 of 4 points), N1 fails: 7.5 -> lean_hire.
+TINY_REPLY = (
+    '{"checks": ['
+    '{"id": "M1", "check": "must one", "evidence": "Built the payments API", "passed": true}, '
+    '{"id": "N1", "check": "nice one", "evidence": null, "passed": false}]}'
+)
 
 
 def make_response(content: str, finish_reason: str = "stop") -> SimpleNamespace:
