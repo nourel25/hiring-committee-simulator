@@ -29,12 +29,19 @@ def test_review_case_logs_a_failed_call(tmp_path):
     assert read_runs(path) == [record]
 
 
-def test_review_case_uses_and_logs_the_temperature_and_seed_it_is_given(tmp_path):
+def test_review_case_uses_and_logs_the_model_temperature_and_seed_it_is_given(tmp_path):
     client = FakeClient([make_response(TINY_REPLY)])
 
     record = review_case(
-        client, TINY_CASE, TINY_CHECKLIST, tmp_path / "runs.jsonl", temperature=0.7, seed=3
+        client,
+        TINY_CASE,
+        TINY_CHECKLIST,
+        tmp_path / "runs.jsonl",
+        model="fake-model",
+        temperature=0.7,
+        seed=3,
     )
 
-    assert (client.kwargs[0]["temperature"], client.kwargs[0]["seed"]) == (0.7, 3)
-    assert (record.temperature, record.seed) == (0.7, 3)
+    settings = client.kwargs[0]
+    assert (settings["model"], settings["temperature"], settings["seed"]) == ("fake-model", 0.7, 3)
+    assert (record.model, record.temperature, record.seed) == ("fake-model", 0.7, 3)

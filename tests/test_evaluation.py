@@ -4,7 +4,15 @@ from pathlib import Path
 
 import pytest
 
-from hcs.evaluation import CaseReport, compare, evidence_matches, summarize_repeats
+from hcs.evaluation import (
+    CaseReport,
+    RepeatSummary,
+    compare,
+    evidence_matches,
+    noise_verdict,
+    summarize_model,
+    summarize_repeats,
+)
 from hcs.pipeline import review_case
 from hcs.runlog import RunRecord
 from tests.fakes import TINY_CASE, TINY_CHECKLIST, TINY_REPLY, FakeClient, make_response
@@ -49,6 +57,18 @@ def test_an_invented_quote_is_caught_by_the_truth_check_and_the_key(tmp_path):
     assert report.decision_ok is False
 
 
+def test_a_pass_the_key_says_should_fail_is_counted_as_lenient(tmp_path):
+    reply = TINY_REPLY.replace(
+        '"evidence": null, "passed": false', '"evidence": "Built the payments API", "passed": true'
+    )
+
+    report = compare(TINY_CASE, run_tiny(reply, tmp_path))
+
+    assert report.passed_wrong == ["N1"]
+    assert report.lenient == ["N1"]
+    assert report.decision == "strong_hire"
+
+
 def test_a_failed_run_is_reported_not_skipped(tmp_path):
     report = compare(TINY_CASE, run_tiny('{"checks": [', tmp_path, finish_reason="length"))
 
@@ -59,19 +79,27 @@ def test_a_failed_run_is_reported_not_skipped(tmp_path):
     assert report.decision_ok is False
 
 
-def make_report(score: float | None, decision: str | None, passed_wrong: list[str]) -> CaseReport:
+def make_report(
+    score: float | None,
+    decision: str | None,
+    passed_wrong: list[str],
+    lenient: list[str] | None = None,
+    attempts: int = 1,
+) -> CaseReport:
     """A CaseReport for TINY_CASE (expected lean_hire) with only the fields a test cares about."""
     return CaseReport(
         case_id="case-1",
         label="good",
         status="ok" if decision else "error",
         seconds=1.0,
+        attempts=attempts,
         score=score,
         decision=decision,
         expected_decision="lean_hire",
         decision_ok=decision == "lean_hire",
         total_checks=2,
         passed_wrong=passed_wrong,
+        lenient=lenient or [],
         evidence_wrong=[],
     )
 
@@ -90,3 +118,44 @@ def test_summarize_repeats_counts_scores_decisions_failures_and_misses():
     assert summary.scores == [7.5, 0.0]
     assert summary.decisions_ok == 1
     assert summary.check_misses == {"M1": 2}
+
+
+def repeat(label: str, scores: list[float]) -> RepeatSummary:
+    """A RepeatSummary with only a label and scores."""
+    return RepeatSummary(
+        case_id=label,
+        label=label,
+        runs=len(scores),
+        errors=0,
+        scores=scores,
+        decisions_ok=0,
+        check_misses={},
+    )
+
+
+def test_noise_verdict_is_the_good_poor_gap_and_the_widest_range():
+    summaries = [
+        repeat("good", [8.0, 9.0]),
+        repeat("borderline", [5.0, 7.0]),
+        repeat("poor", [1.0, 3.0]),
+    ]
+
+    assert noise_verdict(summaries) == (6.5, 2.0)
+    assert noise_verdict(summaries[:2]) is None
+
+
+def test_summarize_model_combines_zero_and_noisy_runs():
+    zero = [make_report(7.5, "lean_hire", [])]
+    noisy = [
+        make_report(7.5, "lean_hire", [], attempts=2),
+        make_report(10.0, "strong_hire", ["N1"], lenient=["N1"]),
+        make_report(None, None, ["M1"]),
+    ]
+
+    summary = summarize_model("fake-model", zero, noisy, gpu_share=0.8)
+
+    assert summary.decisions_at_zero == 1
+    assert (summary.runs, summary.errors, summary.retried) == (4, 1, 1)
+    assert summary.lenient == 1
+    assert (summary.agreed, summary.checks) == (4, 6)
+    assert summary.gap is None

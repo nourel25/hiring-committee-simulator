@@ -1,9 +1,14 @@
 """Run every labelled case several times at a higher temperature to measure score noise."""
 
-import statistics
-
 from hcs.cases import load_cases, load_checklist
-from hcs.evaluation import NOISE_HEADER, compare, format_row, format_summary, summarize_repeats
+from hcs.evaluation import (
+    NOISE_HEADER,
+    compare,
+    format_row,
+    format_summary,
+    noise_verdict,
+    summarize_repeats,
+)
 from hcs.llm import make_client
 from hcs.pipeline import review_case
 
@@ -31,20 +36,13 @@ def main() -> None:
     for summary in summaries:
         print(format_summary(summary))
 
-        means = {
-            summary.label: statistics.mean(summary.scores)
-            for summary in summaries
-            if summary.scores
-        }
-    ranges = [max(summary.scores) - min(summary.scores) for summary in summaries if summary.scores]
-
-    if "good" in means and "poor" in means:
-        gap = means["good"] - means["poor"]
-        widest = max(ranges)
-        verdict = "meets" if widest < gap else "MISSES"
+    verdict = noise_verdict(summaries)
+    if verdict:
+        gap, widest = verdict
+        result = "meets" if widest < gap else "MISSES"
         print()
         print(
-            f"Good-poor gap {gap:.1f} vs widest range {widest:.1f}: {verdict} the design doc's target"
+            f"Good-poor gap {gap:.1f} vs widest range {widest:.1f}: {result} the design doc's target"
         )
 
 

@@ -1,14 +1,16 @@
 """Talking to the local model: one place for the client and the call."""
 
+import json
 import time
+import urllib.request
 from dataclasses import dataclass
 
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
 from pydantic import BaseModel, ValidationError
 
-OLLAMA_BASE_URL = "http://localhost:11434/v1"
-
+OLLAMA_HOST = "http://localhost:11434"
+OLLAMA_BASE_URL = f"{OLLAMA_HOST}/v1"
 
 REPAIR_PROMPT = (
     "Your previous reply did not match the required JSON schema.\n"
@@ -133,3 +135,13 @@ def get_structured(
             completion_tokens=completion_tokens,
             raw_reply=raw_reply,
         )
+
+
+def gpu_share(model: str) -> float | None:
+    """Share of a loaded model's memory on the GPU, from Ollama's native /api/ps; None if not loaded."""
+    with urllib.request.urlopen(f"{OLLAMA_HOST}/api/ps", timeout=5) as response:
+        loaded = json.load(response)["models"]
+    for entry in loaded:
+        if entry["name"] == model:
+            return entry["size_vram"] / entry["size"]
+    return None
