@@ -13,6 +13,7 @@ def test_review_case_scores_logs_and_returns_the_record(tmp_path):
 
     assert record.status == "ok"
     assert record.case_id == "case-1"
+    assert record.checklist == "tiny@v1"
     assert record.score == 7.5
     assert record.decision == "lean_hire"
     assert read_runs(path) == [record]

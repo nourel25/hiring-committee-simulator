@@ -36,6 +36,7 @@ def review_case(
         "started_at": datetime.now(timezone.utc),
         "agent": "tech_lead",
         "case_id": case.id,
+        "checklist": f"{checklist.name}@v{checklist.version}",
         "prompt_version": tech_lead.PROMPT_VERSION,
         "model": model,
         "temperature": temperature,

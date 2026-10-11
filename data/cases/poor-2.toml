@@ -1,0 +1,52 @@
+# Held-out case for checklist v2: written and keyed before any run, not used to word TL1.
+# Scoring rule: passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "poor-2"
+label = "poor"
+split = "heldout"
+checklist = "backend_payments"
+# TL4 (3) + TL5, TL6 (2) = 5/16 = 3.1 -> strong_no.
+# A wrong TL1 pass would give 8/16 = 5.0 -> lean_no, so the decision shows the TL1 fix.
+expected_decision = "strong_no"
+
+cv = """
+Platform Engineer, insurance company (2021-present)
+- Wrote internal command-line tools in Python that engineers run to rotate credentials and clean up old backups
+- Maintain the Terraform modules and GitLab CI templates used by 40 product teams
+- Run the Prometheus and Grafana stack and lead the weekly incident review
+- Moved 30 services from VMs to the company's Kubernetes clusters with Helm charts
+
+IT Support Technician, university (2018-2021)
+- Automated laptop setup with PowerShell and Python scripts
+"""
+
+[expected.TL1]
+# Trap: tools people run, not services other systems call.
+passed = false
+evidence = "Wrote internal command-line tools in Python that engineers run to rotate credentials and clean up old backups"
+
+[expected.TL2]
+passed = false
+
+[expected.TL3]
+passed = false
+
+[expected.TL4]
+passed = true
+evidence = "Moved 30 services from VMs to the company's Kubernetes clusters with Helm charts"
+
+[expected.TL5]
+passed = true
+evidence = "Run the Prometheus and Grafana stack and lead the weekly incident review"
+
+[expected.TL6]
+passed = true
+evidence = "Moved 30 services from VMs to the company's Kubernetes clusters with Helm charts"
+
+[expected.TL7]
+passed = false
+
+[expected.TL8]
+# Trap: leading a meeting is not leading people.
+passed = false
+evidence = "Run the Prometheus and Grafana stack and lead the weekly incident review"

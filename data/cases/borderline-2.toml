@@ -1,0 +1,56 @@
+# Held-out case for checklist v2: written and keyed before any run, not used to word TL1.
+# Scoring rule: passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "borderline-2"
+label = "borderline"
+split = "heldout"
+checklist = "backend_payments"
+# TL1, TL3, TL4 (9) + TL7, TL8 (2) = 11/16 = 6.9 -> lean_hire by band,
+# but must-have TL2 fails (a service, but not a REST API), so the gate caps it at lean_no.
+expected_decision = "lean_no"
+
+cv = """
+Software Engineer, food delivery company (2020-present)
+- Built the Python service that consumes order events from Kafka and assigns couriers, handling 200,000 orders a day
+- Designed the PostgreSQL tables for courier shifts and payouts
+- Ship the services to production through Argo CD after code review
+- Cut courier assignment time from 9 seconds to 2 by batching database writes
+- Guide three graduate engineers through their first year with weekly one-to-ones
+
+Data Engineer Intern, bank (2019)
+- Wrote Python scripts to load CSV exports into the data warehouse
+"""
+
+[expected.TL1]
+# The point of this case: a background service must pass under v2.
+passed = true
+evidence = "Built the Python service that consumes order events from Kafka and assigns couriers, handling 200,000 orders a day"
+
+[expected.TL2]
+# Trap: a service with real traffic, but not a REST API.
+passed = false
+evidence = "Built the Python service that consumes order events from Kafka and assigns couriers, handling 200,000 orders a day"
+
+[expected.TL3]
+passed = true
+evidence = "Designed the PostgreSQL tables for courier shifts and payouts"
+
+[expected.TL4]
+passed = true
+evidence = "Ship the services to production through Argo CD after code review"
+
+[expected.TL5]
+passed = false
+
+[expected.TL6]
+# Trap: Argo CD implies Kubernetes, but the CV never says it.
+passed = false
+evidence = "Ship the services to production through Argo CD after code review"
+
+[expected.TL7]
+passed = true
+evidence = "Cut courier assignment time from 9 seconds to 2 by batching database writes"
+
+[expected.TL8]
+passed = true
+evidence = "Guide three graduate engineers through their first year with weekly one-to-ones"

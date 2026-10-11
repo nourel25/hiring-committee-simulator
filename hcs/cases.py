@@ -18,6 +18,7 @@ class Checklist(BaseModel):
 
     name: str
     posting: str
+    version: int = 1
     items: list[ChecklistItem]
 
 
@@ -35,6 +36,7 @@ class Case(BaseModel):
 
     id: str
     label: Literal["good", "borderline", "poor"]
+    split: Literal["dev", "heldout"] = "dev"
     checklist: str
     expected_decision: Decision
     cv: str

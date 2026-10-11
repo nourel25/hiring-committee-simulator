@@ -48,6 +48,8 @@ def test_checklist_and_case_load_from_toml(tmp_path):
     case = load_case("case-1", tmp_path)
 
     assert [item.id for item in checklist.items] == ["M1", "N1"]
+    assert checklist.version == 1
+    assert case.split == "dev"
     assert case.cv == "Line one"
     assert case.expected["N1"].evidence is None
     assert key_problems(case, checklist) == []

@@ -19,6 +19,7 @@ class RunRecord(BaseModel):
     started_at: datetime
     agent: str
     case_id: str | None = None
+    checklist: str | None = None
 
     # Versions and settings
     prompt_version: str
