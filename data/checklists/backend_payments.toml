@@ -3,7 +3,10 @@
 # year counts are lookups for code. Importance is used by code only, never shown to the model.
 name = "backend_payments"
 posting = "Backend Engineer (Python), Payments Platform (mid-level)"
-version = 2
+# v2 (Step 3.5a): TL1 says what a backend service is; v1 let Python scripts pass.
+# v3 (Step 3.5c): TL3 and TL8 say what counts; v2 left "changing an existing schema" and
+# "leading meetings" open, and several model families read them as passes.
+version = 3
 
 # Must-haves: weight 3. Any failed must-have caps the decision at lean_no.
 
@@ -19,7 +22,7 @@ importance = "must"
 
 [[items]]
 id = "TL3"
-text = "Has designed (not just queried) a relational database schema"
+text = "Has designed a relational database schema, deciding which tables exist and how they relate; querying or changing an existing schema does not count"
 importance = "must"
 
 [[items]]
@@ -47,5 +50,5 @@ importance = "nice"
 
 [[items]]
 id = "TL8"
-text = "Has mentored or led other engineers (people leadership, not technical ownership)"
+text = "Has mentored or managed other engineers, such as coaching, onboarding or line management; leading meetings, projects or technical work does not count"
 importance = "nice"

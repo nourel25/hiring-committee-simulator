@@ -1,0 +1,56 @@
+# Held-out case for checklist v3: written and keyed before any run, not used to word TL3 or TL8.
+# Guards against v3 being too strict: real schema design and real people management,
+# written without the words "designed", "schema" or "mentored".
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "good-2"
+label = "good"
+split = "heldout"
+checklist = "backend_payments"
+# 4 must (12) + TL7, TL8 (2) = 14/16 = 8.75 -> strong_hire.
+expected_decision = "strong_hire"
+
+cv = """
+Senior Backend Engineer, travel booking startup (2020-present)
+- Built the Python booking API that partner travel agencies call to reserve hotel rooms, about 2 million requests a day
+- Modelled the database for the new group-travel product: 14 tables for travellers, trips, rooms and payments, and how they link
+- Deploy our services to production on AWS through a GitHub Actions pipeline
+- Line manager for two backend engineers, running their weekly one-to-ones and yearly reviews
+- Reduced p95 booking latency from 1.8 s to 600 ms by caching availability data
+
+Backend Developer, e-learning company (2017-2020)
+- Maintained the Django REST API used by 300,000 students
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Built the Python booking API that partner travel agencies call to reserve hotel rooms, about 2 million requests a day"
+
+[expected.TL2]
+passed = true
+evidence = "Maintained the Django REST API used by 300,000 students"
+
+[expected.TL3]
+# The point of this case: real schema design without the word "designed".
+passed = true
+evidence = "Modelled the database for the new group-travel product: 14 tables for travellers, trips, rooms and payments, and how they link"
+
+[expected.TL4]
+passed = true
+evidence = "Deploy our services to production on AWS through a GitHub Actions pipeline"
+
+[expected.TL5]
+passed = false
+
+[expected.TL6]
+# No containers or orchestration are mentioned.
+passed = false
+
+[expected.TL7]
+passed = true
+evidence = "Reduced p95 booking latency from 1.8 s to 600 ms by caching availability data"
+
+[expected.TL8]
+# The point of this case: real people management without the word "mentored".
+passed = true
+evidence = "Line manager for two backend engineers, running their weekly one-to-ones and yearly reviews"
