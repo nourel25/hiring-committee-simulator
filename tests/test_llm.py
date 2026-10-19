@@ -5,7 +5,14 @@ import copy
 import pytest
 from pydantic import ValidationError
 
-from hcs.llm import REPAIR_PROMPT, CallResult, LLMOutputError, get_structured
+from hcs.llm import (
+    REPAIR_PROMPT,
+    CallResult,
+    LLMOutputError,
+    forbid_extra_keys,
+    get_structured,
+    make_client,
+)
 from hcs.schemas import Review
 from tests.fakes import FakeClient, make_response
 
@@ -83,3 +90,45 @@ def test_callers_messages_are_not_changed():
     run(client)
 
     assert MESSAGES == before
+
+
+def test_strict_sends_a_closed_schema_and_the_strict_flag():
+    client = FakeClient([make_response(VALID)])
+
+    get_structured(
+        client,
+        MESSAGES,
+        response_model=Review,
+        model="fake",
+        temperature=0,
+        seed=0,
+        max_tokens=500,
+        strict=True,
+    )
+
+    json_schema = client.kwargs[0]["response_format"]["json_schema"]
+    assert json_schema["strict"] is True
+    assert json_schema["schema"]["$defs"]["Check"]["additionalProperties"] is False
+
+
+def test_without_strict_the_schema_is_sent_as_before():
+    client = FakeClient([make_response(VALID)])
+
+    run(client)
+
+    json_schema = client.kwargs[0]["response_format"]["json_schema"]
+    assert "strict" not in json_schema
+    assert json_schema["schema"] == Review.model_json_schema()
+
+
+def test_forbid_extra_keys_leaves_the_original_schema_unchanged():
+    schema = Review.model_json_schema()
+
+    forbid_extra_keys(schema)
+
+    assert "additionalProperties" not in schema["$defs"]["Check"]
+
+
+def test_an_unknown_provider_is_rejected():
+    with pytest.raises(ValueError):
+        make_client("openrouter")

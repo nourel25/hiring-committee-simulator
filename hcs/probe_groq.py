@@ -5,28 +5,15 @@ Sends one real review request (case poor-1) twice: once as our code sends it tod
 Needs GROQ_API_KEY in the environment or in .env.
 """
 
-import copy
-import os
-
-from dotenv import load_dotenv
 from openai import APIError, OpenAI
 from pydantic import ValidationError
 
 from hcs.agents import tech_lead
 from hcs.cases import load_case, load_checklist
+from hcs.llm import forbid_extra_keys, make_client
 from hcs.schemas import review_model_for
 
-GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 MODEL = "openai/gpt-oss-120b"
-
-
-def forbid_extra_keys(schema: dict) -> dict:
-    """A copy of the schema where every object says additionalProperties: false (strict mode needs it)."""
-    schema = copy.deepcopy(schema)
-    for part in [schema, *schema.get("$defs", {}).values()]:
-        if part.get("type") == "object":
-            part["additionalProperties"] = False
-    return schema
 
 
 def probe(client: OpenAI, messages: list[dict[str, str]], response_model, strict: bool) -> None:
@@ -63,8 +50,7 @@ def probe(client: OpenAI, messages: list[dict[str, str]], response_model, strict
 
 
 def main() -> None:
-    load_dotenv()
-    client = OpenAI(base_url=GROQ_BASE_URL, api_key=os.environ["GROQ_API_KEY"])
+    client = make_client("groq")
     case = load_case("poor-1")
     checklist = load_checklist(case.checklist)
     messages = tech_lead.build_messages(case.cv, checklist.items)

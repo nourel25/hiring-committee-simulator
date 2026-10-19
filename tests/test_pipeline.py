@@ -48,6 +48,19 @@ def test_review_case_uses_and_logs_the_model_temperature_and_seed_it_is_given(tm
     assert (record.model, record.temperature, record.seed) == ("fake-model", 0.7, 3)
 
 
+def test_review_case_passes_max_tokens_and_strict_to_the_call_and_logs_max_tokens(tmp_path):
+    client = FakeClient([make_response(TINY_REPLY)])
+
+    record = review_case(
+        client, TINY_CASE, TINY_CHECKLIST, tmp_path / "runs.jsonl", max_tokens=2000, strict=True
+    )
+
+    settings = client.kwargs[0]
+    assert settings["max_tokens"] == 2000
+    assert settings["response_format"]["json_schema"]["strict"] is True
+    assert record.max_tokens == 2000
+
+
 def test_review_case_reports_wrong_ids_as_a_failed_run_not_a_zero_score(tmp_path):
     wrong_ids = TINY_REPLY.replace('"id": "M1"', '"id": "M1: must one"')
     client = FakeClient([make_response(wrong_ids), make_response(wrong_ids)])

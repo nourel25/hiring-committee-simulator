@@ -1,5 +1,7 @@
 """Tests for the command-line options of hcs.run_compare. No model calls."""
 
+import pytest
+
 from hcs.run_compare import DEFAULT_SEEDS, MODELS, parse_args
 
 
@@ -15,3 +17,13 @@ def test_models_and_seeds_can_be_given_on_the_command_line():
 
     assert args.models == ["gemma3:12b"]
     assert args.seeds == 0
+
+
+def test_the_provider_defaults_to_ollama_and_accepts_groq():
+    assert parse_args([]).provider == "ollama"
+    assert parse_args(["--provider", "groq"]).provider == "groq"
+
+
+def test_an_unknown_provider_is_refused(capsys):
+    with pytest.raises(SystemExit):
+        parse_args(["--provider", "openrouter"])

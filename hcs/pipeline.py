@@ -28,6 +28,8 @@ def review_case(
     model: str = tech_lead.MODEL,
     temperature: float = tech_lead.TEMPERATURE,
     seed: int = tech_lead.SEED,
+    max_tokens: int = tech_lead.MAX_TOKENS,
+    strict: bool = False,
 ) -> RunRecord:
     """Run the tech lead on one case, log the result, and return the logged record."""
     messages = tech_lead.build_messages(case.cv, checklist.items)
@@ -42,7 +44,7 @@ def review_case(
         "model": model,
         "temperature": temperature,
         "seed": seed,
-        "max_tokens": tech_lead.MAX_TOKENS,
+        "max_tokens": max_tokens,
         "max_retries": tech_lead.MAX_RETRIES,
         "messages": messages,
     }
@@ -55,8 +57,9 @@ def review_case(
             model=model,
             temperature=temperature,
             seed=seed,
-            max_tokens=tech_lead.MAX_TOKENS,
+            max_tokens=max_tokens,
             max_retries=tech_lead.MAX_RETRIES,
+            strict=strict,
         )
     except LLMOutputError as error:
         record = RunRecord(

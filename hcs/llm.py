@@ -1,16 +1,23 @@
-"""Talking to the local model: one place for the client and the call."""
+"""Talking to models: the clients (local Ollama; Groq for the held-out judge) and the structured call."""
 
+import copy
 import json
+import os
 import time
 import urllib.request
 from dataclasses import dataclass
+from typing import Literal
 
+from dotenv import load_dotenv
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
 from pydantic import BaseModel, ValidationError
 
 OLLAMA_HOST = "http://localhost:11434"
 OLLAMA_BASE_URL = f"{OLLAMA_HOST}/v1"
+GROQ_BASE_URL = "https://api.groq.com/openai/v1"
+
+Provider = Literal["ollama", "groq"]
 
 REPAIR_PROMPT = (
     "Your previous reply did not match the required JSON schema.\n"
@@ -40,9 +47,23 @@ class CallResult:
     raw_reply: str
 
 
-def make_client() -> OpenAI:
-    """Create a client pointed at the local Ollama server."""
-    return OpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama")
+def make_client(provider: Provider = "ollama") -> OpenAI:
+    """Create a client for the local Ollama server, or for Groq (key from GROQ_API_KEY or .env)."""
+    if provider == "ollama":
+        return OpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama")
+    if provider == "groq":
+        load_dotenv()
+        return OpenAI(base_url=GROQ_BASE_URL, api_key=os.environ["GROQ_API_KEY"], max_retries=5)
+    raise ValueError(f"Unknown provider: {provider!r}")
+
+
+def forbid_extra_keys(schema: dict) -> dict:
+    """A copy of the schema where every object says additionalProperties: false (strict mode needs it)."""
+    schema = copy.deepcopy(schema)
+    for part in [schema, *schema.get("$defs", {}).values()]:
+        if part.get("type") == "object":
+            part["additionalProperties"] = False
+    return schema
 
 
 def call_model(
@@ -53,8 +74,17 @@ def call_model(
     temperature: float,
     seed: int,
     max_tokens: int,
+    strict: bool = False,
 ) -> tuple[ChatCompletion, float]:
-    """Send one request constrained to response_model's schema; return the response and seconds taken."""
+    """Send one request constrained to response_model's schema; return the response and seconds taken.
+
+    strict=True asks the provider to enforce the schema while writing (Ollama always does).
+    """
+    schema = response_model.model_json_schema()
+    json_schema = {"name": response_model.__name__, "schema": schema}
+    if strict:
+        json_schema = {**json_schema, "schema": forbid_extra_keys(schema), "strict": True}
+
     start = time.perf_counter()
     response = client.chat.completions.create(
         model=model,
@@ -62,13 +92,7 @@ def call_model(
         temperature=temperature,
         seed=seed,
         max_tokens=max_tokens,
-        response_format={
-            "type": "json_schema",
-            "json_schema": {
-                "name": response_model.__name__,
-                "schema": response_model.model_json_schema(),
-            },
-        },
+        response_format={"type": "json_schema", "json_schema": json_schema},
     )
     return response, time.perf_counter() - start
 
@@ -82,6 +106,7 @@ def get_structured(
     seed: int,
     max_tokens: int,
     max_retries: int = 1,
+    strict: bool = False,
 ) -> CallResult:
     """Call the model and validate the reply; on a schema error, retry with the error attached."""
     conversation = list(messages)
@@ -99,6 +124,7 @@ def get_structured(
             temperature=temperature,
             seed=seed,
             max_tokens=max_tokens,
+            strict=strict,
         )
         total_seconds += seconds
         prompt_tokens += response.usage.prompt_tokens
