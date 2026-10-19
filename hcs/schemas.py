@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, create_model
 
 
 class Check(BaseModel):
@@ -23,6 +23,27 @@ class Review(BaseModel):
     checks: list[Check] = Field(
         min_length=1,
         description="One entry per check, in the order given.",
+    )
+
+
+def review_model_for(ids: list[str]) -> type[Review]:
+    """A Review whose check ids can only be the given ids.
+
+    The schema then lists the ids as an enum, so Ollama's grammar cannot write any other id,
+    and validation rejects one if it appears anyway.
+    """
+    check_model = create_model(
+        "Check",
+        __base__=Check,
+        id=(Literal[tuple(ids)], Field(description=Check.model_fields["id"].description)),
+    )
+    return create_model(
+        "Review",
+        __base__=Review,
+        checks=(
+            list[check_model],
+            Field(min_length=1, description=Review.model_fields["checks"].description),
+        ),
     )
 
 

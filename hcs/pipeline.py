@@ -17,7 +17,7 @@ from hcs.policies import (
     failed_must_haves,
 )
 from hcs.runlog import RUNS_PATH, RunRecord, append_run
-from hcs.schemas import Review
+from hcs.schemas import Review, review_model_for
 
 
 def review_case(
@@ -31,6 +31,7 @@ def review_case(
 ) -> RunRecord:
     """Run the tech lead on one case, log the result, and return the logged record."""
     messages = tech_lead.build_messages(case.cv, checklist.items)
+    response_model = review_model_for([item.id for item in checklist.items])
     common = {
         "run_id": uuid.uuid4().hex,
         "started_at": datetime.now(timezone.utc),
@@ -50,7 +51,7 @@ def review_case(
         result = get_structured(
             client,
             messages,
-            response_model=Review,
+            response_model=response_model,
             model=model,
             temperature=temperature,
             seed=seed,
@@ -68,7 +69,8 @@ def review_case(
         append_run(record, runs_path)
         return record
 
-    review = result.parsed
+    # Validated against this checklist's ids; stored as a plain Review like every other record.
+    review = Review.model_validate(result.parsed.model_dump())
     policy_changes = apply_evidence_policy(review)
     truth_changes, missing_quotes = apply_truth_check(review, case.cv)
     score = compute_score(review, checklist.items)

@@ -46,3 +46,14 @@ def test_review_case_uses_and_logs_the_model_temperature_and_seed_it_is_given(tm
     settings = client.kwargs[0]
     assert (settings["model"], settings["temperature"], settings["seed"]) == ("fake-model", 0.7, 3)
     assert (record.model, record.temperature, record.seed) == ("fake-model", 0.7, 3)
+
+
+def test_review_case_reports_wrong_ids_as_a_failed_run_not_a_zero_score(tmp_path):
+    wrong_ids = TINY_REPLY.replace('"id": "M1"', '"id": "M1: must one"')
+    client = FakeClient([make_response(wrong_ids), make_response(wrong_ids)])
+
+    record = review_case(client, TINY_CASE, TINY_CHECKLIST, tmp_path / "runs.jsonl")
+
+    assert record.status == "error"
+    assert record.score is None
+    assert len(client.calls) == 2
