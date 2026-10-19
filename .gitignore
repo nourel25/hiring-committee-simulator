@@ -3,3 +3,4 @@ LEARNING.md
 __pycache__/
 *.pyc
 runs/
+.env
