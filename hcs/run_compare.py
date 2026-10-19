@@ -11,8 +11,8 @@ from hcs.pipeline import review_case
 MODELS = ["qwen2.5:7b", "llama3.1:8b", "mistral:7b", "granite4.1:8b"]
 TEMPERATURE = 0.7
 DEFAULT_SEEDS = 5
-# API reasoning models think before the JSON; the probe used up to 915 of 1000 tokens.
-API_MAX_TOKENS = 2000
+# API reasoning models think before the JSON: up to 1,849 tokens in the v3 run, so keep a wide margin.
+API_MAX_TOKENS = 4000
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

@@ -1,10 +1,11 @@
 """The tech-lead reviewer: its prompt, its model settings and how it builds messages."""
 
+from hcs.config import JUDGE_A
 from hcs.schemas import ChecklistItem
 
 PROMPT_VERSION = "reviewer-v1"
 
-MODEL = "qwen2.5:7b"
+MODEL = JUDGE_A.model
 TEMPERATURE = 0
 SEED = 42
 MAX_TOKENS = 1000
