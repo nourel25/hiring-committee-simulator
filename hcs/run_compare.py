@@ -32,7 +32,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    seeds = list(range(1, args, seeds + 1))
+    seeds = list(range(1, args.seeds + 1))
     client = make_client()
     cases = [(case, load_checklist(case.checklist)) for case in load_cases()]
     summaries = []
