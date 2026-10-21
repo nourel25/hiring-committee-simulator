@@ -1,13 +1,15 @@
 """Draft a checklist from a posting with the job analyst and print it next to the hand-written one.
 
+With --save, the draft is written to data/checklists/ for a person to review and edit.
 With --eval, the tech lead (judge A, local) then scores every labelled CV with the drafted checklist,
 to see whether the decisions still come out right.
 """
 
 import argparse
+import re
 
 from hcs.agents import job_analyst
-from hcs.cases import Checklist, load_cases, load_checklist, load_posting
+from hcs.cases import Checklist, load_cases, load_checklist, load_posting, save_checklist
 from hcs.config import API_MAX_TOKENS
 from hcs.evaluation import format_or_dash
 from hcs.llm import LLMOutputError, get_structured, make_client
@@ -32,11 +34,21 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="where the job analyst runs (groq: strict schema, larger max_tokens)",
     )
     parser.add_argument(
+        "--save",
+        action="store_true",
+        help="write the draft to data/checklists/ for review (never overwrites a file)",
+    )
+    parser.add_argument(
         "--eval",
         action="store_true",
         help="score every labelled CV with the drafted checklist and compare the decisions",
     )
     return parser.parse_args(argv)
+
+
+def draft_name(posting_name: str, model: str) -> str:
+    """A checklist name that is also a safe file name, e.g. 'backend_payments-draft-qwen2.5-7b'."""
+    return f"{posting_name}-draft-{re.sub(r'[^A-Za-z0-9_.-]', '-', model)}"
 
 
 def draft_checklist(model: str, provider: str) -> Checklist | None:
@@ -61,7 +73,7 @@ def draft_checklist(model: str, provider: str) -> Checklist | None:
         return None
 
     analysis = result.parsed
-    drafted = job_analyst.to_checklist(analysis, f"{POSTING_NAME}-draft-{model}", posting.title)
+    drafted = job_analyst.to_checklist(analysis, draft_name(POSTING_NAME, model), posting.title)
     print(f"Done in {result.attempts} attempt(s), {result.seconds:.1f}s")
     print(f"Tokens: {result.prompt_tokens} in, {result.completion_tokens} out")
 
@@ -74,10 +86,29 @@ def draft_checklist(model: str, provider: str) -> Checklist | None:
     for line in analysis.dropped:
         print(f"    {line.source} -> {line.reason}")
 
+    print("\n== Warnings")
+    for warning in job_analyst.draft_warnings(analysis) or ["none"]:
+        print(f"    {warning}")
+
     print("\n== Hand-written answer key")
     for item in load_checklist(POSTING_NAME).items:
         print(f"{item.id} [{item.importance}] {item.text}")
     return drafted
+
+
+def save_draft(checklist: Checklist, model: str) -> None:
+    """Write the draft for review, with where it came from on top. Refuses to overwrite."""
+    header = (
+        f"Draft by the job analyst ({job_analyst.PROMPT_VERSION}, {model}). Not reviewed yet.\n"
+        "Review every check and its importance, run the downstream eval, then rename the file "
+        "and its name field together."
+    )
+    try:
+        path = save_checklist(checklist, header)
+    except FileExistsError:
+        print(f"\nNot saved: {checklist.name}.toml already exists and may hold your edits.")
+        return
+    print(f"\nSaved the draft to {path}")
 
 
 def score_cases(checklist: Checklist) -> None:
@@ -101,7 +132,11 @@ def score_cases(checklist: Checklist) -> None:
 def main() -> None:
     args = parse_args()
     drafted = draft_checklist(args.model, args.provider)
-    if drafted is not None and args.eval:
+    if drafted is None:
+        return
+    if args.save:
+        save_draft(drafted, args.model)
+    if args.eval:
         score_cases(drafted)
 
 

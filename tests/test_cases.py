@@ -3,9 +3,10 @@
 import pytest
 from pydantic import ValidationError
 
-from hcs.cases import key_problems, load_case, load_cases, load_checklist
+from hcs.cases import key_problems, load_case, load_cases, load_checklist, save_checklist
 from hcs.policies import apply_truth_check, compute_score, decide, failed_must_haves
 from hcs.schemas import Check, Review
+from tests.fakes import TINY_CHECKLIST
 
 CHECKLIST_TOML = """
 name = "tiny"
@@ -69,6 +70,22 @@ def test_key_problems_names_missing_and_unknown_ids(tmp_path):
     problems = key_problems(load_case("case-1", tmp_path), load_checklist("tiny", tmp_path))
 
     assert problems == ["missing: N1", "unknown: X9"]
+
+
+def test_a_saved_checklist_loads_back_unchanged_with_its_header(tmp_path):
+    path = save_checklist(TINY_CHECKLIST, "Draft by a test.\nReview it.", tmp_path)
+
+    assert path == tmp_path / "tiny.toml"
+    assert path.read_text(encoding="utf-8").startswith("# Draft by a test.\n# Review it.\n")
+    assert load_checklist("tiny", tmp_path) == TINY_CHECKLIST
+
+
+def test_saving_never_overwrites_a_file_that_may_hold_edits(tmp_path):
+    (tmp_path / "tiny.toml").write_text("# edited by hand\n", encoding="utf-8")
+
+    with pytest.raises(FileExistsError):
+        save_checklist(TINY_CHECKLIST, "Draft.", tmp_path)
+    assert (tmp_path / "tiny.toml").read_text(encoding="utf-8") == "# edited by hand\n"
 
 
 @pytest.mark.parametrize("case", load_cases(), ids=lambda case: case.id)

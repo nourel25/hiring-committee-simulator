@@ -21,6 +21,8 @@ SEED = 42
 MAX_TOKENS = 1500
 MAX_RETRIES = 1
 ID_PREFIX = "TL"
+# The hand-written checklist has 4; drafts with 6 or 7 made the gate reject good CVs (Step 4.1).
+MAX_MUST_HAVES = 5
 
 # The worked example is a front-end posting on purpose: an example from the payments posting
 # would hand the model the answer key it is measured against.
@@ -146,3 +148,20 @@ def to_checklist(analysis: JobAnalysis, name: str, posting_title: str) -> Checkl
         for number, draft in enumerate(analysis.checks, start=1)
     ]
     return Checklist(name=name, posting=posting_title, items=items)
+
+
+def draft_warnings(analysis: JobAnalysis) -> list[str]:
+    """Problems a person must look at before the draft is used; an empty list means none found."""
+    warnings = []
+    must_haves = [draft for draft in analysis.checks if draft.importance == "must"]
+    if len(must_haves) > MAX_MUST_HAVES:
+        warnings.append(
+            f"{len(must_haves)} must-haves (more than {MAX_MUST_HAVES}): "
+            "each one is another way for the gate to reject a good CV"
+        )
+    check_sources = [draft.source for draft in analysis.checks]
+    for line in analysis.dropped:
+        # Containment either way: one side may quote the whole line, the other part of it.
+        if any(quote_in_cv(line.source, s) or quote_in_cv(s, line.source) for s in check_sources):
+            warnings.append(f"Both a check and dropped: {line.source!r}")
+    return warnings

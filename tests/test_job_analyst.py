@@ -98,6 +98,27 @@ def test_the_worked_example_does_not_come_from_the_real_posting():
     assert not any(quote_in_cv(source, posting.text) for source in sources)
 
 
+def test_a_clean_draft_has_no_warnings():
+    parsed = JobAnalysis.model_validate(analysis([DRAFT_PYTHON, DRAFT_TESTS], [DROPPED]))
+    assert job_analyst.draft_warnings(parsed) == []
+
+
+def test_too_many_must_haves_are_flagged():
+    musts = [DRAFT_PYTHON] * (job_analyst.MAX_MUST_HAVES + 1)
+    parsed = JobAnalysis.model_validate(analysis(musts, []))
+
+    [warning] = job_analyst.draft_warnings(parsed)
+    assert warning.startswith(f"{job_analyst.MAX_MUST_HAVES + 1} must-haves")
+
+
+def test_a_line_that_is_both_a_check_and_dropped_is_flagged():
+    # Run 1 of job-analyst-v3 (qwen) made "Team player" a check and dropped it too.
+    team_check = {**DRAFT_TESTS, "source": "- Team player"}
+    parsed = JobAnalysis.model_validate(analysis([DRAFT_PYTHON, team_check], [DROPPED]))
+
+    assert job_analyst.draft_warnings(parsed) == ["Both a check and dropped: 'Team player'"]
+
+
 def test_the_real_posting_loads():
     posting = load_posting("backend_payments")
     assert posting.title == "Backend Engineer (Python), Payments Platform (mid-level)"

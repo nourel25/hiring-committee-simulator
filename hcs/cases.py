@@ -4,6 +4,7 @@ import tomllib
 from pathlib import Path
 from typing import Literal
 
+import tomli_w
 from pydantic import BaseModel, ConfigDict
 
 from hcs.schemas import ChecklistItem, Decision
@@ -67,6 +68,18 @@ def load_posting(name: str, directory: Path = POSTINGS_DIR) -> Posting:
 def load_checklist(name: str, directory: Path = CHECKLISTS_DIR) -> Checklist:
     """Load and validate the checklist stored as <directory>/<name>.toml."""
     return Checklist.model_validate(load_toml(directory / f"{name}.toml"))
+
+
+def save_checklist(checklist: Checklist, header: str, directory: Path = CHECKLISTS_DIR) -> Path:
+    """Write the checklist as <directory>/<name>.toml with comment lines on top; never overwrite.
+
+    A draft is edited by hand after it is saved, so a second save must not erase those edits.
+    """
+    path = directory / f"{checklist.name}.toml"
+    comments = "".join(f"# {line}\n" for line in header.splitlines())
+    with path.open("x", encoding="utf-8") as file:
+        file.write(comments + tomli_w.dumps(checklist.model_dump()))
+    return path
 
 
 def load_case(case_id: str, directory: Path = CASES_DIR) -> Case:
