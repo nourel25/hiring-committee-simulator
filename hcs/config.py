@@ -27,3 +27,6 @@ HELD_OUT_JUDGE = ModelChoice("groq", "openai/gpt-oss-120b")
 
 # The rubric these choices were measured on.
 CHECKLIST = "backend_payments"
+
+# API reasoning models think before the JSON: up to 1,849 tokens in the v3 run, so keep a wide margin.
+API_MAX_TOKENS = 4000

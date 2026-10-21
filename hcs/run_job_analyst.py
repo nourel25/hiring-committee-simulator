@@ -1,32 +1,67 @@
-"""Turn one posting into a checklist with the job analyst and print it next to the hand-written one."""
+"""Draft a checklist from a posting with the job analyst and print it next to the hand-written one.
+
+With --eval, the tech lead (judge A, local) then scores every labelled CV with the drafted checklist,
+to see whether the decisions still come out right.
+"""
+
+import argparse
 
 from hcs.agents import job_analyst
-from hcs.cases import load_checklist, load_posting
+from hcs.cases import Checklist, load_cases, load_checklist, load_posting
+from hcs.config import API_MAX_TOKENS
+from hcs.evaluation import format_or_dash
 from hcs.llm import LLMOutputError, get_structured, make_client
+from hcs.pipeline import review_case
 
 POSTING_NAME = "backend_payments"
 
 
-def main() -> None:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Read which model drafts the checklist, where it runs, and whether to score the CVs with it."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "model",
+        nargs="?",
+        default=job_analyst.MODEL,
+        help=f"the job analyst's model (default: {job_analyst.MODEL})",
+    )
+    parser.add_argument(
+        "--provider",
+        choices=["ollama", "groq"],
+        default="ollama",
+        help="where the job analyst runs (groq: strict schema, larger max_tokens)",
+    )
+    parser.add_argument(
+        "--eval",
+        action="store_true",
+        help="score every labelled CV with the drafted checklist and compare the decisions",
+    )
+    return parser.parse_args(argv)
+
+
+def draft_checklist(model: str, provider: str) -> Checklist | None:
+    """Ask the job analyst for a checklist, print it with the answer key, and return it."""
     posting = load_posting(POSTING_NAME)
+    api = provider != "ollama"
     try:
         result = get_structured(
-            make_client(),
+            make_client(provider),
             job_analyst.build_messages(posting.text),
             job_analyst.analysis_model_for(posting.text),
-            model=job_analyst.MODEL,
+            model=model,
             temperature=job_analyst.TEMPERATURE,
             seed=job_analyst.SEED,
-            max_tokens=job_analyst.MAX_TOKENS,
+            max_tokens=API_MAX_TOKENS if api else job_analyst.MAX_TOKENS,
             max_retries=job_analyst.MAX_RETRIES,
+            strict=api,
         )
     except LLMOutputError as error:
         print(f"Gave up after {error.attempts} attempt(s): {error}")
         print(f"Last reply: {error.raw_reply!r}")
-        return
+        return None
 
     analysis = result.parsed
-    drafted = job_analyst.to_checklist(analysis, f"{POSTING_NAME}-draft", posting.title)
+    drafted = job_analyst.to_checklist(analysis, f"{POSTING_NAME}-draft-{model}", posting.title)
     print(f"Done in {result.attempts} attempt(s), {result.seconds:.1f}s")
     print(f"Tokens: {result.prompt_tokens} in, {result.completion_tokens} out")
 
@@ -40,9 +75,34 @@ def main() -> None:
         print(f"    {line.source} -> {line.reason}")
 
     print("\n== Hand-written answer key")
-    answer_key = load_checklist(POSTING_NAME)
-    for item in answer_key.items:
+    for item in load_checklist(POSTING_NAME).items:
         print(f"{item.id} [{item.importance}] {item.text}")
+    return drafted
+
+
+def score_cases(checklist: Checklist) -> None:
+    """Downstream check: the decisions only, since the answer keys use the hand-written ids."""
+    client = make_client()
+    cases = load_cases()
+    right = 0
+    print(f"\n== Tech lead with {checklist.name}")
+    for case in cases:
+        record = review_case(client, case, checklist)
+        ok = record.decision == case.expected_decision
+        right += ok
+        print(
+            f"{case.id:<14} {case.split:<8} expected {case.expected_decision:<12} "
+            f"got {str(record.decision):<12} {format_or_dash(record.score, '.1f'):>4}  "
+            f"{'ok' if ok else 'WRONG'}  failed must-haves: {record.failed_must_haves}"
+        )
+    print(f"Decisions: {right}/{len(cases)}")
+
+
+def main() -> None:
+    args = parse_args()
+    drafted = draft_checklist(args.model, args.provider)
+    if drafted is not None and args.eval:
+        score_cases(drafted)
 
 
 if __name__ == "__main__":
