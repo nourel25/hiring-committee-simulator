@@ -1,0 +1,56 @@
+# Held-out case for the data engineer posting: written and keyed before any run.
+# Strong operations and streaming, but the TL2 trap: adding columns and views to an existing model
+# is not designing one, so the gate applies.
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "data-borderline-1"
+label = "borderline"
+split = "heldout"
+checklist = "data_logistics"
+# TL1, TL3 (6) + TL4, TL5, TL6 (3) = 9/14 = 6.4 -> lean_hire, capped at lean_no (TL2 fails).
+# A wrong TL2 pass would give 12/14 = 8.6 -> strong_hire, so the decision shows the TL2 trap.
+expected_decision = "lean_no"
+
+cv = """
+Data Engineer, food delivery app (2022-present)
+- Maintain the Python ingestion pipelines that feed the marketing and finance dashboards every morning
+- Add new columns and views to the existing Snowflake models when analysts ask for them
+- Deploy and schedule my own jobs with Dagster in production
+- Set up Great Expectations checks that stop a load when key fields are empty
+- Part of the data team's weekly on-call rota
+- Built a Kafka consumer that streams order events into Snowflake within seconds
+
+Junior Developer, software agency (2020-2022)
+- Built internal admin pages in Django
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Maintain the Python ingestion pipelines that feed the marketing and finance dashboards every morning"
+
+[expected.TL2]
+# Trap: changing an existing model is not designing one.
+passed = false
+evidence = "Add new columns and views to the existing Snowflake models when analysts ask for them"
+
+[expected.TL3]
+passed = true
+evidence = "Deploy and schedule my own jobs with Dagster in production"
+
+[expected.TL4]
+passed = true
+evidence = "Set up Great Expectations checks that stop a load when key fields are empty"
+
+[expected.TL5]
+passed = true
+evidence = "Part of the data team's weekly on-call rota"
+
+[expected.TL6]
+passed = true
+evidence = "Built a Kafka consumer that streams order events into Snowflake within seconds"
+
+[expected.TL7]
+passed = false
+
+[expected.TL8]
+passed = false

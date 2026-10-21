@@ -1,0 +1,54 @@
+# Held-out case for the data engineer posting: written and keyed before any run.
+# A strong data engineer whose CV never uses the checklist's trigger words ("designed", "on-call").
+# Guards against over-strictness: TL2 is real modelling described in other words.
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "data-good-1"
+label = "good"
+split = "heldout"
+checklist = "data_logistics"
+# TL1, TL2, TL3 (9) + TL4, TL7, TL8 (3) = 12/14 = 8.6 -> strong_hire.
+expected_decision = "strong_hire"
+
+cv = """
+Data Engineer, parcel delivery company (2021-present)
+- Build and maintain the nightly Python and SQL pipelines that load shipment data for the finance and operations teams
+- Modelled the delivery analytics layer in BigQuery from scratch: chose the 12 fact and dimension tables and how they join
+- Schedule and run my pipelines in production with Airflow, and fix them when a load fails
+- Added dbt tests for row counts, nulls and freshness to every pipeline
+- Cut the nightly load from 3 hours to 40 minutes by switching to incremental models
+- Run a monthly SQL workshop for the operations analysts
+
+Data Analyst, retail chain (2018-2021)
+- Wrote SQL reports and Excel dashboards for store managers
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Build and maintain the nightly Python and SQL pipelines that load shipment data for the finance and operations teams"
+
+[expected.TL2]
+passed = true
+evidence = "Modelled the delivery analytics layer in BigQuery from scratch: chose the 12 fact and dimension tables and how they join"
+
+[expected.TL3]
+passed = true
+evidence = "Schedule and run my pipelines in production with Airflow, and fix them when a load fails"
+
+[expected.TL4]
+passed = true
+evidence = "Added dbt tests for row counts, nulls and freshness to every pipeline"
+
+[expected.TL5]
+passed = false
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+passed = true
+evidence = "Cut the nightly load from 3 hours to 40 minutes by switching to incremental models"
+
+[expected.TL8]
+passed = true
+evidence = "Run a monthly SQL workshop for the operations analysts"

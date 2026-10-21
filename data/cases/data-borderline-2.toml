@@ -1,0 +1,55 @@
+# Held-out case for the data engineer posting: written and keyed before any run.
+# An analytics engineer who builds and models well but never runs anything in production:
+# the TL3 trap (someone else deploys and schedules) and the TL4 trap (fixing data by hand).
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "data-borderline-2"
+label = "borderline"
+split = "heldout"
+checklist = "data_logistics"
+# TL1, TL2 (6) + TL7 (1) = 7/14 = 5.0 -> lean_no (TL3 fails, so the gate also applies).
+# A wrong TL3 pass would give 10/14 = 7.1 -> lean_hire, so the decision shows the TL3 trap.
+expected_decision = "lean_no"
+
+cv = """
+Analytics Engineer, freight marketplace (2021-present)
+- Build the dbt SQL pipelines that turn raw freight bookings into the tables the pricing and sales teams use every day
+- Designed the star schema for carrier performance: decided the fact table of loads and its five dimensions
+- Hand finished models to the platform team, who deploy and schedule them in production
+- Fix bad rows by hand when the sales team reports wrong numbers
+- Reduced the warehouse bill for my models by 35% by partitioning the largest tables
+
+Data Analyst, travel company (2019-2021)
+- Built Tableau dashboards for the sales team
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Build the dbt SQL pipelines that turn raw freight bookings into the tables the pricing and sales teams use every day"
+
+[expected.TL2]
+passed = true
+evidence = "Designed the star schema for carrier performance: decided the fact table of loads and its five dimensions"
+
+[expected.TL3]
+# Trap: building pipelines that someone else deploys and schedules.
+passed = false
+evidence = "Hand finished models to the platform team, who deploy and schedule them in production"
+
+[expected.TL4]
+# Trap: fixing bad data by hand is not an automated check.
+passed = false
+evidence = "Fix bad rows by hand when the sales team reports wrong numbers"
+
+[expected.TL5]
+passed = false
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+passed = true
+evidence = "Reduced the warehouse bill for my models by 35% by partitioning the largest tables"
+
+[expected.TL8]
+passed = false

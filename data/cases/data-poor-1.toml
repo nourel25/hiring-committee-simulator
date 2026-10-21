@@ -1,0 +1,57 @@
+# Held-out case for the data engineer posting: written and keyed before any run.
+# A data analyst whose CV looks close to the role. Traps: own scripts and notebooks (TL1),
+# querying a warehouse (TL2), handing work to others to schedule (TL3), an hourly batch read
+# from Kafka (TL6), and answering questions (TL8).
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "data-poor-1"
+label = "poor"
+split = "heldout"
+checklist = "data_logistics"
+# Nothing passes: 0/14 = 0.0 -> strong_no.
+# Wrong passes on TL1 and TL2 would give 6/14 = 4.3 -> lean_no, so two must-have traps show.
+expected_decision = "strong_no"
+
+cv = """
+Data Analyst, logistics company (2020-present)
+- Write SQL queries against the company's Snowflake warehouse for weekly operations reports
+- Automated my own monthly KPI report with a Python script and a Jupyter notebook
+- Hand my notebooks to the data engineering team, who turn them into scheduled jobs
+- Read the hourly batch export of scanner events from Kafka to update a delivery-delay chart
+- Answer SQL questions from colleagues in the team chat
+- Five years of experience in logistics and supply chain
+"""
+
+[expected.TL1]
+# Trap: a script and notebook for the author's own report, not a pipeline others rely on.
+passed = false
+evidence = "Automated my own monthly KPI report with a Python script and a Jupyter notebook"
+
+[expected.TL2]
+# Trap: querying a warehouse is not designing its models.
+passed = false
+evidence = "Write SQL queries against the company's Snowflake warehouse for weekly operations reports"
+
+[expected.TL3]
+# Trap: someone else schedules and runs the work.
+passed = false
+evidence = "Hand my notebooks to the data engineering team, who turn them into scheduled jobs"
+
+[expected.TL4]
+passed = false
+
+[expected.TL5]
+passed = false
+
+[expected.TL6]
+# Trap: an hourly batch read from a queue is not streaming.
+passed = false
+evidence = "Read the hourly batch export of scanner events from Kafka to update a delivery-delay chart"
+
+[expected.TL7]
+passed = false
+
+[expected.TL8]
+# Trap: answering occasional questions is not coaching.
+passed = false
+evidence = "Answer SQL questions from colleagues in the team chat"
