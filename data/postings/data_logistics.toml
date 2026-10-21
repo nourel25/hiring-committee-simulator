@@ -1,0 +1,19 @@
+# A job posting as a candidate would see it. The job analyst turns its text into a checklist.
+# Step 4.2: the job analyst's held-out posting. Its reviewed checklist is written before any draft.
+
+title = "Data Engineer, Logistics Analytics (mid-level)"
+text = """
+Requirements
+- 3+ years of Python and SQL
+- Built and maintained batch data pipelines that other teams rely on
+- Hands-on with a cloud data warehouse (Snowflake or BigQuery), including designing data models for analytics
+- Own your pipelines in production: scheduling, data-quality checks and the on-call rota
+- Strong stakeholder management
+
+Nice to have
+- Airflow or Dagster
+- Streaming data with Kafka
+- A track record of cutting pipeline cost or runtime
+- Logistics or supply-chain experience
+- Mentoring analysts on SQL
+"""
