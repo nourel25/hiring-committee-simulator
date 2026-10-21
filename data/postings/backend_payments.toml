@@ -15,3 +15,18 @@ Nice to have
 - Mentoring junior engineers
 - Fintech or payments experience
 """
+
+# Hand-written until the company researcher exists. The company is invented.
+brief = """
+A payments platform for online shops in Europe, at scale-up stage with about 120 engineers.
+The Payments Platform team (8 engineers) owns the services that take card payments and pay merchants.
+Stack: Python, PostgreSQL, Kubernetes on AWS.
+This year's focus: fewer failed payments and two new payment methods.
+"""
+
+# The recruiter's screen, checked by code: current title, dated years, and names in the top third.
+[recruiter]
+# "backend developer" added after the first screen of the 11 CVs: good-1 is a "Backend Developer".
+titles = ["backend engineer", "backend developer", "software engineer", "python developer"]
+keywords = ["Python", "REST"]
+min_years = 3

@@ -17,3 +17,17 @@ Nice to have
 - Logistics or supply-chain experience
 - Mentoring analysts on SQL
 """
+
+# Hand-written until the company researcher exists. The company is invented.
+brief = """
+A parcel delivery company across the Middle East, with about 40 people in data and analytics.
+The analytics team (6 data engineers, 15 analysts) builds the warehouse that operations and finance
+use to plan routes and costs. Stack: Python, SQL, BigQuery, Airflow.
+This year's focus: predicting delivery delays and cutting the warehouse bill.
+"""
+
+# The recruiter's screen, checked by code: current title, dated years, and names in the top third.
+[recruiter]
+titles = ["data engineer", "analytics engineer"]
+keywords = ["Python", "SQL"]
+min_years = 3

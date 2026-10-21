@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Literal
 
 import tomli_w
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from hcs.schemas import ChecklistItem, Decision
 
@@ -15,13 +15,23 @@ CHECKLISTS_DIR = DATA_DIR / "checklists"
 CASES_DIR = DATA_DIR / "cases"
 
 
+class RecruiterScreen(BaseModel):
+    """What the recruiter's code looks for, reviewed by a person like a checklist."""
+
+    titles: list[str] = Field(min_length=1)
+    keywords: list[str]
+    min_years: int = Field(ge=0)
+
+
 class Posting(BaseModel):
-    """A job posting as published. The job analyst reads its text."""
+    """A job posting as published, plus a hand-written company brief and the recruiter's screen."""
 
     model_config = ConfigDict(str_strip_whitespace=True)
 
     title: str
     text: str
+    brief: str
+    recruiter: RecruiterScreen
 
 
 class Checklist(BaseModel):
