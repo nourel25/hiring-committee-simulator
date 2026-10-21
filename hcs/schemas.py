@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, create_model
+from pydantic import BaseModel, ConfigDict, Field, create_model, field_validator
 
 
 class Check(BaseModel):
@@ -76,6 +76,20 @@ class DraftCheck(BaseModel):
     importance: Literal["must", "nice"] = Field(
         description="'must' if the posting requires it; 'nice' if it is a bonus."
     )
+
+    @field_validator("does_not_count")
+    @classmethod
+    def says_what_does_not_count(cls, value: str | None) -> str | None:
+        """Code joins this clause to the check, so it must read as an exclusion, never a requirement."""
+        if value is None:
+            return None
+        clause = value.strip().rstrip(".")
+        if not clause.casefold().endswith(("does not count", "do not count")):
+            raise ValueError(
+                "does_not_count must end in 'does not count' or 'do not count', "
+                "e.g. 'scripts and reports do not count'"
+            )
+        return clause
 
 
 class DroppedLine(BaseModel):

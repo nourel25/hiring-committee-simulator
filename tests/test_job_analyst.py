@@ -5,6 +5,7 @@ from pydantic import ValidationError
 
 from hcs.agents import job_analyst
 from hcs.cases import load_posting
+from hcs.policies import quote_in_cv
 from hcs.schemas import DraftCheck, JobAnalysis
 
 POSTING = """
@@ -65,6 +66,36 @@ def test_the_checklist_is_numbered_in_order_and_joins_what_does_not_count():
     assert checklist.items[1].text == "Has written automated tests"
     assert [item.importance for item in checklist.items] == ["must", "nice"]
     assert checklist.posting == "Tiny posting"
+
+
+@pytest.mark.parametrize(
+    "clause, stored",
+    [
+        ("scripts do not count", "scripts do not count"),
+        ("Querying a schema does not count.", "Querying a schema does not count"),
+        (None, None),
+    ],
+)
+def test_an_exclusion_clause_is_accepted(clause, stored):
+    draft = DraftCheck.model_validate({**DRAFT_PYTHON, "does_not_count": clause})
+    assert draft.does_not_count == stored
+
+
+def test_a_clause_that_reads_as_a_requirement_is_rejected():
+    # Run 1 of job-analyst-v1 wrote this for TL3; joined to the check, it asked for queries.
+    with pytest.raises(ValidationError, match="does not count"):
+        DraftCheck.model_validate({**DRAFT_PYTHON, "does_not_count": "Has written queries"})
+
+
+def test_the_worked_example_is_a_valid_reply_for_its_own_posting():
+    model = job_analyst.analysis_model_for(job_analyst.EXAMPLE_POSTING)
+    model.model_validate(job_analyst.EXAMPLE_REPLY)
+
+
+def test_the_worked_example_does_not_come_from_the_real_posting():
+    posting = load_posting("backend_payments")
+    sources = [check["source"] for check in job_analyst.EXAMPLE_REPLY["checks"]]
+    assert not any(quote_in_cv(source, posting.text) for source in sources)
 
 
 def test_the_real_posting_loads():
