@@ -55,3 +55,46 @@ class ChecklistItem(BaseModel):
     importance: Literal["must", "nice"] = Field(
         description="'must' = required by the posting; 'nice' = a bonus."
     )
+
+
+class DraftCheck(BaseModel):
+    """One check the job analyst drafts from a posting. Code gives it an id."""
+
+    source: str = Field(
+        max_length=300,
+        description="The posting line this check comes from, copied exactly.",
+    )
+    check: str = Field(
+        description="One thing the candidate has done, starting with 'Has', e.g. 'Has built …'."
+    )
+    does_not_count: str | None = Field(
+        description=(
+            "A clause naming the closest work that does not prove the check, "
+            "e.g. 'scripts, notebooks and reports do not count', or null if there is none."
+        )
+    )
+    importance: Literal["must", "nice"] = Field(
+        description="'must' if the posting requires it; 'nice' if it is a bonus."
+    )
+
+
+class DroppedLine(BaseModel):
+    """A posting line that no CV can prove, left out on purpose."""
+
+    source: str = Field(max_length=300, description="The posting line, copied exactly.")
+    reason: str = Field(description="Why a CV cannot prove it, e.g. 'a personality trait'.")
+
+
+class JobAnalysis(BaseModel):
+    """What the job analyst returns: every posting line ends up in checks, lookups or dropped."""
+
+    checks: list[DraftCheck] = Field(
+        min_length=1,
+        description="Checks a reviewer can judge from a CV, one per thing to prove.",
+    )
+    lookups: list[str] = Field(
+        description="Named tools, year counts and industries, for code to look up, e.g. 'PostgreSQL'."
+    )
+    dropped: list[DroppedLine] = Field(
+        description="Posting lines that are neither a check nor a lookup."
+    )

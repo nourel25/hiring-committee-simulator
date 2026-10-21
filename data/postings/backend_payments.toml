@@ -1,0 +1,17 @@
+# A job posting as a candidate would see it. The job analyst turns its text into a checklist.
+
+title = "Backend Engineer (Python), Payments Platform (mid-level)"
+text = """
+Requirements
+- Strong Python skills, 3+ years
+- Experience building and maintaining REST APIs
+- Hands-on experience with relational databases (PostgreSQL preferred), including schema design, not just writing queries
+- Comfortable owning services in production: deployment, monitoring and on-call
+- Team player with great communication skills
+
+Nice to have
+- Kubernetes and AWS
+- Performance tuning (caching, query optimisation)
+- Mentoring junior engineers
+- Fintech or payments experience
+"""

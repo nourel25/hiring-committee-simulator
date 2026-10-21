@@ -1,4 +1,4 @@
-"""Evaluation data: checklists and labelled cases, loaded from TOML files in data/ and validated."""
+"""Evaluation data: postings, checklists and labelled cases, loaded from TOML files in data/ and validated."""
 
 import tomllib
 from pathlib import Path
@@ -9,8 +9,18 @@ from pydantic import BaseModel, ConfigDict
 from hcs.schemas import ChecklistItem, Decision
 
 DATA_DIR = Path("data")
+POSTINGS_DIR = DATA_DIR / "postings"
 CHECKLISTS_DIR = DATA_DIR / "checklists"
 CASES_DIR = DATA_DIR / "cases"
+
+
+class Posting(BaseModel):
+    """A job posting as published. The job analyst reads its text."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    title: str
+    text: str
 
 
 class Checklist(BaseModel):
@@ -47,6 +57,11 @@ def load_toml(path: Path) -> dict:
     """Read one TOML file into a dict."""
     with path.open("rb") as file:
         return tomllib.load(file)
+
+
+def load_posting(name: str, directory: Path = POSTINGS_DIR) -> Posting:
+    """Load and validate the posting stored as <directory>/<name>.toml."""
+    return Posting.model_validate(load_toml(directory / f"{name}.toml"))
 
 
 def load_checklist(name: str, directory: Path = CHECKLISTS_DIR) -> Checklist:
