@@ -3,7 +3,7 @@
 import statistics
 from dataclasses import dataclass
 
-from hcs.cases import Case
+from hcs.cases import AgentKey, Case
 from hcs.policies import normalize
 from hcs.runlog import RunRecord
 from hcs.schemas import Decision
@@ -36,14 +36,20 @@ class CaseReport:
     evidence_wrong: list[str]
 
 
-def compare(case: Case, record: RunRecord) -> CaseReport:
-    """Judge the post-policy run against the key: passed on every check, evidence on expected passes."""
+def compare(case: Case, record: RunRecord, agent_key: AgentKey | None = None) -> CaseReport:
+    """Judge the post-policy run against the key: passed on every check, evidence on expected passes.
+
+    The key is the tech lead's unless another reviewer's key is given. A key without evidence on a
+    pass (a check computed by code) is judged on passed only.
+    """
+    expected = agent_key.expected if agent_key else case.expected
+    expected_decision = agent_key.expected_decision if agent_key else case.expected_decision
     checks = {check.id: check for check in record.review.checks} if record.review else {}
 
     passed_wrong = []
     evidence_wrong = []
     lenient = []
-    for check_id, key in case.expected.items():
+    for check_id, key in expected.items():
         check = checks.get(check_id)
         got_passed = check.passed if check else False
         got_evidence = check.evidence if check else None
@@ -52,7 +58,11 @@ def compare(case: Case, record: RunRecord) -> CaseReport:
             passed_wrong.append(check_id)
         if got_passed and not key.passed:
             lenient.append(check_id)
-        if key.passed and not evidence_matches(got_evidence, key.evidence):
+        if (
+            key.passed
+            and key.evidence is not None
+            and not evidence_matches(got_evidence, key.evidence)
+        ):
             evidence_wrong.append(check_id)
 
     return CaseReport(
@@ -63,9 +73,9 @@ def compare(case: Case, record: RunRecord) -> CaseReport:
         attempts=record.attempts,
         score=record.score,
         decision=record.decision,
-        expected_decision=case.expected_decision,
-        decision_ok=record.decision == case.expected_decision,
-        total_checks=len(case.expected),
+        expected_decision=expected_decision,
+        decision_ok=record.decision == expected_decision,
+        total_checks=len(expected),
         passed_wrong=passed_wrong,
         lenient=lenient,
         evidence_wrong=evidence_wrong,

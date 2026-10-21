@@ -1,19 +1,48 @@
-"""Run the tech lead over every labelled case and compare each result with its answer key."""
+"""Run one reviewer over every labelled case and compare each result with its answer key."""
 
-from hcs.cases import load_cases, load_checklist
-from hcs.evaluation import HEADER, compare, format_row
+import argparse
+from datetime import date
+
+from openai import OpenAI
+
+from hcs.cases import Case, load_cases, load_checklist, load_posting
+from hcs.evaluation import HEADER, CaseReport, compare, format_row
 from hcs.llm import make_client
-from hcs.pipeline import review_case
+from hcs.pipeline import review_case, review_recruiter
+
+AGENTS = ["tech_lead", "recruiter"]
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Read which reviewer to evaluate."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--agent", choices=AGENTS, default="tech_lead", help="the reviewer to run")
+    return parser.parse_args(argv)
+
+
+def evaluate(client: OpenAI, case: Case, agent: str) -> CaseReport:
+    """Run the agent on one case and compare the result with that agent's key."""
+    if agent == "recruiter":
+        record = review_recruiter(
+            client,
+            case,
+            load_posting(case.checklist),
+            load_checklist("recruiter"),
+            date.today().year,
+        )
+        return compare(case, record, case.recruiter)
+    return compare(case, review_case(client, case, load_checklist(case.checklist)))
 
 
 def main() -> None:
+    args = parse_args()
     client = make_client()
     reports = []
 
+    print(f"Agent: {args.agent}")
     print(HEADER)
     for case in load_cases():
-        record = review_case(client, case, load_checklist(case.checklist))
-        report = compare(case, record)
+        report = evaluate(client, case, args.agent)
         reports.append(report)
         print(format_row(report))
         if report.passed_wrong:

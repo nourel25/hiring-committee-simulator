@@ -27,3 +27,10 @@ def test_the_provider_defaults_to_ollama_and_accepts_groq():
 def test_an_unknown_provider_is_refused(capsys):
     with pytest.raises(SystemExit):
         parse_args(["--provider", "openrouter"])
+
+
+def test_run_eval_defaults_to_the_tech_lead_and_accepts_the_recruiter():
+    from hcs.run_eval import parse_args as eval_args
+
+    assert eval_args([]).agent == "tech_lead"
+    assert eval_args(["--agent", "recruiter"]).agent == "recruiter"

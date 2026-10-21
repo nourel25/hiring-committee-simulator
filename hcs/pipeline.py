@@ -6,8 +6,8 @@ from pathlib import Path
 
 from openai import OpenAI
 
-from hcs.agents import tech_lead
-from hcs.cases import Case, Checklist
+from hcs.agents import recruiter, tech_lead
+from hcs.cases import Case, Checklist, Posting
 from hcs.llm import LLMOutputError, get_structured
 from hcs.policies import (
     apply_evidence_policy,
@@ -17,35 +17,43 @@ from hcs.policies import (
     failed_must_haves,
 )
 from hcs.runlog import RUNS_PATH, RunRecord, append_run
-from hcs.schemas import Review, review_model_for
+from hcs.schemas import Check, Review, review_model_for
+from hcs.screening import screening_checks, top_third
 
 
-def review_case(
+def run_review(
     client: OpenAI,
-    case: Case,
+    *,
+    agent: str,
+    prompt_version: str,
+    case_id: str,
     checklist: Checklist,
-    runs_path: Path = RUNS_PATH,
-    model: str = tech_lead.MODEL,
-    temperature: float = tech_lead.TEMPERATURE,
-    seed: int = tech_lead.SEED,
-    max_tokens: int = tech_lead.MAX_TOKENS,
-    strict: bool = False,
+    messages: list[dict[str, str]],
+    model_ids: list[str],
+    truth_text: str,
+    code_checks: list[Check] | None = None,
+    runs_path: Path,
+    model: str,
+    temperature: float,
+    seed: int,
+    max_tokens: int,
+    max_retries: int,
+    strict: bool,
 ) -> RunRecord:
-    """Run the tech lead on one case, log the result, and return the logged record."""
-    messages = tech_lead.build_messages(case.cv, checklist.items)
-    response_model = review_model_for([item.id for item in checklist.items])
+    """Any reviewer's run: the model answers model_ids, the policies check its quotes against
+    truth_text, code checks join unchanged, and the whole checklist is scored, gated and logged."""
     common = {
         "run_id": uuid.uuid4().hex,
         "started_at": datetime.now(timezone.utc),
-        "agent": "tech_lead",
-        "case_id": case.id,
+        "agent": agent,
+        "case_id": case_id,
         "checklist": f"{checklist.name}@v{checklist.version}",
-        "prompt_version": tech_lead.PROMPT_VERSION,
+        "prompt_version": prompt_version,
         "model": model,
         "temperature": temperature,
         "seed": seed,
         "max_tokens": max_tokens,
-        "max_retries": tech_lead.MAX_RETRIES,
+        "max_retries": max_retries,
         "messages": messages,
     }
 
@@ -53,12 +61,12 @@ def review_case(
         result = get_structured(
             client,
             messages,
-            response_model=response_model,
+            response_model=review_model_for(model_ids),
             model=model,
             temperature=temperature,
             seed=seed,
             max_tokens=max_tokens,
-            max_retries=tech_lead.MAX_RETRIES,
+            max_retries=max_retries,
             strict=strict,
         )
     except LLMOutputError as error:
@@ -72,10 +80,12 @@ def review_case(
         append_run(record, runs_path)
         return record
 
-    # Validated against this checklist's ids; stored as a plain Review like every other record.
-    review = Review.model_validate(result.parsed.model_dump())
-    policy_changes = apply_evidence_policy(review)
-    truth_changes, missing_quotes = apply_truth_check(review, case.cv)
+    # Validated against these ids; stored as a plain Review like every other record.
+    model_review = Review.model_validate(result.parsed.model_dump())
+    policy_changes = apply_evidence_policy(model_review)
+    truth_changes, missing_quotes = apply_truth_check(model_review, truth_text)
+    # Code checks skip the policies: their evidence is what code found, not a quote.
+    review = Review(checks=[*(code_checks or []), *model_review.checks])
     score = compute_score(review, checklist.items)
     failed = failed_must_haves(review, checklist.items)
 
@@ -97,3 +107,70 @@ def review_case(
     )
     append_run(record, runs_path)
     return record
+
+
+def review_case(
+    client: OpenAI,
+    case: Case,
+    checklist: Checklist,
+    runs_path: Path = RUNS_PATH,
+    model: str = tech_lead.MODEL,
+    temperature: float = tech_lead.TEMPERATURE,
+    seed: int = tech_lead.SEED,
+    max_tokens: int = tech_lead.MAX_TOKENS,
+    strict: bool = False,
+) -> RunRecord:
+    """Run the tech lead on one case, log the result, and return the logged record."""
+    return run_review(
+        client,
+        agent="tech_lead",
+        prompt_version=tech_lead.PROMPT_VERSION,
+        case_id=case.id,
+        checklist=checklist,
+        messages=tech_lead.build_messages(case.cv, checklist.items),
+        model_ids=[item.id for item in checklist.items],
+        truth_text=case.cv,
+        runs_path=runs_path,
+        model=model,
+        temperature=temperature,
+        seed=seed,
+        max_tokens=max_tokens,
+        max_retries=tech_lead.MAX_RETRIES,
+        strict=strict,
+    )
+
+
+def review_recruiter(
+    client: OpenAI,
+    case: Case,
+    posting: Posting,
+    checklist: Checklist,
+    this_year: int,
+    runs_path: Path = RUNS_PATH,
+    model: str = recruiter.MODEL,
+    temperature: float = recruiter.TEMPERATURE,
+    seed: int = recruiter.SEED,
+    max_tokens: int = recruiter.MAX_TOKENS,
+    strict: bool = False,
+) -> RunRecord:
+    """Run the recruiter on one case: code screens, the model judges the top third's clarity."""
+    cv_top = top_third(case.cv)
+    checks = recruiter.model_items(checklist.items)
+    return run_review(
+        client,
+        agent="recruiter",
+        prompt_version=recruiter.PROMPT_VERSION,
+        case_id=case.id,
+        checklist=checklist,
+        messages=recruiter.build_messages(cv_top, checks),
+        model_ids=[item.id for item in checks],
+        truth_text=cv_top,
+        code_checks=screening_checks(case.cv, posting.recruiter, this_year),
+        runs_path=runs_path,
+        model=model,
+        temperature=temperature,
+        seed=seed,
+        max_tokens=max_tokens,
+        max_retries=recruiter.MAX_RETRIES,
+        strict=strict,
+    )

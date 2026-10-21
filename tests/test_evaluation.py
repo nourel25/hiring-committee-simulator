@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from hcs.cases import AgentKey, ExpectedCheck
 from hcs.evaluation import (
     CaseReport,
     RepeatSummary,
@@ -159,3 +160,18 @@ def test_summarize_model_combines_zero_and_noisy_runs():
     assert summary.lenient == 1
     assert (summary.agreed, summary.checks) == (4, 6)
     assert summary.gap is None
+
+
+def test_compare_uses_another_reviewers_key_and_skips_evidence_on_code_checks(tmp_path):
+    # M1 stands in for a code check: the key has no evidence, so only passed is compared.
+    key = AgentKey(
+        expected_decision="lean_hire",
+        expected={"M1": ExpectedCheck(passed=True), "N1": ExpectedCheck(passed=False)},
+    )
+
+    report = compare(TINY_CASE, run_tiny(TINY_REPLY, tmp_path), key)
+
+    assert report.decision_ok is True
+    assert report.total_checks == 2
+    assert report.passed_wrong == []
+    assert report.evidence_wrong == []
