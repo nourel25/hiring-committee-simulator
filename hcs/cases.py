@@ -50,8 +50,19 @@ class ExpectedCheck(BaseModel):
     evidence: str | None = None
 
 
+class AgentKey(BaseModel):
+    """Another reviewer's answer key for the same CV, checked against that reviewer's checklist."""
+
+    expected_decision: Decision
+    expected: dict[str, ExpectedCheck]
+
+
 class Case(BaseModel):
-    """One labelled CV, scored against a named checklist, with its answer key."""
+    """One labelled CV, scored against a named checklist, with its answer key.
+
+    `checklist`, `expected` and `expected_decision` are the tech lead's; other reviewers' keys
+    are optional, so cases written before them still load.
+    """
 
     model_config = ConfigDict(str_strip_whitespace=True)
 
@@ -62,6 +73,7 @@ class Case(BaseModel):
     expected_decision: Decision
     cv: str
     expected: dict[str, ExpectedCheck]
+    recruiter: AgentKey | None = None
 
 
 def load_toml(path: Path) -> dict:

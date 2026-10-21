@@ -52,3 +52,29 @@ passed = false
 [expected.TL8]
 passed = true
 evidence = "Coach two junior engineers through weekly pairing sessions and code reviews"
+
+# The recruiter's key (data/checklists/recruiter.toml), judged on the top third only.
+# 12/12 = 10.0
+[recruiter]
+expected_decision = "strong_hire"
+
+[recruiter.expected.R1]
+passed = true
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = true
+
+[recruiter.expected.C1]
+passed = true
+evidence = "Develop and maintain the Python microservices behind our public REST API, used by 12,000 merchants"
+
+[recruiter.expected.C2]
+passed = true
+evidence = "Develop and maintain the Python microservices behind our public REST API, used by 12,000 merchants"
+
+[recruiter.expected.C3]
+passed = true
+evidence = "Develop and maintain the Python microservices behind our public REST API, used by 12,000 merchants"

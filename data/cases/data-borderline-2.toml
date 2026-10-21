@@ -53,3 +53,28 @@ evidence = "Reduced the warehouse bill for my models by 35% by partitioning the 
 
 [expected.TL8]
 passed = false
+
+# The recruiter's key (data/checklists/recruiter.toml), judged on the top third only.
+# 10/12 = 8.3 (no Python in the top third; no number)
+[recruiter]
+expected_decision = "strong_hire"
+
+[recruiter.expected.R1]
+passed = true
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = false
+
+[recruiter.expected.C1]
+passed = true
+evidence = "Build the dbt SQL pipelines that turn raw freight bookings into the tables the pricing and sales teams use every day"
+
+[recruiter.expected.C2]
+passed = false
+
+[recruiter.expected.C3]
+passed = true
+evidence = "Build the dbt SQL pipelines that turn raw freight bookings into the tables the pricing and sales teams use every day"

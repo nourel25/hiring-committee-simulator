@@ -2,7 +2,7 @@
 
 import pytest
 
-from hcs.cases import RecruiterScreen, load_case, load_posting
+from hcs.cases import RecruiterScreen, load_case, load_cases, load_posting
 from hcs.screening import (
     current_title,
     keywords_found,
@@ -97,3 +97,13 @@ def test_missing_keywords_are_named_in_the_evidence():
 
     assert keywords.passed is False
     assert keywords.evidence == "found: Python; missing: SQL"
+
+
+@pytest.mark.parametrize("case", load_cases(), ids=lambda case: case.id)
+def test_the_screen_agrees_with_every_recruiter_key(case):
+    # The keys say what should happen; the code says what does. A difference is a code bug or
+    # missing screen data (as "backend developer" was).
+    screen = load_posting(case.checklist).recruiter
+    got = {check.id: check.passed for check in screening_checks(case.cv, screen, THIS_YEAR)}
+
+    assert got == {check_id: case.recruiter.expected[check_id].passed for check_id in got}

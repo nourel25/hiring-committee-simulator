@@ -1,0 +1,42 @@
+# The recruiter's checklist, the same for every posting: a first look at the top third of the CV.
+# R1-R3 are computed by code (hcs/screening.py) from the posting's [recruiter] screen; the model
+# never sees them. C1-C3 are judged by the model on the top third only. Importance is used by code only.
+# A failed C check is usually a presentation problem the refiner can fix, not a missing skill.
+name = "recruiter"
+posting = "any"
+version = 1
+
+# Must-haves: weight 3. Any failed must-have caps the decision at lean_no.
+
+[[items]]
+id = "R1"
+text = "The current job title matches the role"
+importance = "must"
+
+[[items]]
+id = "R2"
+text = "Has the years of experience the posting asks for, in dated roles"
+importance = "must"
+
+[[items]]
+id = "C1"
+text = "The first lines make the current role and the kind of work clear; a title alone, or a summary of personal qualities, does not count"
+importance = "must"
+
+# Nice-to-haves: weight 1.
+# R3 is strict on purpose (a recruiter skims), so a miss is a presentation fix, not a reason to reject.
+
+[[items]]
+id = "R3"
+text = "Names the posting's must-have tools in the top third of the CV"
+importance = "nice"
+
+[[items]]
+id = "C2"
+text = "At least one bullet states a result or a scale of use with a number, such as users, requests, money or time saved; a list of duties without numbers does not count"
+importance = "nice"
+
+[[items]]
+id = "C3"
+text = "The text is short bullets that can each be read at a glance; a long paragraph does not count"
+importance = "nice"

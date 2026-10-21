@@ -50,3 +50,29 @@ passed = false
 # Trap: leading a meeting is not leading people.
 passed = false
 evidence = "Run the Prometheus and Grafana stack and lead the weekly incident review"
+
+# The recruiter's key (data/checklists/recruiter.toml), judged on the top third only.
+# 8/12 = 6.7, capped at lean_no (R1: Platform Engineer)
+[recruiter]
+expected_decision = "lean_no"
+
+[recruiter.expected.R1]
+passed = false
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = false
+
+[recruiter.expected.C1]
+passed = true
+evidence = "Wrote internal command-line tools in Python that engineers run to rotate credentials and clean up old backups"
+
+[recruiter.expected.C2]
+passed = true
+evidence = "Maintain the Terraform modules and GitLab CI templates used by 40 product teams"
+
+[recruiter.expected.C3]
+passed = true
+evidence = "Wrote internal command-line tools in Python that engineers run to rotate credentials and clean up old backups"

@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from hcs.cases import key_problems, load_case, load_cases, load_checklist, save_checklist
 from hcs.policies import apply_truth_check, compute_score, decide, failed_must_haves
 from hcs.schemas import Check, Review
+from hcs.screening import top_third
 from tests.fakes import TINY_CHECKLIST
 
 CHECKLIST_TOML = """
@@ -105,3 +106,29 @@ def test_real_answer_key_is_consistent(case):
     assert key_problems(case, checklist) == []
     assert missing_quotes == []
     assert decision == case.expected_decision
+
+
+@pytest.mark.parametrize(
+    "case", [case for case in load_cases() if case.recruiter], ids=lambda case: case.id
+)
+def test_real_recruiter_key_is_consistent(case):
+    # The recruiter reads only the top third, so its quotes must come from there.
+    checklist = load_checklist("recruiter")
+    review = Review(
+        checks=[
+            Check(id=check_id, check="", evidence=key.evidence, passed=key.passed)
+            for check_id, key in case.recruiter.expected.items()
+        ]
+    )
+
+    _, missing_quotes = apply_truth_check(review, top_third(case.cv))
+    score = compute_score(review, checklist.items)
+    decision = decide(score, failed_must_haves(review, checklist.items))
+
+    assert sorted(case.recruiter.expected) == sorted(item.id for item in checklist.items)
+    assert missing_quotes == []
+    assert decision == case.recruiter.expected_decision
+
+
+def test_every_case_has_a_recruiter_key():
+    assert [case.id for case in load_cases() if case.recruiter is None] == []

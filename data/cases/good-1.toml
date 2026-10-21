@@ -49,3 +49,29 @@ evidence = "Cut average API response time by 40% by adding Redis caching"
 [expected.TL8]
 # Trap: leading a migration is technical ownership, not leading people.
 passed = false
+
+# The recruiter's key (data/checklists/recruiter.toml), judged on the top third only.
+# 12/12 = 10.0
+[recruiter]
+expected_decision = "strong_hire"
+
+[recruiter.expected.R1]
+passed = true
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = true
+
+[recruiter.expected.C1]
+passed = true
+evidence = "Built and maintain 6 REST APIs in Python (FastAPI) serving 50,000 daily users"
+
+[recruiter.expected.C2]
+passed = true
+evidence = "Built and maintain 6 REST APIs in Python (FastAPI) serving 50,000 daily users"
+
+[recruiter.expected.C3]
+passed = true
+evidence = "Built and maintain 6 REST APIs in Python (FastAPI) serving 50,000 daily users"

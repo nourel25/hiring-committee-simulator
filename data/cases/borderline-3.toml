@@ -55,3 +55,29 @@ evidence = "Led the rewrite of the claims search from SQL LIKE queries to Elasti
 # Traps: running meetings, and leading a technical rewrite, are not managing people.
 passed = false
 evidence = "Run the team's sprint planning and retrospectives every two weeks"
+
+# The recruiter's key (data/checklists/recruiter.toml), judged on the top third only.
+# 12/12 = 10.0
+[recruiter]
+expected_decision = "strong_hire"
+
+[recruiter.expected.R1]
+passed = true
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = true
+
+[recruiter.expected.C1]
+passed = true
+evidence = "Develop the Python claims service that the mobile app and partner insurers call through its REST API, with 40,000 claims a month"
+
+[recruiter.expected.C2]
+passed = true
+evidence = "Develop the Python claims service that the mobile app and partner insurers call through its REST API, with 40,000 claims a month"
+
+[recruiter.expected.C3]
+passed = true
+evidence = "Develop the Python claims service that the mobile app and partner insurers call through its REST API, with 40,000 claims a month"

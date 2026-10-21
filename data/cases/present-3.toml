@@ -1,0 +1,79 @@
+# Held-out case for the recruiter: a clearly written CV with numbers, so every recruiter check
+# passes (guards against a recruiter that fails everything), while the tech lead finds a gap
+# (TL3: added columns to existing tables). Written and keyed before any run.
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "present-3"
+label = "borderline"
+split = "heldout"
+checklist = "backend_payments"
+# TL1, TL2, TL4 (9) + TL7 (1) = 10/16 = 6.2 -> lean_hire, capped at lean_no (TL3 fails).
+expected_decision = "lean_no"
+
+cv = """
+Software Engineer, ride-hailing company (2022-present)
+- Built the Python pricing service behind our REST API, answering 5 million price requests a day
+- Cut the pricing service's response time from 400 ms to 90 ms by caching surge zones in Redis
+- Deploy my changes to production myself through the team's CI pipeline
+- Wrote SQL queries and added columns to the existing trip tables when features needed them
+
+Junior Developer, logistics startup (2020-2022)
+- Built internal tools in Django
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Built the Python pricing service behind our REST API, answering 5 million price requests a day"
+
+[expected.TL2]
+passed = true
+evidence = "Built the Python pricing service behind our REST API, answering 5 million price requests a day"
+
+[expected.TL3]
+# Trap: queries and new columns on existing tables are not designing a schema.
+passed = false
+evidence = "Wrote SQL queries and added columns to the existing trip tables when features needed them"
+
+[expected.TL4]
+passed = true
+evidence = "Deploy my changes to production myself through the team's CI pipeline"
+
+[expected.TL5]
+passed = false
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+passed = true
+evidence = "Cut the pricing service's response time from 400 ms to 90 ms by caching surge zones in Redis"
+
+[expected.TL8]
+passed = false
+
+# The recruiter's key, judged on the top third (the first 3 of 7 lines).
+# Everything passes: 12/12 = 10.0 -> strong_hire. The recruiter and the tech lead disagree on
+# purpose: a clear CV is not the same as a deep one.
+[recruiter]
+expected_decision = "strong_hire"
+
+[recruiter.expected.R1]
+passed = true
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = true
+
+[recruiter.expected.C1]
+passed = true
+evidence = "Built the Python pricing service behind our REST API, answering 5 million price requests a day"
+
+[recruiter.expected.C2]
+passed = true
+evidence = "Built the Python pricing service behind our REST API, answering 5 million price requests a day"
+
+[recruiter.expected.C3]
+passed = true
+evidence = "Built the Python pricing service behind our REST API, answering 5 million price requests a day"

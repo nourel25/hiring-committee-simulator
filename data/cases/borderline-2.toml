@@ -54,3 +54,29 @@ evidence = "Cut courier assignment time from 9 seconds to 2 by batching database
 [expected.TL8]
 passed = true
 evidence = "Guide three graduate engineers through their first year with weekly one-to-ones"
+
+# The recruiter's key (data/checklists/recruiter.toml), judged on the top third only.
+# 11/12 = 9.2 (no REST in the top third)
+[recruiter]
+expected_decision = "strong_hire"
+
+[recruiter.expected.R1]
+passed = true
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = false
+
+[recruiter.expected.C1]
+passed = true
+evidence = "Built the Python service that consumes order events from Kafka and assigns couriers, handling 200,000 orders a day"
+
+[recruiter.expected.C2]
+passed = true
+evidence = "Built the Python service that consumes order events from Kafka and assigns couriers, handling 200,000 orders a day"
+
+[recruiter.expected.C3]
+passed = true
+evidence = "Built the Python service that consumes order events from Kafka and assigns couriers, handling 200,000 orders a day"

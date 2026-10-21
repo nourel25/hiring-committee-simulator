@@ -1,0 +1,76 @@
+# Held-out case for the recruiter: solid data engineering written as one long paragraph with no
+# numbers. Written and keyed before any run. The role is clear (C1 passes) but C2 and C3 fail.
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "present-2"
+label = "good"
+split = "heldout"
+checklist = "data_logistics"
+# TL1, TL2, TL3 (9) + TL4, TL8 (2) = 11/14 = 7.9 -> lean_hire.
+expected_decision = "lean_hire"
+
+cv = """
+Data Engineer, grocery delivery company (2020-present)
+I look after most of the data platform here, which means building and maintaining the batch pipelines in Python and SQL that the finance, operations and marketing teams depend on, and I also designed the warehouse models in BigQuery, deciding which fact and dimension tables we have and how they join, and on top of that I schedule and run all of these pipelines myself in Airflow and set up the dbt tests that check row counts and freshness before anyone sees the numbers.
+I also coach the analysts on SQL in a weekly session and review their queries.
+
+Data Analyst, telecom company (2017-2020)
+Built reports and dashboards for the sales team.
+"""
+
+[expected.TL1]
+passed = true
+evidence = "building and maintaining the batch pipelines in Python and SQL that the finance, operations and marketing teams depend on"
+
+[expected.TL2]
+passed = true
+evidence = "designed the warehouse models in BigQuery, deciding which fact and dimension tables we have and how they join"
+
+[expected.TL3]
+passed = true
+evidence = "I schedule and run all of these pipelines myself in Airflow"
+
+[expected.TL4]
+passed = true
+evidence = "set up the dbt tests that check row counts and freshness before anyone sees the numbers"
+
+[expected.TL5]
+passed = false
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+passed = false
+
+[expected.TL8]
+passed = true
+evidence = "I also coach the analysts on SQL in a weekly session and review their queries."
+
+# The recruiter's key, judged on the top third (the first 2 of 5 lines).
+# R1, R2, C1 (9) + R3 (1) = 10/12 = 8.3 -> strong_hire. C2 and C3 fail but are nice-to-haves:
+# a clear-enough CV still passes the first look, and the refiner gets two presentation fixes.
+[recruiter]
+expected_decision = "strong_hire"
+
+[recruiter.expected.R1]
+passed = true
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = true
+
+[recruiter.expected.C1]
+passed = true
+evidence = "building and maintaining the batch pipelines in Python and SQL that the finance, operations and marketing teams depend on"
+
+[recruiter.expected.C2]
+# No number anywhere in the top third.
+passed = false
+
+[recruiter.expected.C3]
+# Trap: one long paragraph instead of bullets.
+passed = false
+evidence = "I look after most of the data platform here"

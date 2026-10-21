@@ -1,0 +1,85 @@
+# Held-out case for the recruiter: strong work, badly presented. Written and keyed before any run.
+# The CV opens with personal qualities and buries the title on line 3, so the recruiter's first look
+# fails (R1, C1) although the tech lead, who reads everything, should hire.
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "present-1"
+label = "good"
+split = "heldout"
+checklist = "backend_payments"
+# TL1-TL4 (12) + TL5, TL6, TL8 (3) = 15/16 = 9.4 -> strong_hire.
+expected_decision = "strong_hire"
+
+cv = """
+Passionate, detail-oriented team player who loves clean code and learning new things.
+Looking for a challenging role in a fast-moving company.
+Backend Developer, online pharmacy (2021-present)
+- Built and maintain the Python REST APIs for orders and prescriptions, serving 30,000 customers a day
+- Designed the PostgreSQL schema for prescriptions: 9 tables and how they relate
+- Deploy my services to production myself with GitHub Actions and Kubernetes
+- Added Grafana dashboards and alerts, and join the team's on-call rotation
+- Mentor two junior developers through weekly pairing and code reviews
+
+Junior Developer, web agency (2019-2021)
+- Built Django websites for small businesses
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Built and maintain the Python REST APIs for orders and prescriptions, serving 30,000 customers a day"
+
+[expected.TL2]
+passed = true
+evidence = "Built and maintain the Python REST APIs for orders and prescriptions, serving 30,000 customers a day"
+
+[expected.TL3]
+passed = true
+evidence = "Designed the PostgreSQL schema for prescriptions: 9 tables and how they relate"
+
+[expected.TL4]
+passed = true
+evidence = "Deploy my services to production myself with GitHub Actions and Kubernetes"
+
+[expected.TL5]
+passed = true
+evidence = "Added Grafana dashboards and alerts, and join the team's on-call rotation"
+
+[expected.TL6]
+passed = true
+evidence = "Deploy my services to production myself with GitHub Actions and Kubernetes"
+
+[expected.TL7]
+passed = false
+
+[expected.TL8]
+passed = true
+evidence = "Mentor two junior developers through weekly pairing and code reviews"
+
+# The recruiter's key, judged on the top third (the first 4 of 10 lines).
+# R2, R3, C2, C3 (6) = 6/12 = 5.0 -> lean_no (R1 and C1 fail, so the gate also applies).
+# Both failures are presentation: moving the title and a work summary to the top fixes them.
+[recruiter]
+expected_decision = "lean_no"
+
+[recruiter.expected.R1]
+# Code reads the title from the first line, which here is a personal summary.
+passed = false
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = true
+
+[recruiter.expected.C1]
+# Trap: personal qualities instead of the role and the work.
+passed = false
+evidence = "Passionate, detail-oriented team player who loves clean code and learning new things."
+
+[recruiter.expected.C2]
+passed = true
+evidence = "Built and maintain the Python REST APIs for orders and prescriptions, serving 30,000 customers a day"
+
+[recruiter.expected.C3]
+passed = true
+evidence = "Built and maintain the Python REST APIs for orders and prescriptions, serving 30,000 customers a day"

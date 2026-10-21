@@ -55,3 +55,28 @@ passed = false
 # Trap: answering occasional questions is not coaching.
 passed = false
 evidence = "Answer SQL questions from colleagues in the team chat"
+
+# The recruiter's key (data/checklists/recruiter.toml), judged on the top third only.
+# 8/12 = 6.7, capped at lean_no (R1: Data Analyst)
+[recruiter]
+expected_decision = "lean_no"
+
+[recruiter.expected.R1]
+passed = false
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = true
+
+[recruiter.expected.C1]
+passed = true
+evidence = "Write SQL queries against the company's Snowflake warehouse for weekly operations reports"
+
+[recruiter.expected.C2]
+passed = false
+
+[recruiter.expected.C3]
+passed = true
+evidence = "Write SQL queries against the company's Snowflake warehouse for weekly operations reports"

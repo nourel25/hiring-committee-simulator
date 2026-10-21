@@ -48,3 +48,28 @@ evidence = "Cut monthly report generation from 3 hours to 20 minutes by rewritin
 # Trap: presenting to managers is not leading engineers.
 passed = false
 evidence = "Present findings to regional managers every quarter"
+
+# The recruiter's key (data/checklists/recruiter.toml), judged on the top third only.
+# 7/12 = 5.8 (R1: Data Analyst)
+[recruiter]
+expected_decision = "lean_no"
+
+[recruiter.expected.R1]
+passed = false
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = false
+
+[recruiter.expected.C1]
+passed = true
+evidence = "Automated weekly sales reports with Python scripts and pandas"
+
+[recruiter.expected.C2]
+passed = false
+
+[recruiter.expected.C3]
+passed = true
+evidence = "Automated weekly sales reports with Python scripts and pandas"

@@ -54,3 +54,29 @@ evidence = "Reduced p95 booking latency from 1.8 s to 600 ms by caching availabi
 # The point of this case: real people management without the word "mentored".
 passed = true
 evidence = "Line manager for two backend engineers, running their weekly one-to-ones and yearly reviews"
+
+# The recruiter's key (data/checklists/recruiter.toml), judged on the top third only.
+# 11/12 = 9.2 (no REST in the top third)
+[recruiter]
+expected_decision = "strong_hire"
+
+[recruiter.expected.R1]
+passed = true
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = false
+
+[recruiter.expected.C1]
+passed = true
+evidence = "Built the Python booking API that partner travel agencies call to reserve hotel rooms, about 2 million requests a day"
+
+[recruiter.expected.C2]
+passed = true
+evidence = "Built the Python booking API that partner travel agencies call to reserve hotel rooms, about 2 million requests a day"
+
+[recruiter.expected.C3]
+passed = true
+evidence = "Built the Python booking API that partner travel agencies call to reserve hotel rooms, about 2 million requests a day"
