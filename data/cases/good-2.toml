@@ -77,6 +77,5 @@ evidence = "Built the Python booking API that partner travel agencies call to re
 passed = true
 evidence = "Built the Python booking API that partner travel agencies call to reserve hotel rooms, about 2 million requests a day"
 
-[recruiter.expected.C3]
+[recruiter.expected.R4]
 passed = true
-evidence = "Built the Python booking API that partner travel agencies call to reserve hotel rooms, about 2 million requests a day"

@@ -75,6 +75,5 @@ evidence = "Develop and maintain the Python microservices behind our public REST
 passed = true
 evidence = "Develop and maintain the Python microservices behind our public REST API, used by 12,000 merchants"
 
-[recruiter.expected.C3]
+[recruiter.expected.R4]
 passed = true
-evidence = "Develop and maintain the Python microservices behind our public REST API, used by 12,000 merchants"

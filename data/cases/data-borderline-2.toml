@@ -75,6 +75,5 @@ evidence = "Build the dbt SQL pipelines that turn raw freight bookings into the 
 [recruiter.expected.C2]
 passed = false
 
-[recruiter.expected.C3]
+[recruiter.expected.R4]
 passed = true
-evidence = "Build the dbt SQL pipelines that turn raw freight bookings into the tables the pricing and sales teams use every day"

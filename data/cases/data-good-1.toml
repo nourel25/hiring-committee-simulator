@@ -74,6 +74,5 @@ evidence = "Build and maintain the nightly Python and SQL pipelines that load sh
 [recruiter.expected.C2]
 passed = false
 
-[recruiter.expected.C3]
+[recruiter.expected.R4]
 passed = true
-evidence = "Build and maintain the nightly Python and SQL pipelines that load shipment data for the finance and operations teams"

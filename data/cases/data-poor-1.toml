@@ -77,6 +77,5 @@ evidence = "Write SQL queries against the company's Snowflake warehouse for week
 [recruiter.expected.C2]
 passed = false
 
-[recruiter.expected.C3]
+[recruiter.expected.R4]
 passed = true
-evidence = "Write SQL queries against the company's Snowflake warehouse for weekly operations reports"

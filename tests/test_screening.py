@@ -67,6 +67,7 @@ def test_a_strong_cv_passes_the_screen():
         ("R1", True),
         ("R2", True),
         ("R3", True),
+        ("R4", True),
     ]
     assert checks[1].evidence == "8 years from the dated roles"
 
@@ -83,6 +84,7 @@ def test_the_screen_is_shallow_on_purpose():
         ("R1", False),
         ("R2", True),
         ("R3", True),
+        ("R4", True),
     ]
     assert checks[0].evidence == "Data Analyst"
 
@@ -91,7 +93,7 @@ def test_missing_keywords_are_named_in_the_evidence():
     screen = RecruiterScreen(titles=["engineer"], keywords=["Python", "SQL"], min_years=0)
 
     # Three lines, so the top third is the first line only.
-    [_, _, keywords] = screening_checks(
+    [_, _, keywords, _] = screening_checks(
         "Python Engineer (2024-present)\n- Built services\n- Wrote SQL", screen, THIS_YEAR
     )
 
@@ -107,3 +109,14 @@ def test_the_screen_agrees_with_every_recruiter_key(case):
     got = {check.id: check.passed for check in screening_checks(case.cv, screen, THIS_YEAR)}
 
     assert got == {check_id: case.recruiter.expected[check_id].passed for check_id in got}
+
+
+def test_a_paragraph_in_the_top_third_fails_the_line_length_check():
+    case = load_case("present-2")
+    screen = load_posting(case.checklist).recruiter
+
+    lines = screening_checks(case.cv, screen, THIS_YEAR)[3]
+
+    assert lines.id == "R4"
+    assert lines.passed is False
+    assert lines.evidence.startswith("longest line: ")

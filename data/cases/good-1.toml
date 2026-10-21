@@ -72,6 +72,5 @@ evidence = "Built and maintain 6 REST APIs in Python (FastAPI) serving 50,000 da
 passed = true
 evidence = "Built and maintain 6 REST APIs in Python (FastAPI) serving 50,000 daily users"
 
-[recruiter.expected.C3]
+[recruiter.expected.R4]
 passed = true
-evidence = "Built and maintain 6 REST APIs in Python (FastAPI) serving 50,000 daily users"

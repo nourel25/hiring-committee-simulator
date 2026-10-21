@@ -48,7 +48,7 @@ passed = true
 evidence = "I also coach the analysts on SQL in a weekly session and review their queries."
 
 # The recruiter's key, judged on the top third (the first 2 of 5 lines).
-# R1, R2, C1 (9) + R3 (1) = 10/12 = 8.3 -> strong_hire. C2 and C3 fail but are nice-to-haves:
+# R1, R2, C1 (9) + R3 (1) = 10/12 = 8.3 -> strong_hire. C2 and R4 fail but are nice-to-haves:
 # a clear-enough CV still passes the first look, and the refiner gets two presentation fixes.
 [recruiter]
 expected_decision = "strong_hire"
@@ -70,7 +70,6 @@ evidence = "building and maintaining the batch pipelines in Python and SQL that 
 # No number anywhere in the top third.
 passed = false
 
-[recruiter.expected.C3]
-# Trap: one long paragraph instead of bullets.
+[recruiter.expected.R4]
+# Trap: a line of several hundred characters.
 passed = false
-evidence = "I look after most of the data platform here"

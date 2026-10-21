@@ -70,6 +70,5 @@ evidence = "Automated weekly sales reports with Python scripts and pandas"
 [recruiter.expected.C2]
 passed = false
 
-[recruiter.expected.C3]
+[recruiter.expected.R4]
 passed = true
-evidence = "Automated weekly sales reports with Python scripts and pandas"

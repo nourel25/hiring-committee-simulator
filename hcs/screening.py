@@ -1,4 +1,4 @@
-"""The recruiter's screen done by code: current title, dated years and names in the top third.
+"""The recruiter's screen done by code: title, dated years, names and line length in the top third.
 
 Each result is returned as a Check, the same shape a reviewer returns, so scoring treats both alike.
 For these checks, evidence holds what the code found, not a quote; the evidence policy and the
@@ -12,6 +12,9 @@ from hcs.cases import RecruiterScreen
 from hcs.schemas import Check
 
 # "(2021-present)" or "(2018 – 2021)": the dated roles in a CV.
+# A line longer than this is a paragraph, not a bullet a recruiter can read at a glance. The longest
+# bullet in the 14 labelled CVs is about 130 characters; a paragraph is several hundred.
+MAX_LINE = 200
 PERIOD = re.compile(r"\((\d{4})\s*[-–]\s*(\d{4}|present)\)", re.IGNORECASE)
 
 
@@ -59,11 +62,12 @@ def current_title(cv: str) -> str:
 
 
 def screening_checks(cv: str, screen: RecruiterScreen, this_year: int) -> list[Check]:
-    """The recruiter's three code checks, R1 to R3."""
+    """The recruiter's four code checks, R1 to R4."""
     title = current_title(cv)
     years = years_of_experience(cv, this_year)
     found = keywords_found(top_third(cv), screen.keywords)
     missing = [keyword for keyword in screen.keywords if keyword not in found]
+    longest = max((len(line) for line in top_third(cv).splitlines()), default=0)
     return [
         Check(
             id="R1",
@@ -82,5 +86,13 @@ def screening_checks(cv: str, screen: RecruiterScreen, this_year: int) -> list[C
             check="Names the posting's must-have tools in the top third of the CV",
             evidence=f"found: {', '.join(found) or 'none'}; missing: {', '.join(missing) or 'none'}",
             passed=not missing,
+        ),
+        # Was C3, judged by the model (Step 4.3b); no single quote can prove a property of the
+        # whole text, so the model failed it on every CV.
+        Check(
+            id="R4",
+            check="The top third is short lines that can each be read at a glance",
+            evidence=f"longest line: {longest} characters (limit {MAX_LINE})",
+            passed=longest <= MAX_LINE,
         ),
     ]

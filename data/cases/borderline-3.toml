@@ -78,6 +78,5 @@ evidence = "Develop the Python claims service that the mobile app and partner in
 passed = true
 evidence = "Develop the Python claims service that the mobile app and partner insurers call through its REST API, with 40,000 claims a month"
 
-[recruiter.expected.C3]
+[recruiter.expected.R4]
 passed = true
-evidence = "Develop the Python claims service that the mobile app and partner insurers call through its REST API, with 40,000 claims a month"

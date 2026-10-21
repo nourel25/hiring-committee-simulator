@@ -12,7 +12,7 @@ SEED = 42
 MAX_TOKENS = 600
 MAX_RETRIES = 1
 # Checks computed by code; the model never sees them.
-CODE_CHECK_IDS = ("R1", "R2", "R3")
+CODE_CHECK_IDS = ("R1", "R2", "R3", "R4")
 
 SYSTEM_PROMPT = """
 You are a recruiter taking a first look at a CV, the way recruiters skim one in a few seconds.

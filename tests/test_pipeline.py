@@ -110,8 +110,8 @@ def test_the_recruiter_scores_code_checks_and_model_checks_together(tmp_path):
         client, RECRUITER_CASE, RECRUITER_POSTING, RECRUITER_CHECKLIST, 2026, path
     )
 
-    # Code checks come first; R2 and R3 are not in this checklist, so scoring ignores them.
-    assert [check.id for check in record.review.checks] == ["R1", "R2", "R3", "C1"]
+    # Code checks come first; R2-R4 are not in this checklist, so scoring ignores them.
+    assert [check.id for check in record.review.checks] == ["R1", "R2", "R3", "R4", "C1"]
     # R1 (code) passes: Backend Engineer; C1 (model) passes with a quote from the top third.
     assert record.score == 10.0
     assert record.agent == "recruiter"
@@ -128,7 +128,7 @@ def test_the_recruiter_model_sees_only_the_top_third_and_only_its_own_checks(tmp
     user_message = client.calls[0][1]["content"]
     assert "Backend Engineer, shop (2020-present)" in user_message
     assert "Hidden line" not in user_message
-    assert "- C1:" in user_message and "R1" not in user_message
+    assert "- C1:" in user_message and "R1" not in user_message and "R4" not in user_message
     schema = client.kwargs[0]["response_format"]["json_schema"]["schema"]
     # One allowed id is written as "const", several as "enum"; both bind the grammar.
     id_schema = schema["$defs"]["Check"]["properties"]["id"]

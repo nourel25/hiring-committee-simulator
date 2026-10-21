@@ -73,6 +73,5 @@ evidence = "Wrote internal command-line tools in Python that engineers run to ro
 passed = true
 evidence = "Maintain the Terraform modules and GitLab CI templates used by 40 product teams"
 
-[recruiter.expected.C3]
+[recruiter.expected.R4]
 passed = true
-evidence = "Wrote internal command-line tools in Python that engineers run to rotate credentials and clean up old backups"

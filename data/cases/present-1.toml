@@ -56,8 +56,9 @@ passed = true
 evidence = "Mentor two junior developers through weekly pairing and code reviews"
 
 # The recruiter's key, judged on the top third (the first 4 of 10 lines).
-# R2, R3, C2, C3 (6) = 6/12 = 5.0 -> lean_no (R1 and C1 fail, so the gate also applies).
-# Both failures are presentation: moving the title and a work summary to the top fixes them.
+# R2, R3, C1, C2, R4 (9) = 9/12 = 7.5 -> lean_hire, capped at lean_no (R1 fails).
+# The failure is presentation: moving the title to the top fixes it.
+# Dev case for the recruiter since Step 4.3c: its first run motivated recruiter checklist v2.
 [recruiter]
 expected_decision = "lean_no"
 
@@ -72,14 +73,15 @@ passed = true
 passed = true
 
 [recruiter.expected.C1]
-# Trap: personal qualities instead of the role and the work.
-passed = false
-evidence = "Passionate, detail-oriented team player who loves clean code and learning new things."
+# Changed from false after the first run (Step 4.3c). v1 said "the first lines", which read two ways:
+# the first one or two lines (personal qualities: fail) or the top third (role and work on lines 3-4:
+# pass). Rule now, for every case: C1 is judged on the whole top third; the title's position is R1's job.
+passed = true
+evidence = "Built and maintain the Python REST APIs for orders and prescriptions, serving 30,000 customers a day"
 
 [recruiter.expected.C2]
 passed = true
 evidence = "Built and maintain the Python REST APIs for orders and prescriptions, serving 30,000 customers a day"
 
-[recruiter.expected.C3]
+[recruiter.expected.R4]
 passed = true
-evidence = "Built and maintain the Python REST APIs for orders and prescriptions, serving 30,000 customers a day"
