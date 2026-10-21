@@ -11,7 +11,7 @@ import re
 from hcs.agents import job_analyst
 from hcs.cases import Checklist, load_cases, load_checklist, load_posting, save_checklist
 from hcs.config import API_MAX_TOKENS
-from hcs.evaluation import format_or_dash
+from hcs.evaluation import CASE_WIDTH, format_or_dash
 from hcs.llm import LLMOutputError, get_structured, make_client
 from hcs.pipeline import review_case
 
@@ -136,7 +136,7 @@ def score_cases(checklist: Checklist, posting_name: str) -> None:
         ok = record.decision == case.expected_decision
         right += ok
         print(
-            f"{case.id:<14} {case.split:<8} expected {case.expected_decision:<12} "
+            f"{case.id:<{CASE_WIDTH}} {case.split:<8} expected {case.expected_decision:<12} "
             f"got {str(record.decision):<12} {format_or_dash(record.score, '.1f'):>4}  "
             f"{'ok' if ok else 'WRONG'}  failed must-haves: {record.failed_must_haves}"
         )

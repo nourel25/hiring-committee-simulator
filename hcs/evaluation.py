@@ -72,7 +72,10 @@ def compare(case: Case, record: RunRecord) -> CaseReport:
     )
 
 
-HEADER = f"{'case':<14}{'label':<12}{'score':>6}  {'decision':<12}{'expected':<12}{'checks':>7}  ok"
+# Wide enough for ids like "data-borderline-1"; tables stay aligned as postings add longer ids.
+CASE_WIDTH = 20
+
+HEADER = f"{'case':<{CASE_WIDTH}}{'label':<12}{'score':>6}  {'decision':<12}{'expected':<12}{'checks':>7}  ok"
 
 
 def format_row(report: CaseReport) -> str:
@@ -83,7 +86,7 @@ def format_row(report: CaseReport) -> str:
     checks = f"{agreed}/{report.total_checks}"
     ok = "yes" if report.decision_ok else "NO"
     return (
-        f"{report.case_id:<14}{report.label:<12}{score:>6}  "
+        f"{report.case_id:<{CASE_WIDTH}}{report.label:<12}{score:>6}  "
         f"{decision:<12}{report.expected_decision:<12}{checks:>7}  {ok}"
     )
 
@@ -119,9 +122,7 @@ def summarize_repeats(reports: list[CaseReport]) -> RepeatSummary:
     )
 
 
-NOISE_HEADER = (
-    f"{'case':<14}{'label':<12}{'mean':>6}{'sd':>6}{'min-max':>12}  {'decisions':>9}  misses"
-)
+NOISE_HEADER = f"{'case':<{CASE_WIDTH}}{'label':<12}{'mean':>6}{'sd':>6}{'min-max':>12}  {'decisions':>9}  misses"
 
 
 def format_summary(summary: RepeatSummary) -> str:
@@ -141,7 +142,7 @@ def format_summary(summary: RepeatSummary) -> str:
     )
     failed = f" ({summary.errors} failed)" if summary.errors else ""
     return (
-        f"{summary.case_id:<14}{summary.label:<12}{stats}  "
+        f"{summary.case_id:<{CASE_WIDTH}}{summary.label:<12}{stats}  "
         f"{decisions:>9}  {misses or 'none'}{failed}"
     )
 
