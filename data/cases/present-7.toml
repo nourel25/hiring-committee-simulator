@@ -1,0 +1,83 @@
+# Held-out case for recruiter checklist v3: both lenient traps in new forms. The top third is the title,
+# a career objective (what the candidate wants, not what they do) and a line of numbers about the
+# candidate's background (years, a certificate, languages), not about their work. Written and keyed
+# before any v3 run.
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "present-7"
+label = "good"
+split = "heldout"
+checklist = "backend_payments"
+# TL1-TL4 (12) + TL8 (1) = 13/16 = 8.1 -> strong_hire.
+expected_decision = "strong_hire"
+
+cv = """
+Python Developer, insurance company (2020-present)
+Objective: to join a product company as a backend engineer where I can keep growing and learning.
+8 years of experience | AWS Certified Developer (2023) | Fluent in 3 languages
+- Built and maintain the Python REST APIs for policy quotes, used by brokers in production
+- Designed the PostgreSQL schema for quotes and policies: which tables exist and how they relate
+- Deploy my services to production myself with GitHub Actions
+- Mentor a junior developer through weekly code reviews
+
+Junior Developer, web agency (2018-2020)
+- Built WordPress sites for local shops
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Built and maintain the Python REST APIs for policy quotes, used by brokers in production"
+
+[expected.TL2]
+passed = true
+evidence = "Built and maintain the Python REST APIs for policy quotes, used by brokers in production"
+
+[expected.TL3]
+passed = true
+evidence = "Designed the PostgreSQL schema for quotes and policies: which tables exist and how they relate"
+
+[expected.TL4]
+passed = true
+evidence = "Deploy my services to production myself with GitHub Actions"
+
+[expected.TL5]
+passed = false
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+passed = false
+
+[expected.TL8]
+passed = true
+evidence = "Mentor a junior developer through weekly code reviews"
+
+# The recruiter's key, judged on the top third (the first 3 of 9 lines).
+# R1, R2 (6) + R4 (1) = 7/12 = 5.8 -> lean_no. A lenient C1 alone gives 10/12 = 8.3 strong_hire,
+# so the C1 trap decides the outcome.
+[recruiter]
+expected_decision = "lean_no"
+
+[recruiter.expected.R1]
+passed = true
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+# REST appears only on line 4.
+passed = false
+
+[recruiter.expected.C1]
+# Trap: a job title and a wish ("to join a product company as a backend engineer") never say what
+# work the candidate does.
+passed = false
+
+[recruiter.expected.C2]
+# Trap: 8 years, 2023 and 3 languages are numbers about the candidate's background, not a result or
+# a scale of their work.
+passed = false
+
+[recruiter.expected.R4]
+passed = true

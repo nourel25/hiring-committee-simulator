@@ -58,6 +58,7 @@ passed = false
 # R2, R4 (4) = 4/12 = 3.3 -> strong_no. The tech lead would hire; the first look rejects. Every
 # failure is presentation: a "Backend Engineer" title and the API bullet moved up would fix R1, R3,
 # C1 and C2.
+# Dev case for the recruiter since Step 4.3d: its first run motivated recruiter checklist v3.
 [recruiter]
 expected_decision = "strong_no"
 

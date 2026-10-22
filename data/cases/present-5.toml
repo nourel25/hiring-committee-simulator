@@ -53,6 +53,7 @@ evidence = "Coach the operations analysts on SQL in monthly workshops"
 # The recruiter's key, judged on the top third (the first 3 of 7 lines).
 # Everything passes: 12/12 = 10.0 -> strong_hire. A strict C2 gives 11/12 = 9.2, the same decision,
 # so this case measures the check, not the decision.
+# Dev case for the recruiter since Step 4.3d: it ran on v2 before recruiter checklist v3 was written.
 [recruiter]
 expected_decision = "strong_hire"
 

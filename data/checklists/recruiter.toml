@@ -5,9 +5,11 @@
 # v2 (Step 4.3c): C3 "short bullets" moved to code as R4, because no single quote can prove a property
 # of the whole text (the model failed it on every CV); C1 no longer says "the first lines", which was
 # read two ways, and leaves the title's position to R1.
+# v3 (Step 4.3d): C1 and C2 say what does not count. On held-out cases v2 passed C1 on buzzwords and
+# on the job title line alone, and C2 on the employer's numbers: form over meaning.
 name = "recruiter"
 posting = "any"
-version = 2
+version = 3
 
 # Must-haves: weight 3. Any failed must-have caps the decision at lean_no.
 
@@ -23,7 +25,7 @@ importance = "must"
 
 [[items]]
 id = "C1"
-text = "The role and the kind of work the candidate does are clear from the top of the CV; a summary of personal qualities alone does not count"
+text = "The top of the CV says what kind of work the candidate does, such as what they build or run; a job title alone, personal qualities or general phrases such as 'digital transformation' do not count"
 importance = "must"
 
 # Nice-to-haves: weight 1.
@@ -41,5 +43,5 @@ importance = "nice"
 
 [[items]]
 id = "C2"
-text = "At least one bullet states a result or a scale of use with a number, such as users, requests, money or time saved; a list of duties without numbers does not count"
+text = "At least one bullet states a result or a scale of the candidate's own work with a number, such as users, requests, money or time saved; numbers about the employer and duties without numbers do not count"
 importance = "nice"

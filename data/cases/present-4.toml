@@ -56,6 +56,7 @@ passed = false
 # The recruiter's key, judged on the top third (the first 3 of 9 lines).
 # R1, R2, C1 (9) + R3, R4 (2) = 11/12 = 9.2 -> strong_hire. C2 fails: the fix is to move the
 # latency result (line 6) into the top third.
+# Dev case for the recruiter since Step 4.3d: its first run motivated recruiter checklist v3.
 [recruiter]
 expected_decision = "strong_hire"
 

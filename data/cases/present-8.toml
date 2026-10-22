@@ -1,0 +1,80 @@
+# Held-out case for recruiter checklist v3, against a too-strict fix: the work is said in a first-person
+# summary line rather than a bullet, and the scale is the number of people who use the candidate's
+# tables (not users, requests, money or time). Both should pass. Written and keyed before any v3 run.
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "present-8"
+label = "good"
+split = "heldout"
+checklist = "data_logistics"
+# TL1, TL2, TL3 (9) + TL5, TL8 (2) = 11/14 = 7.9 -> lean_hire.
+expected_decision = "lean_hire"
+
+cv = """
+Data Engineer, parcel delivery company (2021-present)
+I build and run the batch pipelines in Python and SQL that feed our delivery-time forecasts.
+- The forecast tables I built are used each morning by all 300 dispatchers
+- Designed the warehouse models for parcels and routes in Snowflake: which tables exist and how they join
+- Schedule and run my pipelines myself in Airflow
+- Take part in the data team's on-call rota
+- Coach new analysts on SQL during their onboarding
+
+Junior Data Analyst, bank (2019-2021)
+- Built monthly reports in Excel
+"""
+
+[expected.TL1]
+passed = true
+evidence = "I build and run the batch pipelines in Python and SQL that feed our delivery-time forecasts."
+
+[expected.TL2]
+passed = true
+evidence = "Designed the warehouse models for parcels and routes in Snowflake: which tables exist and how they join"
+
+[expected.TL3]
+passed = true
+evidence = "Schedule and run my pipelines myself in Airflow"
+
+[expected.TL4]
+passed = false
+
+[expected.TL5]
+passed = true
+evidence = "Take part in the data team's on-call rota"
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+passed = false
+
+[expected.TL8]
+passed = true
+evidence = "Coach new analysts on SQL during their onboarding"
+
+# The recruiter's key, judged on the top third (the first 3 of 9 lines).
+# Everything passes: 12/12 = 10.0 -> strong_hire.
+[recruiter]
+expected_decision = "strong_hire"
+
+[recruiter.expected.R1]
+passed = true
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = true
+
+[recruiter.expected.C1]
+# A summary of the work counts; v3 excludes only a title alone, personal qualities and general phrases.
+passed = true
+evidence = "I build and run the batch pipelines in Python and SQL that feed our delivery-time forecasts."
+
+[recruiter.expected.C2]
+# The people who use the candidate's tables are a scale of their own work.
+passed = true
+evidence = "The forecast tables I built are used each morning by all 300 dispatchers"
+
+[recruiter.expected.R4]
+passed = true
