@@ -1,0 +1,30 @@
+# The hiring manager's checklist, the same for every posting: the model reads the posting's brief
+# (the team, its system and this year's goals) and judges the full CV against it. Technical depth is
+# the tech lead's job. Importance is used by code only.
+# All four are nice-to-haves: no single one is a reason to reject, and a CV from another domain should
+# score lower, not be gated. "A reason for choosing this company" (from the design doc) is left out
+# until there are cover letters: CVs almost never say it, and a check CVs are silent on punishes silence.
+# v1 (Step 4.3e): a first draft; review before relying on it.
+name = "hiring_manager"
+posting = "any"
+version = 1
+
+[[items]]
+id = "HM1"
+text = "Has worked on a system whose main job is the same as that of the system the team in the brief owns; the same industry, the same tools, or a product that only calls such a system do not count"
+importance = "nice"
+
+[[items]]
+id = "HM2"
+text = "Has worked towards one of the goals the brief names for this year, at this or another company; other improvements, however good, do not count"
+importance = "nice"
+
+[[items]]
+id = "HM3"
+text = "Has shown the effect of their own work with a before-and-after or a number, such as faster responses, lower costs or fewer failures; numbers that only show size or scale do not count"
+importance = "nice"
+
+[[items]]
+id = "HM4"
+text = "Has kept their own work running in production, such as deploying it, scheduling it, being on call or fixing it when it fails; handing it to another team to deploy or run does not count"
+importance = "nice"

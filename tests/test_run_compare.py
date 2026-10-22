@@ -34,3 +34,4 @@ def test_run_eval_defaults_to_the_tech_lead_and_accepts_the_recruiter():
 
     assert eval_args([]).agent == "tech_lead"
     assert eval_args(["--agent", "recruiter"]).agent == "recruiter"
+    assert eval_args(["--agent", "hiring_manager"]).agent == "hiring_manager"

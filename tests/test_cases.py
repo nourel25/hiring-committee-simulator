@@ -133,3 +133,23 @@ def test_real_recruiter_key_is_consistent(case):
 
 def test_every_case_has_a_recruiter_key():
     assert [case.id for case in load_cases() if case.recruiter is None] == []
+
+
+@pytest.mark.parametrize("case", load_cases(), ids=lambda case: case.id)
+def test_real_hiring_manager_key_is_consistent(case):
+    # The hiring manager reads the full CV; quotes from the brief would prove nothing.
+    checklist = load_checklist("hiring_manager")
+    review = Review(
+        checks=[
+            Check(id=check_id, check="", evidence=key.evidence, passed=key.passed)
+            for check_id, key in case.hiring_manager.expected.items()
+        ]
+    )
+
+    _, missing_quotes = apply_truth_check(review, case.cv)
+    score = compute_score(review, checklist.items)
+    decision = decide(score, failed_must_haves(review, checklist.items))
+
+    assert sorted(case.hiring_manager.expected) == sorted(item.id for item in checklist.items)
+    assert missing_quotes == []
+    assert decision == case.hiring_manager.expected_decision

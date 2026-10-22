@@ -73,3 +73,22 @@ passed = false
 [recruiter.expected.R4]
 # Trap: a line of several hundred characters.
 passed = false
+
+# The hiring manager's key (full CV + the posting's brief), written before any run
+# (Step 4.3e) while the user could not review it. HM1-HM4 are nice-to-haves: passes / 4 x 10.
+[hiring_manager]
+expected_decision = "lean_no"
+
+[hiring_manager.expected.HM1]
+passed = true
+evidence = "building and maintaining the batch pipelines in Python and SQL that the finance, operations and marketing teams depend on"
+
+[hiring_manager.expected.HM2]
+passed = false
+
+[hiring_manager.expected.HM3]
+passed = false
+
+[hiring_manager.expected.HM4]
+passed = true
+evidence = "I schedule and run all of these pipelines myself in Airflow"

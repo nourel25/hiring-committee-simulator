@@ -74,6 +74,7 @@ class Case(BaseModel):
     cv: str
     expected: dict[str, ExpectedCheck]
     recruiter: AgentKey | None = None
+    hiring_manager: AgentKey | None = None
 
 
 def load_toml(path: Path) -> dict:

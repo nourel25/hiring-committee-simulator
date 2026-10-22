@@ -79,3 +79,25 @@ evidence = "The forecast tables I built are used each morning by all 300 dispatc
 
 [recruiter.expected.R4]
 passed = true
+
+# The hiring manager's key (full CV + the posting's brief), written before any run
+# (Step 4.3e) while the user could not review it. HM1-HM4 are nice-to-haves: passes / 4 x 10.
+[hiring_manager]
+expected_decision = "lean_hire"
+
+[hiring_manager.expected.HM1]
+passed = true
+evidence = "I build and run the batch pipelines in Python and SQL that feed our delivery-time forecasts."
+
+[hiring_manager.expected.HM2]
+# Forecasting delivery times is the same goal as predicting delivery delays.
+passed = true
+evidence = "feed our delivery-time forecasts"
+
+[hiring_manager.expected.HM3]
+# 300 dispatchers is scale, not an effect.
+passed = false
+
+[hiring_manager.expected.HM4]
+passed = true
+evidence = "Schedule and run my pipelines myself in Airflow"

@@ -77,3 +77,23 @@ evidence = "Develop and maintain the Python microservices behind our public REST
 
 [recruiter.expected.R4]
 passed = true
+
+# The hiring manager's key (full CV + the posting's brief), written before any run
+# (Step 4.3e) while the user could not review it. HM1-HM4 are nice-to-haves: passes / 4 x 10.
+[hiring_manager]
+expected_decision = "strong_no"
+
+[hiring_manager.expected.HM1]
+# Merchant-facing logistics APIs; the main job is not payments.
+passed = false
+
+[hiring_manager.expected.HM2]
+passed = false
+
+[hiring_manager.expected.HM3]
+# 12,000 merchants is scale, not an effect.
+passed = false
+
+[hiring_manager.expected.HM4]
+passed = true
+evidence = "Take a week of out-of-hours support each month and respond to production alerts in Grafana"

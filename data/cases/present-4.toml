@@ -80,3 +80,24 @@ passed = false
 
 [recruiter.expected.R4]
 passed = true
+
+# The hiring manager's key (full CV + the posting's brief), written before any run
+# (Step 4.3e) while the user could not review it. HM1-HM4 are nice-to-haves: passes / 4 x 10.
+[hiring_manager]
+expected_decision = "lean_hire"
+
+[hiring_manager.expected.HM1]
+passed = true
+evidence = "Build and maintain the Python REST APIs that merchants use in production to receive their payouts"
+
+[hiring_manager.expected.HM2]
+# Faster payouts are not fewer failed payments or a new payment method.
+passed = false
+
+[hiring_manager.expected.HM3]
+passed = true
+evidence = "Cut the payout API's p95 latency from 800 ms to 150 ms by batching ledger writes"
+
+[hiring_manager.expected.HM4]
+passed = true
+evidence = "Take part in the team's on-call rotation and maintain its Grafana alerts"

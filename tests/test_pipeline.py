@@ -1,7 +1,7 @@
 """Tests for hcs.pipeline (tech lead and recruiter) with a fake client. No model calls; logs go to tmp_path."""
 
 from hcs.cases import Case, Checklist, ExpectedCheck, Posting, RecruiterScreen
-from hcs.pipeline import review_case, review_recruiter
+from hcs.pipeline import review_case, review_hiring_manager, review_recruiter
 from hcs.runlog import read_runs
 from hcs.schemas import ChecklistItem
 from tests.fakes import TINY_CASE, TINY_CHECKLIST, TINY_REPLY, FakeClient, make_response
@@ -148,3 +148,42 @@ def test_a_recruiter_quote_from_below_the_top_third_fails_the_truth_check(tmp_pa
     assert record.truth_check_changes == 1
     assert record.failed_must_haves == ["C1"]
     assert record.decision == "lean_no"
+
+
+HM_CHECKLIST = Checklist(
+    name="hiring_manager",
+    posting="any",
+    items=[ChecklistItem(id="HM1", text="same kind of system", importance="nice")],
+)
+HM_POSTING = RECRUITER_POSTING.model_copy(update={"brief": "The team owns the card payments API."})
+HM_REPLY = (
+    '{"checks": [{"id": "HM1", "check": "same kind of system", '
+    '"evidence": "Hidden line", "passed": true}]}'
+)
+
+
+def test_the_hiring_manager_sees_the_brief_and_the_full_cv(tmp_path):
+    path = tmp_path / "runs.jsonl"
+    client = FakeClient([make_response(HM_REPLY)])
+
+    record = review_hiring_manager(client, RECRUITER_CASE, HM_POSTING, HM_CHECKLIST, path)
+
+    user_message = client.calls[0][1]["content"]
+    assert "<brief>\nThe team owns the card payments API.\n</brief>" in user_message
+    # Unlike the recruiter, the hiring manager reads the whole CV, down to its last line.
+    assert "Hidden line" in user_message
+    assert record.agent == "hiring_manager"
+    assert record.score == 10.0
+    assert read_runs(path) == [record]
+
+
+def test_a_hiring_manager_quote_from_the_brief_fails_the_truth_check(tmp_path):
+    from_brief = HM_REPLY.replace("Hidden line", "The team owns the card payments API.")
+    client = FakeClient([make_response(from_brief)])
+
+    record = review_hiring_manager(
+        client, RECRUITER_CASE, HM_POSTING, HM_CHECKLIST, tmp_path / "runs.jsonl"
+    )
+
+    assert record.truth_check_changes == 1
+    assert record.score == 0.0

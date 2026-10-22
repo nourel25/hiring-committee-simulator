@@ -75,3 +75,22 @@ evidence = "Maintain the Terraform modules and GitLab CI templates used by 40 pr
 
 [recruiter.expected.R4]
 passed = true
+
+# The hiring manager's key (full CV + the posting's brief), written before any run
+# (Step 4.3e) while the user could not review it. HM1-HM4 are nice-to-haves: passes / 4 x 10.
+[hiring_manager]
+expected_decision = "strong_no"
+
+[hiring_manager.expected.HM1]
+passed = false
+
+[hiring_manager.expected.HM2]
+passed = false
+
+[hiring_manager.expected.HM3]
+# Trap: 30 services moved is a count, not an effect.
+passed = false
+
+[hiring_manager.expected.HM4]
+passed = true
+evidence = "Run the Prometheus and Grafana stack and lead the weekly incident review"

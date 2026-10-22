@@ -77,3 +77,23 @@ evidence = "load about two million orders a day"
 
 [recruiter.expected.R4]
 passed = true
+
+# The hiring manager's key (full CV + the posting's brief), written before any run
+# (Step 4.3e) while the user could not review it. HM1-HM4 are nice-to-haves: passes / 4 x 10.
+[hiring_manager]
+expected_decision = "lean_no"
+
+[hiring_manager.expected.HM1]
+passed = true
+evidence = "Build the batch pipelines in Python and SQL that load about two million orders a day into BigQuery for the operations team"
+
+[hiring_manager.expected.HM2]
+passed = false
+
+[hiring_manager.expected.HM3]
+# Trap: two million orders a day is scale, not an effect.
+passed = false
+
+[hiring_manager.expected.HM4]
+passed = true
+evidence = "Schedule and run my pipelines myself in Dagster"

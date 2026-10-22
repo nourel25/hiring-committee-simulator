@@ -85,3 +85,23 @@ evidence = "Built and maintain the Python REST APIs for orders and prescriptions
 
 [recruiter.expected.R4]
 passed = true
+
+# The hiring manager's key (full CV + the posting's brief), written before any run
+# (Step 4.3e) while the user could not review it. HM1-HM4 are nice-to-haves: passes / 4 x 10.
+[hiring_manager]
+expected_decision = "strong_no"
+
+[hiring_manager.expected.HM1]
+# Orders and prescriptions APIs; the main job is not payments.
+passed = false
+
+[hiring_manager.expected.HM2]
+passed = false
+
+[hiring_manager.expected.HM3]
+# 30,000 customers a day is scale, not an effect.
+passed = false
+
+[hiring_manager.expected.HM4]
+passed = true
+evidence = "Deploy my services to production myself with GitHub Actions and Kubernetes"

@@ -79,3 +79,23 @@ evidence = "Built the Python service that consumes order events from Kafka and a
 
 [recruiter.expected.R4]
 passed = true
+
+# The hiring manager's key (full CV + the posting's brief), written before any run
+# (Step 4.3e) while the user could not review it. HM1-HM4 are nice-to-haves: passes / 4 x 10.
+[hiring_manager]
+expected_decision = "lean_no"
+
+[hiring_manager.expected.HM1]
+# Trap: payout tables inside a courier-assignment service; its main job is assigning couriers.
+passed = false
+
+[hiring_manager.expected.HM2]
+passed = false
+
+[hiring_manager.expected.HM3]
+passed = true
+evidence = "Cut courier assignment time from 9 seconds to 2 by batching database writes"
+
+[hiring_manager.expected.HM4]
+passed = true
+evidence = "Ship the services to production through Argo CD after code review"

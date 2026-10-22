@@ -6,7 +6,7 @@ from pathlib import Path
 
 from openai import OpenAI
 
-from hcs.agents import recruiter, tech_lead
+from hcs.agents import hiring_manager, recruiter, tech_lead
 from hcs.cases import Case, Checklist, Posting
 from hcs.llm import LLMOutputError, get_structured
 from hcs.policies import (
@@ -172,5 +172,38 @@ def review_recruiter(
         seed=seed,
         max_tokens=max_tokens,
         max_retries=recruiter.MAX_RETRIES,
+        strict=strict,
+    )
+
+
+def review_hiring_manager(
+    client: OpenAI,
+    case: Case,
+    posting: Posting,
+    checklist: Checklist,
+    runs_path: Path = RUNS_PATH,
+    model: str = hiring_manager.MODEL,
+    temperature: float = hiring_manager.TEMPERATURE,
+    seed: int = hiring_manager.SEED,
+    max_tokens: int = hiring_manager.MAX_TOKENS,
+    strict: bool = False,
+) -> RunRecord:
+    """Run the hiring manager on one case: the full CV judged against the posting's brief."""
+    return run_review(
+        client,
+        agent="hiring_manager",
+        prompt_version=hiring_manager.PROMPT_VERSION,
+        case_id=case.id,
+        checklist=checklist,
+        messages=hiring_manager.build_messages(posting.brief, case.cv, checklist.items),
+        model_ids=[item.id for item in checklist.items],
+        # Quotes must come from the CV: a quote from the brief proves nothing about the candidate.
+        truth_text=case.cv,
+        runs_path=runs_path,
+        model=model,
+        temperature=temperature,
+        seed=seed,
+        max_tokens=max_tokens,
+        max_retries=hiring_manager.MAX_RETRIES,
         strict=strict,
     )

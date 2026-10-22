@@ -77,3 +77,25 @@ passed = false
 
 [recruiter.expected.R4]
 passed = true
+
+# The hiring manager's key (full CV + the posting's brief), written before any run
+# (Step 4.3e) while the user could not review it. HM1-HM4 are nice-to-haves: passes / 4 x 10.
+[hiring_manager]
+expected_decision = "lean_hire"
+
+[hiring_manager.expected.HM1]
+passed = true
+evidence = "Build the dbt SQL pipelines that turn raw freight bookings into the tables the pricing and sales teams use every day"
+
+[hiring_manager.expected.HM2]
+# Cutting the warehouse bill is one of this year's goals.
+passed = true
+evidence = "Reduced the warehouse bill for my models by 35% by partitioning the largest tables"
+
+[hiring_manager.expected.HM3]
+passed = true
+evidence = "Reduced the warehouse bill for my models by 35% by partitioning the largest tables"
+
+[hiring_manager.expected.HM4]
+# Trap: the platform team deploys and schedules the models.
+passed = false

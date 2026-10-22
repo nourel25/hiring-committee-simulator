@@ -80,3 +80,22 @@ evidence = "Develop the Python claims service that the mobile app and partner in
 
 [recruiter.expected.R4]
 passed = true
+
+# The hiring manager's key (full CV + the posting's brief), written before any run
+# (Step 4.3e) while the user could not review it. HM1-HM4 are nice-to-haves: passes / 4 x 10.
+[hiring_manager]
+expected_decision = "strong_no"
+
+[hiring_manager.expected.HM1]
+passed = false
+
+[hiring_manager.expected.HM2]
+passed = false
+
+[hiring_manager.expected.HM3]
+# A rewrite with no before-and-after.
+passed = false
+
+[hiring_manager.expected.HM4]
+passed = true
+evidence = "Ship releases to production myself through the team's Jenkins pipeline"

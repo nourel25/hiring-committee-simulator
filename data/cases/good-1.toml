@@ -74,3 +74,23 @@ evidence = "Built and maintain 6 REST APIs in Python (FastAPI) serving 50,000 da
 
 [recruiter.expected.R4]
 passed = true
+
+# The hiring manager's key (full CV + the posting's brief), written before any run
+# (Step 4.3e) while the user could not review it. HM1-HM4 are nice-to-haves: passes / 4 x 10.
+[hiring_manager]
+expected_decision = "lean_hire"
+
+[hiring_manager.expected.HM1]
+passed = true
+evidence = "Designed the PostgreSQL schema for the payments service"
+
+[hiring_manager.expected.HM2]
+passed = false
+
+[hiring_manager.expected.HM3]
+passed = true
+evidence = "Cut average API response time by 40% by adding Redis caching"
+
+[hiring_manager.expected.HM4]
+passed = true
+evidence = "Containerised services with Docker and deployed them to a single cloud VM"

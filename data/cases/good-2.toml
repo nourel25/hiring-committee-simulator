@@ -79,3 +79,23 @@ evidence = "Built the Python booking API that partner travel agencies call to re
 
 [recruiter.expected.R4]
 passed = true
+
+# The hiring manager's key (full CV + the posting's brief), written before any run
+# (Step 4.3e) while the user could not review it. HM1-HM4 are nice-to-haves: passes / 4 x 10.
+[hiring_manager]
+expected_decision = "lean_no"
+
+[hiring_manager.expected.HM1]
+# Trap: payments is one of 14 tables in a booking product; its main job is booking.
+passed = false
+
+[hiring_manager.expected.HM2]
+passed = false
+
+[hiring_manager.expected.HM3]
+passed = true
+evidence = "Reduced p95 booking latency from 1.8 s to 600 ms by caching availability data"
+
+[hiring_manager.expected.HM4]
+passed = true
+evidence = "Deploy our services to production on AWS through a GitHub Actions pipeline"

@@ -8,9 +8,9 @@ from openai import OpenAI
 from hcs.cases import Case, load_cases, load_checklist, load_posting
 from hcs.evaluation import HEADER, CaseReport, compare, format_row
 from hcs.llm import make_client
-from hcs.pipeline import review_case, review_recruiter
+from hcs.pipeline import review_case, review_hiring_manager, review_recruiter
 
-AGENTS = ["tech_lead", "recruiter"]
+AGENTS = ["tech_lead", "recruiter", "hiring_manager"]
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -31,6 +31,11 @@ def evaluate(client: OpenAI, case: Case, agent: str) -> CaseReport:
             date.today().year,
         )
         return compare(case, record, case.recruiter)
+    if agent == "hiring_manager":
+        record = review_hiring_manager(
+            client, case, load_posting(case.checklist), load_checklist("hiring_manager")
+        )
+        return compare(case, record, case.hiring_manager)
     return compare(case, review_case(client, case, load_checklist(case.checklist)))
 
 

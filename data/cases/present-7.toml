@@ -82,3 +82,22 @@ passed = false
 
 [recruiter.expected.R4]
 passed = true
+
+# The hiring manager's key (full CV + the posting's brief), written before any run
+# (Step 4.3e) while the user could not review it. HM1-HM4 are nice-to-haves: passes / 4 x 10.
+[hiring_manager]
+expected_decision = "strong_no"
+
+[hiring_manager.expected.HM1]
+passed = false
+
+[hiring_manager.expected.HM2]
+passed = false
+
+[hiring_manager.expected.HM3]
+# Trap: 8 years and 3 languages are not an effect of their work.
+passed = false
+
+[hiring_manager.expected.HM4]
+passed = true
+evidence = "Deploy my services to production myself with GitHub Actions"

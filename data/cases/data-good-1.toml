@@ -76,3 +76,24 @@ passed = false
 
 [recruiter.expected.R4]
 passed = true
+
+# The hiring manager's key (full CV + the posting's brief), written before any run
+# (Step 4.3e) while the user could not review it. HM1-HM4 are nice-to-haves: passes / 4 x 10.
+[hiring_manager]
+expected_decision = "lean_hire"
+
+[hiring_manager.expected.HM1]
+passed = true
+evidence = "Build and maintain the nightly Python and SQL pipelines that load shipment data for the finance and operations teams"
+
+[hiring_manager.expected.HM2]
+# Trap: a faster nightly load is not a smaller warehouse bill.
+passed = false
+
+[hiring_manager.expected.HM3]
+passed = true
+evidence = "Cut the nightly load from 3 hours to 40 minutes by switching to incremental models"
+
+[hiring_manager.expected.HM4]
+passed = true
+evidence = "Schedule and run my pipelines in production with Airflow, and fix them when a load fails"

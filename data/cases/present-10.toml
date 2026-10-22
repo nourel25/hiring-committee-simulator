@@ -77,3 +77,24 @@ evidence = "My pipelines load the stock data for all 40 of our warehouses every 
 
 [recruiter.expected.R4]
 passed = true
+
+# The hiring manager's key (full CV + the posting's brief), written before any run
+# (Step 4.3e) while the user could not review it. HM1-HM4 are nice-to-haves: passes / 4 x 10.
+[hiring_manager]
+expected_decision = "lean_hire"
+
+[hiring_manager.expected.HM1]
+passed = true
+evidence = "Build and run the nightly Python and SQL pipelines that load stock levels into BigQuery for the planning team"
+
+[hiring_manager.expected.HM2]
+# Trap: a faster nightly load is not a smaller warehouse bill.
+passed = false
+
+[hiring_manager.expected.HM3]
+passed = true
+evidence = "Cut the nightly load from 3 hours to 50 minutes by switching to incremental loads"
+
+[hiring_manager.expected.HM4]
+passed = true
+evidence = "Schedule my pipelines myself in Airflow"
