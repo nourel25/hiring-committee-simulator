@@ -1,0 +1,95 @@
+# Held-out case for the devil's advocate (v3): a gap on the warehouse line (TL2: adds views and columns
+# to models others design), while the three-part ownership line (scheduling, data-quality checks and
+# the on-call rota) is fully shown across three separate bullets, so it needs several quotes.
+# Written and keyed before any v3 run; not yet independently reviewed.
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "da-4"
+label = "borderline"
+split = "heldout"
+checklist = "data_logistics"
+# TL1, TL3 (6) + TL4, TL5 (2) = 8/14 = 5.7 -> lean_no (TL2 fails as well).
+expected_decision = "lean_no"
+
+cv = """
+Data Engineer, freight forwarding company (2020-present)
+- Build and maintain the Python and SQL pipelines that load shipment events into BigQuery for the operations team
+- Add views and columns to the warehouse models our analytics engineers design
+- Schedule my pipelines myself in Airflow
+- Added dbt tests on nulls and freshness that stop a bad load
+- Part of the data team's on-call rota
+
+Junior Data Analyst, shipping line (2017-2020)
+- Built port volume reports in SQL
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Build and maintain the Python and SQL pipelines that load shipment events into BigQuery for the operations team"
+
+[expected.TL2]
+# Trap: adding views and columns to models others design is not designing them.
+passed = false
+
+[expected.TL3]
+passed = true
+evidence = "Schedule my pipelines myself in Airflow"
+
+[expected.TL4]
+passed = true
+evidence = "Added dbt tests on nulls and freshness that stop a bad load"
+
+[expected.TL5]
+passed = true
+evidence = "Part of the data team's on-call rota"
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+passed = false
+
+[expected.TL8]
+passed = false
+
+# The recruiter's key, judged on the top third (the first 3 of 8 lines; the model sees lines 2-3).
+# R1, R2, C1 (9) + R3, R4 (2) = 11/12 = 9.2 -> strong_hire. C2 fails: no number in lines 2-3.
+[recruiter]
+expected_decision = "strong_hire"
+
+[recruiter.expected.R1]
+passed = true
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = true
+
+[recruiter.expected.C1]
+passed = true
+evidence = "Build and maintain the Python and SQL pipelines that load shipment events into BigQuery for the operations team"
+
+[recruiter.expected.C2]
+passed = false
+
+[recruiter.expected.R4]
+passed = true
+
+# The hiring manager's key (checklist v2). HM1, HM4 (2) = 2/4 = 5.0 -> lean_no.
+[hiring_manager]
+expected_decision = "lean_no"
+
+[hiring_manager.expected.HM1]
+passed = true
+evidence = "Build and maintain the Python and SQL pipelines that load shipment events into BigQuery for the operations team"
+
+[hiring_manager.expected.HM2]
+passed = false
+
+[hiring_manager.expected.HM3]
+passed = false
+
+[hiring_manager.expected.HM4]
+passed = true
+evidence = "Schedule my pipelines myself in Airflow"

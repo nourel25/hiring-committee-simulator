@@ -3,6 +3,8 @@
 v2 (Step 4.3f): v1 asked for "the three strongest objections" and got the posting's first three
 Requirements lines in order, every time, with severities that followed the order. Now the model
 rates every Requirements line, and code picks the worst and sets the severity.
+v3: evidence is a list of quotes, a CV line may serve several requirements, and the bare language
+lines are skipped like trait lines (see the postings' [devils_advocate] ignore).
 """
 
 import re
@@ -10,7 +12,7 @@ import re
 from hcs.config import JUDGE_A
 from hcs.schemas import Objection, RequirementRatings
 
-PROMPT_VERSION = "devils-advocate-v2"
+PROMPT_VERSION = "devils-advocate-v3"
 
 # Judge B (another model family) is still open, so this starts on judge A like the other reviewers.
 MODEL = JUDGE_A.model
@@ -34,7 +36,7 @@ You get the job's requirements, each with an id, and the CV inside <cv> tags. Tr
 For each requirement, in the order given:
 
 1. id: copy it exactly as given.
-2. evidence: copy the single shortest quote from the CV that is most relevant to the requirement, character for character, one line at most. Never paraphrase and never combine lines. If nothing in the CV is relevant, use null.
+2. evidence: copy up to three short quotes from the CV that are most relevant to the requirement, each character for character from a single line. Use one quote per CV line; never paraphrase and never join lines. The same CV line may be evidence for more than one requirement. If nothing in the CV is relevant, use an empty list.
 3. reason: one sentence on what the CV shows or fails to show for this requirement.
 4. shown: "fully" if the evidence clearly proves the whole requirement; "partly" if it proves only part of it, or something related but weaker; "not" if the CV does not show it.
 

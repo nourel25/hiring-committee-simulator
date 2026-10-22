@@ -100,13 +100,12 @@ def decide(score: float, failed: list[str]) -> Decision:
 
 
 def apply_rating_policy(ratings: RequirementRatings, cv_text: str) -> int:
-    """A requirement rated as shown (fully or partly) without a real CV quote counts as not shown,
-    like a pass without evidence. Returns how many ratings changed."""
+    """Quotes not found in the CV are dropped; a requirement rated as shown (fully or partly) with no
+    real quote left counts as not shown, like a pass without evidence. Returns how many ratings changed."""
     changed = 0
     for rating in ratings.ratings:
-        if rating.shown != "not" and (
-            rating.evidence is None or not quote_in_cv(rating.evidence, cv_text)
-        ):
+        rating.evidence = [quote for quote in rating.evidence if quote_in_cv(quote, cv_text)]
+        if rating.shown != "not" and not rating.evidence:
             rating.shown = "not"
             changed += 1
     return changed

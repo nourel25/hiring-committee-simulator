@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import (
     BaseModel,
@@ -135,13 +135,30 @@ def null_if_written_out(value: object) -> object:
     return value
 
 
+def quote_list(value: object) -> object:
+    """Evidence as a list of quotes: null becomes [], a single quote becomes [quote], and quotes
+    written as "null" are dropped. Also reads records logged before evidence was a list (v1, v2)."""
+    if value is None:
+        return []
+    if isinstance(value, str):
+        value = [value]
+    if isinstance(value, list):
+        return [item for item in value if null_if_written_out(item) is not None]
+    return value
+
+
+Quote = Annotated[str, Field(max_length=200)]
+
+
 class LineRating(BaseModel):
-    """How well the CV shows one requirement line. The quote comes before the verdict."""
+    """How well the CV shows one requirement line. The quotes come before the verdict."""
 
     id: str = Field(description="The requirement's id, copied exactly from the input, e.g. 'D1'.")
-    evidence: str | None = Field(
-        max_length=200,
-        description="The shortest exact quote from the CV most relevant to the requirement, or null.",
+    # v3 (Step 4.3f): a list, because a requirement with several parts (deployment, monitoring and
+    # on-call) is shown on several CV lines; v2 allowed one quote and the model glued lines together.
+    evidence: list[Quote] = Field(
+        max_length=3,
+        description="Up to three exact quotes from the CV, each from one line, most relevant first.",
     )
     reason: str = Field(
         max_length=300,
@@ -149,7 +166,7 @@ class LineRating(BaseModel):
     )
     shown: Shown = Field(description="'fully', 'partly' or 'not', as the instructions define.")
 
-    _evidence_null = field_validator("evidence", mode="before")(null_if_written_out)
+    _evidence_list = field_validator("evidence", mode="before")(quote_list)
 
 
 class RequirementRatings(BaseModel):
@@ -188,10 +205,12 @@ def ratings_model_for(ids: list[str]) -> type[RequirementRatings]:
 
 
 class Objection(BaseModel):
-    """One reason not to hire, built by code from a rating: the requirement line, the CV quote,
+    """One reason not to hire, built by code from a rating: the requirement line, the CV quotes,
     the model's reason, and a severity code sets from the rating."""
 
     requirement: str | None = Field(max_length=200)
-    evidence: str | None = Field(max_length=200)
+    evidence: list[Quote] = []
     reason: str = Field(max_length=300)
     severity: Severity
+
+    _evidence_list = field_validator("evidence", mode="before")(quote_list)

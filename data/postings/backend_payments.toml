@@ -38,7 +38,9 @@ min_years = 3
 system = "a service that processes card payments or pays out money"
 goals = ["fewer failed payments", "new payment methods"]
 
-# Requirements lines the devil's advocate skips (Step 4.3f): a trait no CV can prove, already
-# dropped from the tech lead's checklist; every CV would get a "not shown" objection for it.
+# Requirements lines the devil's advocate skips (Step 4.3f), reviewed like a checklist:
+# - a trait no CV can prove, already dropped from the tech lead's checklist (v2);
+# - the bare language-and-years line (v3): years are R2's job and languages R3's, and the tech lead
+#   tests them through the work. Rated first in v2, it took the CV line the next requirement needed.
 [devils_advocate]
-ignore = ["Team player with great communication skills"]
+ignore = ["Team player with great communication skills", "Strong Python skills, 3+ years"]

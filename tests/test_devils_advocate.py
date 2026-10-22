@@ -65,7 +65,7 @@ def make_case(m2_passed: bool) -> Case:
     )
 
 
-def rating(line_id: str, evidence: str | None, shown: str) -> dict:
+def rating(line_id: str, evidence: str | list[str] | None, shown: str) -> dict:
     return {"id": line_id, "evidence": evidence, "reason": f"about {line_id}", "shown": shown}
 
 
@@ -102,7 +102,10 @@ def test_the_real_postings_ignore_only_lines_they_have(name):
     assert all(
         without_year_counts(line) in lines.values() for line in posting.devils_advocate.ignore
     )
-    assert len(requirement_lines(posting.text, posting.devils_advocate.ignore)) == len(lines) - 1
+    ignored = len(posting.devils_advocate.ignore)
+    assert (
+        len(requirement_lines(posting.text, posting.devils_advocate.ignore)) == len(lines) - ignored
+    )
 
 
 def test_every_requirement_must_be_rated_exactly_once():
@@ -115,9 +118,13 @@ def test_every_requirement_must_be_rated_exactly_once():
     assert len(model.model_validate_json(reply(PYTHON_SHOWN, SCHEMA_MISSING)).ratings) == 2
 
 
-@pytest.mark.parametrize("written", ["null", "None", " NULL ", ""])
+@pytest.mark.parametrize("written", ["null", "None", " NULL ", "", None, ["null"]])
 def test_null_written_as_a_word_is_missing_evidence(written):
-    assert LineRating(**rating("D1", written, "not")).evidence is None
+    assert LineRating(**rating("D1", written, "not")).evidence == []
+
+
+def test_a_single_quote_becomes_a_list_of_one():
+    assert LineRating(**rating("D1", "Wrote SQL queries", "not")).evidence == ["Wrote SQL queries"]
 
 
 def test_a_rating_above_not_needs_a_real_quote():
@@ -131,6 +138,25 @@ def test_a_rating_above_not_needs_a_real_quote():
 
     assert apply_rating_policy(ratings, CV) == 2
     assert [item.shown for item in ratings.ratings] == ["fully", "not", "not"]
+
+
+def test_quotes_not_in_the_cv_are_dropped_and_real_ones_kept():
+    # A requirement with several parts is shown on several lines; one invented quote among real
+    # ones is dropped without changing the rating.
+    ratings = RequirementRatings.model_validate_json(
+        reply(
+            rating("D1", ["Built the shop API in Python", "Wrote SQL queries"], "fully"),
+            rating("D2", ["Wrote SQL queries", "Designed a 40-table schema"], "partly"),
+            ON_CALL_MISSING,
+        )
+    )
+
+    assert apply_rating_policy(ratings, CV) == 0
+    assert [item.evidence for item in ratings.ratings] == [
+        ["Built the shop API in Python", "Wrote SQL queries"],
+        ["Wrote SQL queries"],
+        [],
+    ]
 
 
 def test_code_picks_up_to_three_objections_not_shown_first():

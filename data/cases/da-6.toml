@@ -1,0 +1,94 @@
+# Held-out case for the devil's advocate (v3): a gap on the REST line (TL2: the API is GraphQL), now
+# the first line it rates; one bullet also shows all three parts of the ownership line. Written and
+# keyed before any v3 run; not yet independently reviewed.
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "da-6"
+label = "borderline"
+split = "heldout"
+checklist = "backend_payments"
+# TL1, TL3, TL4 (9) + TL5, TL7 (2) = 11/16 = 6.9 -> lean_hire, capped at lean_no (TL2 fails).
+expected_decision = "lean_no"
+
+cv = """
+Backend Engineer, music streaming app (2021-present)
+- Built and maintain the Python GraphQL API that our mobile apps use to browse playlists
+- Designed the PostgreSQL schema for playlists and tracks: which tables exist and how they relate
+- Deploy my services to production myself, watch their Datadog dashboards and join the on-call rotation
+- Cut playlist load time from 1.5 seconds to 300 ms with query batching
+
+Junior Developer, bank (2018-2021)
+- Built internal tools in Java
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Built and maintain the Python GraphQL API that our mobile apps use to browse playlists"
+
+[expected.TL2]
+# Trap: a GraphQL API is not a REST API.
+passed = false
+
+[expected.TL3]
+passed = true
+evidence = "Designed the PostgreSQL schema for playlists and tracks: which tables exist and how they relate"
+
+[expected.TL4]
+passed = true
+evidence = "Deploy my services to production myself, watch their Datadog dashboards and join the on-call rotation"
+
+[expected.TL5]
+passed = true
+evidence = "Deploy my services to production myself, watch their Datadog dashboards and join the on-call rotation"
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+passed = true
+evidence = "Cut playlist load time from 1.5 seconds to 300 ms with query batching"
+
+[expected.TL8]
+passed = false
+
+# The recruiter's key, judged on the top third (the first 3 of 7 lines; the model sees lines 2-3).
+# R1, R2, C1 (9) + R4 (1) = 10/12 = 8.3 -> strong_hire. R3 fails (no REST) and C2 fails (no number).
+[recruiter]
+expected_decision = "strong_hire"
+
+[recruiter.expected.R1]
+passed = true
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = false
+
+[recruiter.expected.C1]
+passed = true
+evidence = "Built and maintain the Python GraphQL API that our mobile apps use to browse playlists"
+
+[recruiter.expected.C2]
+passed = false
+
+[recruiter.expected.R4]
+passed = true
+
+# The hiring manager's key (checklist v2). HM3, HM4 (2) = 2/4 = 5.0 -> lean_no.
+[hiring_manager]
+expected_decision = "lean_no"
+
+[hiring_manager.expected.HM1]
+passed = false
+
+[hiring_manager.expected.HM2]
+passed = false
+
+[hiring_manager.expected.HM3]
+passed = true
+evidence = "Cut playlist load time from 1.5 seconds to 300 ms with query batching"
+
+[hiring_manager.expected.HM4]
+passed = true
+evidence = "Deploy my services to production myself, watch their Datadog dashboards and join the on-call rotation"
