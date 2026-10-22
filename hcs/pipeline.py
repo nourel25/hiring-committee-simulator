@@ -195,7 +195,11 @@ def review_hiring_manager(
         prompt_version=hiring_manager.PROMPT_VERSION,
         case_id=case.id,
         checklist=checklist,
-        messages=hiring_manager.build_messages(posting.brief, case.cv, checklist.items),
+        messages=hiring_manager.build_messages(
+            posting.brief,
+            case.cv,
+            hiring_manager.fill_checks(checklist.items, posting.hiring_manager),
+        ),
         model_ids=[item.id for item in checklist.items],
         # Quotes must come from the CV: a quote from the brief proves nothing about the candidate.
         truth_text=case.cv,

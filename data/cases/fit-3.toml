@@ -1,0 +1,100 @@
+# Held-out case for the hiring manager (checklist v2): this year's goal in other words ("our BigQuery
+# spend" is the warehouse bill: HM2 should pass) and HM4's trap in a new form (an SRE team runs the
+# pipelines and restarts failed runs). Written and keyed before any v2 run; not yet reviewed
+# by the user.
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "fit-3"
+label = "borderline"
+split = "heldout"
+checklist = "data_logistics"
+# TL1, TL2 (6) + TL7, TL8 (2) = 8/14 = 5.7 -> lean_no (TL3 fails as well).
+expected_decision = "lean_no"
+
+cv = """
+Data Engineer, last-mile courier company (2021-present)
+- Build the Python and SQL pipelines that load scan events into BigQuery for the operations planners
+- Cut our BigQuery spend by 30% by clustering and partitioning the scan tables
+- Designed the warehouse models for routes and stops: which fact and dimension tables exist and how they join
+- Write the Airflow DAGs; the SRE team runs them in production and restarts failed runs
+- Run monthly SQL training for new planners
+
+Junior Data Analyst, airline (2018-2021)
+- Built route profitability reports in SQL
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Build the Python and SQL pipelines that load scan events into BigQuery for the operations planners"
+
+[expected.TL2]
+passed = true
+evidence = "Designed the warehouse models for routes and stops: which fact and dimension tables exist and how they join"
+
+[expected.TL3]
+# Trap: another team runs the pipelines in production.
+passed = false
+
+[expected.TL4]
+passed = false
+
+[expected.TL5]
+passed = false
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+passed = true
+evidence = "Cut our BigQuery spend by 30% by clustering and partitioning the scan tables"
+
+[expected.TL8]
+passed = true
+evidence = "Run monthly SQL training for new planners"
+
+# The recruiter's key, judged on the top third (the first 3 of 8 lines; the model sees lines 2-3).
+# Everything passes: 12/12 = 10.0 -> strong_hire.
+[recruiter]
+expected_decision = "strong_hire"
+
+[recruiter.expected.R1]
+passed = true
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = true
+
+[recruiter.expected.C1]
+passed = true
+evidence = "Build the Python and SQL pipelines that load scan events into BigQuery for the operations planners"
+
+[recruiter.expected.C2]
+passed = true
+evidence = "Cut our BigQuery spend by 30% by clustering and partitioning the scan tables"
+
+[recruiter.expected.R4]
+passed = true
+
+# The hiring manager's key (checklist v2: targets from the posting), held-out.
+# HM1, HM2, HM3 (3) = 3/4 = 7.5 -> lean_hire.
+[hiring_manager]
+expected_decision = "lean_hire"
+
+[hiring_manager.expected.HM1]
+passed = true
+evidence = "Build the Python and SQL pipelines that load scan events into BigQuery for the operations planners"
+
+[hiring_manager.expected.HM2]
+# "Our BigQuery spend" is the warehouse bill in other words.
+passed = true
+evidence = "Cut our BigQuery spend by 30% by clustering and partitioning the scan tables"
+
+[hiring_manager.expected.HM3]
+passed = true
+evidence = "Cut our BigQuery spend by 30% by clustering and partitioning the scan tables"
+
+[hiring_manager.expected.HM4]
+# Trap: they write the DAGs, but the SRE team runs them and restarts failed runs.
+passed = false

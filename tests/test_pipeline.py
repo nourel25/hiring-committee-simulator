@@ -1,6 +1,13 @@
-"""Tests for hcs.pipeline (tech lead and recruiter) with a fake client. No model calls; logs go to tmp_path."""
+"""Tests for hcs.pipeline (every reviewer) with a fake client. No model calls; logs go to tmp_path."""
 
-from hcs.cases import Case, Checklist, ExpectedCheck, Posting, RecruiterScreen
+from hcs.cases import (
+    Case,
+    Checklist,
+    ExpectedCheck,
+    HiringManagerTargets,
+    Posting,
+    RecruiterScreen,
+)
 from hcs.pipeline import review_case, review_hiring_manager, review_recruiter
 from hcs.runlog import read_runs
 from hcs.schemas import ChecklistItem
@@ -19,6 +26,7 @@ RECRUITER_POSTING = Posting(
     text="x",
     brief="x",
     recruiter=RecruiterScreen(titles=["backend engineer"], keywords=[], min_years=0),
+    hiring_manager=HiringManagerTargets(system="a card payments service", goals=["fewer failures"]),
 )
 # Six lines, so the top third is the title and the first bullet.
 RECRUITER_CASE = Case(
@@ -153,7 +161,7 @@ def test_a_recruiter_quote_from_below_the_top_third_fails_the_truth_check(tmp_pa
 HM_CHECKLIST = Checklist(
     name="hiring_manager",
     posting="any",
-    items=[ChecklistItem(id="HM1", text="same kind of system", importance="nice")],
+    items=[ChecklistItem(id="HM1", text="Has worked on {system}", importance="nice")],
 )
 HM_POSTING = RECRUITER_POSTING.model_copy(update={"brief": "The team owns the card payments API."})
 HM_REPLY = (
@@ -172,6 +180,9 @@ def test_the_hiring_manager_sees_the_brief_and_the_full_cv(tmp_path):
     assert "<brief>\nThe team owns the card payments API.\n</brief>" in user_message
     # Unlike the recruiter, the hiring manager reads the whole CV, down to its last line.
     assert "Hidden line" in user_message
+    # The posting's target is written into the check; the placeholder never reaches the model.
+    assert "- HM1: Has worked on a card payments service" in user_message
+    assert "{system}" not in user_message
     assert record.agent == "hiring_manager"
     assert record.score == 10.0
     assert read_runs(path) == [record]

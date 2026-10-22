@@ -1,5 +1,6 @@
 """The hiring manager: judges the full CV against the team described in the posting's brief."""
 
+from hcs.cases import HiringManagerTargets
 from hcs.config import JUDGE_A
 from hcs.schemas import ChecklistItem
 
@@ -27,6 +28,20 @@ Judge what each check means, not whether its words appear in the CV.
 
 Reply with JSON only, in the required format.
 """.strip()
+
+
+def fill_checks(
+    checklist: list[ChecklistItem], targets: HiringManagerTargets
+) -> list[ChecklistItem]:
+    """The checks with the posting's targets written in, so the model compares the CV with a stated
+    target instead of one it has to infer from the brief."""
+    goals = " or ".join(targets.goals)
+    return [
+        item.model_copy(
+            update={"text": item.text.replace("{system}", targets.system).replace("{goals}", goals)}
+        )
+        for item in checklist
+    ]
 
 
 def build_user_message(brief: str, cv_text: str, checklist: list[ChecklistItem]) -> str:

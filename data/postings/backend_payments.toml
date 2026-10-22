@@ -30,3 +30,10 @@ This year's focus: fewer failed payments and two new payment methods.
 titles = ["backend engineer", "backend developer", "software engineer", "python developer"]
 keywords = ["Python", "REST"]
 min_years = 3
+
+# The hiring manager's targets, from the brief; code writes them into HM1 and HM2 (Step 4.3e).
+# Without them the model had to infer the team's system from the brief and read any production
+# REST API as "the same kind of system".
+[hiring_manager]
+system = "a service that processes card payments or pays out money"
+goals = ["fewer failed payments", "new payment methods"]

@@ -5,18 +5,20 @@
 # score lower, not be gated. "A reason for choosing this company" (from the design doc) is left out
 # until there are cover letters: CVs almost never say it, and a check CVs are silent on punishes silence.
 # v1 (Step 4.3e): a first draft; review before relying on it.
+# v2 (Step 4.3e): {system} and {goals} are filled in by code from the posting's [hiring_manager]
+# table. v1 asked the model to infer them from the brief, and it passed HM1 on any production REST API.
 name = "hiring_manager"
 posting = "any"
-version = 1
+version = 2
 
 [[items]]
 id = "HM1"
-text = "Has worked on a system whose main job is the same as that of the system the team in the brief owns; the same industry, the same tools, or a product that only calls such a system do not count"
+text = "Has worked on {system}, judged by the main job of the system they built or ran; the same industry, the same tools, or a product that only calls such a system do not count"
 importance = "nice"
 
 [[items]]
 id = "HM2"
-text = "Has worked towards one of the goals the brief names for this year, at this or another company; other improvements, however good, do not count"
+text = "Has worked towards {goals}, at this or another company; other improvements, however good, do not count"
 importance = "nice"
 
 [[items]]

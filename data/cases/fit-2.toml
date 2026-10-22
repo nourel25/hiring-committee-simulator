@@ -1,0 +1,100 @@
+# Held-out case for the hiring manager (checklist v2): HM1 traps in new forms. The candidate works
+# in fintech (the same industry), designed tables for repayments, and built a service that only calls
+# Stripe to collect them; none of it processes payments. Written and keyed before any v2
+# run; not yet independently reviewed.
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "fit-2"
+label = "good"
+split = "heldout"
+checklist = "backend_payments"
+# TL1-TL4 (12) + TL6, TL7 (2) = 14/16 = 8.75 -> strong_hire.
+expected_decision = "strong_hire"
+
+cv = """
+Backend Engineer, consumer lending startup (2020-present)
+- Built the Python REST API that scores loan applications in our lending app, used by 80,000 borrowers
+- Built the service that calls Stripe to collect monthly loan repayments
+- Designed the PostgreSQL schema for loans and repayments: which tables exist and how they relate
+- Deploy my services to production myself on our Kubernetes cluster
+- Cut the scoring API's response time from 3 seconds to 400 ms by caching credit bureau results
+
+Junior Developer, insurance broker (2017-2020)
+- Built internal tools in Django
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Built the Python REST API that scores loan applications in our lending app, used by 80,000 borrowers"
+
+[expected.TL2]
+passed = true
+evidence = "Built the Python REST API that scores loan applications in our lending app, used by 80,000 borrowers"
+
+[expected.TL3]
+passed = true
+evidence = "Designed the PostgreSQL schema for loans and repayments: which tables exist and how they relate"
+
+[expected.TL4]
+passed = true
+evidence = "Deploy my services to production myself on our Kubernetes cluster"
+
+[expected.TL5]
+passed = false
+
+[expected.TL6]
+passed = true
+evidence = "Deploy my services to production myself on our Kubernetes cluster"
+
+[expected.TL7]
+passed = true
+evidence = "Cut the scoring API's response time from 3 seconds to 400 ms by caching credit bureau results"
+
+[expected.TL8]
+passed = false
+
+# The recruiter's key, judged on the top third (the first 3 of 8 lines; the model sees lines 2-3).
+# Everything passes: 12/12 = 10.0 -> strong_hire.
+[recruiter]
+expected_decision = "strong_hire"
+
+[recruiter.expected.R1]
+passed = true
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = true
+
+[recruiter.expected.C1]
+passed = true
+evidence = "Built the Python REST API that scores loan applications in our lending app, used by 80,000 borrowers"
+
+[recruiter.expected.C2]
+passed = true
+evidence = "used by 80,000 borrowers"
+
+[recruiter.expected.R4]
+passed = true
+
+# The hiring manager's key (checklist v2: targets from the posting), held-out.
+# HM3, HM4 (2) = 2/4 = 5.0 -> lean_no. A lenient HM1 gives 7.5 lean_hire.
+[hiring_manager]
+expected_decision = "lean_no"
+
+[hiring_manager.expected.HM1]
+# Trap: fintech is the same industry; repayments tables and a service that only calls Stripe do not
+# process payments. The main job of what they built is scoring loans.
+passed = false
+
+[hiring_manager.expected.HM2]
+passed = false
+
+[hiring_manager.expected.HM3]
+passed = true
+evidence = "Cut the scoring API's response time from 3 seconds to 400 ms by caching credit bureau results"
+
+[hiring_manager.expected.HM4]
+passed = true
+evidence = "Deploy my services to production myself on our Kubernetes cluster"

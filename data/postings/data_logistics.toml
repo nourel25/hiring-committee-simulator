@@ -31,3 +31,8 @@ This year's focus: predicting delivery delays and cutting the warehouse bill.
 titles = ["data engineer", "analytics engineer"]
 keywords = ["Python", "SQL"]
 min_years = 3
+
+# The hiring manager's targets, from the brief; code writes them into HM1 and HM2 (Step 4.3e).
+[hiring_manager]
+system = "data pipelines that load a warehouse which business teams, such as operations or finance, use to plan their work"
+goals = ["predicting delivery delays", "a lower warehouse bill"]

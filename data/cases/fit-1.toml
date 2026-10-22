@@ -1,0 +1,101 @@
+# Held-out case for the hiring manager (checklist v2), against a too-strict HM1: a subscription
+# business that charges saved cards is a payments system although the company is not in payments,
+# and "failed renewal charges" is this year's goal in other words. Written and keyed
+# before any v2 run; not yet independently reviewed.
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "fit-1"
+label = "good"
+split = "heldout"
+checklist = "backend_payments"
+# TL1-TL4 (12) = 12/16 = 7.5 -> lean_hire.
+expected_decision = "lean_hire"
+
+cv = """
+Backend Engineer, subscription box company (2021-present)
+- Built the Python service that charges customers' saved cards each month for their subscriptions
+- Cut failed renewal charges from 6% to 2% by retrying declined cards at better times
+- Maintain the REST API that our web app uses to manage subscriptions
+- Designed the PostgreSQL schema for subscriptions and invoices: which tables exist and how they relate
+- Deploy my services to production myself with GitLab CI
+
+Junior Developer, web agency (2018-2021)
+- Built Django sites for local businesses
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Built the Python service that charges customers' saved cards each month for their subscriptions"
+
+[expected.TL2]
+passed = true
+evidence = "Maintain the REST API that our web app uses to manage subscriptions"
+
+[expected.TL3]
+passed = true
+evidence = "Designed the PostgreSQL schema for subscriptions and invoices: which tables exist and how they relate"
+
+[expected.TL4]
+passed = true
+evidence = "Deploy my services to production myself with GitLab CI"
+
+[expected.TL5]
+passed = false
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+# Fewer failed charges is a business result, not the performance of a system.
+passed = false
+
+[expected.TL8]
+passed = false
+
+# The recruiter's key, judged on the top third (the first 3 of 8 lines; the model sees lines 2-3).
+# R1, R2, C1 (9) + R4, C2 (2) = 11/12 = 9.2 -> strong_hire. R3 fails: REST only on line 4.
+[recruiter]
+expected_decision = "strong_hire"
+
+[recruiter.expected.R1]
+passed = true
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = false
+
+[recruiter.expected.C1]
+passed = true
+evidence = "Built the Python service that charges customers' saved cards each month for their subscriptions"
+
+[recruiter.expected.C2]
+passed = true
+evidence = "Cut failed renewal charges from 6% to 2% by retrying declined cards at better times"
+
+[recruiter.expected.R4]
+passed = true
+
+# The hiring manager's key (checklist v2: targets from the posting), held-out.
+# All four pass: 10.0 -> strong_hire.
+[hiring_manager]
+expected_decision = "strong_hire"
+
+[hiring_manager.expected.HM1]
+# Charging saved cards is processing card payments, whatever the company sells.
+passed = true
+evidence = "Built the Python service that charges customers' saved cards each month for their subscriptions"
+
+[hiring_manager.expected.HM2]
+# Failed renewal charges are failed payments.
+passed = true
+evidence = "Cut failed renewal charges from 6% to 2% by retrying declined cards at better times"
+
+[hiring_manager.expected.HM3]
+passed = true
+evidence = "Cut failed renewal charges from 6% to 2% by retrying declined cards at better times"
+
+[hiring_manager.expected.HM4]
+passed = true
+evidence = "Deploy my services to production myself with GitLab CI"

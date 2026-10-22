@@ -23,8 +23,17 @@ class RecruiterScreen(BaseModel):
     min_years: int = Field(ge=0)
 
 
+class HiringManagerTargets(BaseModel):
+    """What the hiring manager's checks compare a CV with, taken from the brief and reviewed by a
+    person. Code writes them into the check text, so the model never has to infer them."""
+
+    system: str
+    goals: list[str] = Field(min_length=1)
+
+
 class Posting(BaseModel):
-    """A job posting as published, plus a hand-written company brief and the recruiter's screen."""
+    """A job posting as published, plus a hand-written company brief, the recruiter's screen and
+    the hiring manager's targets."""
 
     model_config = ConfigDict(str_strip_whitespace=True)
 
@@ -32,6 +41,7 @@ class Posting(BaseModel):
     text: str
     brief: str
     recruiter: RecruiterScreen
+    hiring_manager: HiringManagerTargets
 
 
 class Checklist(BaseModel):
