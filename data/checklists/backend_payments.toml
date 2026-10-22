@@ -8,27 +8,33 @@ posting = "Backend Engineer (Python), Payments Platform (mid-level)"
 # "leading meetings" open, and several model families read them as passes.
 version = 3
 
+# sources (Step 4.3f): the posting lines each must-have comes from. Used by code only, to check
+# whether the devil's advocate's objections name the gaps the key knows; the tech lead never sees them.
 # Must-haves: weight 3. Any failed must-have caps the decision at lean_no.
 
 [[items]]
 id = "TL1"
 text = "Has built server-side applications in Python that other systems or users call, such as APIs or background services, as part of their job; scripts, notebooks and reports do not count"
 importance = "must"
+sources = ["Strong Python skills, 3+ years"]
 
 [[items]]
 id = "TL2"
 text = "Has maintained REST APIs that serve real users in production"
 importance = "must"
+sources = ["Experience building and maintaining REST APIs"]
 
 [[items]]
 id = "TL3"
 text = "Has designed a relational database schema, deciding which tables exist and how they relate; querying or changing an existing schema does not count"
 importance = "must"
+sources = ["Hands-on experience with relational databases (PostgreSQL preferred), including schema design, not just writing queries"]
 
 [[items]]
 id = "TL4"
 text = "Has deployed services to production themselves"
 importance = "must"
+sources = ["Comfortable owning services in production: deployment, monitoring and on-call"]
 
 # Nice-to-haves: weight 1.
 # TL5 is a requirement in the posting, demoted here because CVs rarely mention it.

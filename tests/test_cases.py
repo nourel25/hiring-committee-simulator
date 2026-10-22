@@ -3,8 +3,15 @@
 import pytest
 from pydantic import ValidationError
 
-from hcs.cases import key_problems, load_case, load_cases, load_checklist, save_checklist
-from hcs.policies import apply_truth_check, compute_score, decide, failed_must_haves
+from hcs.cases import (
+    key_problems,
+    load_case,
+    load_cases,
+    load_checklist,
+    load_posting,
+    save_checklist,
+)
+from hcs.policies import apply_truth_check, compute_score, decide, failed_must_haves, quote_in_cv
 from hcs.schemas import Check, Review
 from hcs.screening import recruiter_view
 from tests.fakes import TINY_CHECKLIST
@@ -133,6 +140,17 @@ def test_real_recruiter_key_is_consistent(case):
 
 def test_every_case_has_a_recruiter_key():
     assert [case.id for case in load_cases() if case.recruiter is None] == []
+
+
+@pytest.mark.parametrize("name", ["backend_payments", "data_logistics"])
+def test_every_must_have_names_posting_lines_that_exist(name):
+    checklist = load_checklist(name)
+    posting = load_posting(name)
+
+    for item in checklist.items:
+        if item.importance == "must":
+            assert item.sources, item.id
+        assert all(quote_in_cv(source, posting.text) for source in item.sources), item.id
 
 
 @pytest.mark.parametrize("case", load_cases(), ids=lambda case: case.id)

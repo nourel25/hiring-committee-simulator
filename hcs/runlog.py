@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from hcs.schemas import Decision, Review
+from hcs.schemas import Decision, Objection, Review
 
 RUNS_PATH = Path("runs") / "runs.jsonl"
 
@@ -51,6 +51,10 @@ class RunRecord(BaseModel):
     review: Review | None = None
     score: float | None = None
     decision: Decision | None = None
+
+    # The devil's advocate's result instead of a review (None for other reviewers and failed runs)
+    objections: list[Objection] | None = None
+    ungrounded_objections: list[int] = []
 
 
 def append_run(record: RunRecord, path: Path = RUNS_PATH) -> None:

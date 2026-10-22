@@ -6,7 +6,7 @@ from pathlib import Path
 
 from openai import OpenAI
 
-from hcs.agents import hiring_manager, recruiter, tech_lead
+from hcs.agents import devils_advocate, hiring_manager, recruiter, tech_lead
 from hcs.cases import Case, Checklist, Posting
 from hcs.llm import LLMOutputError, get_structured
 from hcs.policies import (
@@ -15,10 +15,41 @@ from hcs.policies import (
     compute_score,
     decide,
     failed_must_haves,
+    ungrounded_objections,
 )
 from hcs.runlog import RUNS_PATH, RunRecord, append_run
-from hcs.schemas import Check, Review, review_model_for
+from hcs.schemas import Check, Objections, Review, review_model_for
 from hcs.screening import recruiter_view, screening_checks
+
+
+def run_identity(
+    *,
+    agent: str,
+    prompt_version: str,
+    case_id: str,
+    checklist: str | None,
+    messages: list[dict[str, str]],
+    model: str,
+    temperature: float,
+    seed: int,
+    max_tokens: int,
+    max_retries: int,
+) -> dict:
+    """The fields every run record starts with, filled in before the call."""
+    return {
+        "run_id": uuid.uuid4().hex,
+        "started_at": datetime.now(timezone.utc),
+        "agent": agent,
+        "case_id": case_id,
+        "checklist": checklist,
+        "prompt_version": prompt_version,
+        "model": model,
+        "temperature": temperature,
+        "seed": seed,
+        "max_tokens": max_tokens,
+        "max_retries": max_retries,
+        "messages": messages,
+    }
 
 
 def run_review(
@@ -42,20 +73,18 @@ def run_review(
 ) -> RunRecord:
     """Any reviewer's run: the model answers model_ids, the policies check its quotes against
     truth_text, code checks join unchanged, and the whole checklist is scored, gated and logged."""
-    common = {
-        "run_id": uuid.uuid4().hex,
-        "started_at": datetime.now(timezone.utc),
-        "agent": agent,
-        "case_id": case_id,
-        "checklist": f"{checklist.name}@v{checklist.version}",
-        "prompt_version": prompt_version,
-        "model": model,
-        "temperature": temperature,
-        "seed": seed,
-        "max_tokens": max_tokens,
-        "max_retries": max_retries,
-        "messages": messages,
-    }
+    common = run_identity(
+        agent=agent,
+        prompt_version=prompt_version,
+        case_id=case_id,
+        checklist=f"{checklist.name}@v{checklist.version}",
+        messages=messages,
+        model=model,
+        temperature=temperature,
+        seed=seed,
+        max_tokens=max_tokens,
+        max_retries=max_retries,
+    )
 
     try:
         result = get_structured(
@@ -211,3 +240,69 @@ def review_hiring_manager(
         max_retries=hiring_manager.MAX_RETRIES,
         strict=strict,
     )
+
+
+def review_devils_advocate(
+    client: OpenAI,
+    case: Case,
+    posting: Posting,
+    runs_path: Path = RUNS_PATH,
+    model: str = devils_advocate.MODEL,
+    temperature: float = devils_advocate.TEMPERATURE,
+    seed: int = devils_advocate.SEED,
+    max_tokens: int = devils_advocate.MAX_TOKENS,
+    strict: bool = False,
+) -> RunRecord:
+    """Run the devil's advocate on one case: three objections, each traced to the posting or the
+    CV. No checklist, no score and no decision."""
+    messages = devils_advocate.build_messages(posting.text, case.cv)
+    common = run_identity(
+        agent="devils_advocate",
+        prompt_version=devils_advocate.PROMPT_VERSION,
+        case_id=case.id,
+        checklist=None,
+        messages=messages,
+        model=model,
+        temperature=temperature,
+        seed=seed,
+        max_tokens=max_tokens,
+        max_retries=devils_advocate.MAX_RETRIES,
+    )
+
+    try:
+        result = get_structured(
+            client,
+            messages,
+            response_model=Objections,
+            model=model,
+            temperature=temperature,
+            seed=seed,
+            max_tokens=max_tokens,
+            max_retries=devils_advocate.MAX_RETRIES,
+            strict=strict,
+        )
+    except LLMOutputError as error:
+        record = RunRecord(
+            **common,
+            status="error",
+            error=str(error),
+            attempts=error.attempts,
+            raw_reply=error.raw_reply,
+        )
+        append_run(record, runs_path)
+        return record
+
+    objections = Objections.model_validate(result.parsed.model_dump())
+    record = RunRecord(
+        **common,
+        status="ok",
+        attempts=result.attempts,
+        seconds=result.seconds,
+        prompt_tokens=result.prompt_tokens,
+        completion_tokens=result.completion_tokens,
+        raw_reply=result.raw_reply,
+        objections=objections.objections,
+        ungrounded_objections=ungrounded_objections(objections, posting.text, case.cv),
+    )
+    append_run(record, runs_path)
+    return record

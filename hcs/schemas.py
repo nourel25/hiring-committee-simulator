@@ -55,6 +55,8 @@ class ChecklistItem(BaseModel):
     importance: Literal["must", "nice"] = Field(
         description="'must' = required by the posting; 'nice' = a bonus."
     )
+    # Used by code only (the devil's advocate's evaluation), never shown to a model.
+    sources: list[str] = Field(default=[], description="The posting lines this check comes from.")
 
 
 class DraftCheck(BaseModel):
@@ -111,4 +113,35 @@ class JobAnalysis(BaseModel):
     )
     dropped: list[DroppedLine] = Field(
         description="Posting lines that are neither a check nor a lookup."
+    )
+
+
+# The devil's advocate's reply: no checks, no score.
+Severity = Literal["low", "medium", "high"]
+
+
+class Objection(BaseModel):
+    """One reason not to hire. The quotes come before the reason and the severity, so the model
+    grounds the objection before it judges how serious it is."""
+
+    requirement: str | None = Field(
+        max_length=200,
+        description="The shortest exact quote from the posting this objection is about, or null.",
+    )
+    evidence: str | None = Field(
+        max_length=200,
+        description=(
+            "The shortest exact quote from the CV that shows the problem, or null when the "
+            "problem is that the CV never shows something."
+        ),
+    )
+    reason: str = Field(
+        max_length=300, description="One sentence: why this is a reason not to hire."
+    )
+    severity: Severity = Field(description="'high', 'medium' or 'low', as the instructions define.")
+
+
+class Objections(BaseModel):
+    objections: list[Objection] = Field(
+        min_length=3, max_length=3, description="Exactly three objections, strongest first."
     )

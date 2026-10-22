@@ -8,6 +8,8 @@ name = "data_logistics"
 posting = "Data Engineer, Logistics Analytics (mid-level)"
 version = 1
 
+# sources (Step 4.3f): the posting lines each must-have comes from. Used by code only, to check
+# whether the devil's advocate's objections name the gaps the key knows; the tech lead never sees them.
 # Must-haves: weight 3. Any failed must-have caps the decision at lean_no.
 # TL1 covers posting lines 1 and 2: pipelines are the work this role does with Python and SQL,
 # so one check avoids counting one CV line twice (the TL1/TL2 compromise in backend_payments).
@@ -16,16 +18,19 @@ version = 1
 id = "TL1"
 text = "Has built and maintained batch data pipelines in Python or SQL that other teams rely on, as part of their job; one-off scripts, notebooks and reports that only the author uses do not count"
 importance = "must"
+sources = ["3+ years of Python and SQL", "Built and maintained batch data pipelines that other teams rely on"]
 
 [[items]]
 id = "TL2"
 text = "Has designed data models for analytics in a data warehouse, deciding which tables exist and how they relate; querying existing models or adding columns to them does not count"
 importance = "must"
+sources = ["Hands-on with a cloud data warehouse (Snowflake or BigQuery), including designing data models for analytics"]
 
 [[items]]
 id = "TL3"
 text = "Has run their own pipelines in production on a scheduler; building pipelines that someone else deploys and runs does not count"
 importance = "must"
+sources = ["Own your pipelines in production: scheduling, data-quality checks and the on-call rota"]
 
 # Nice-to-haves: weight 1.
 # TL4 and TL5 are requirements in the posting, made nice because many qualified CVs never mention them.

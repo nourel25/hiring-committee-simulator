@@ -3,7 +3,7 @@
 import statistics
 from dataclasses import dataclass
 
-from hcs.cases import AgentKey, Case
+from hcs.cases import AgentKey, Case, Checklist
 from hcs.policies import normalize
 from hcs.runlog import RunRecord
 from hcs.schemas import Decision
@@ -240,4 +240,79 @@ def format_model_row(summary: ModelSummary) -> str:
     return (
         f"{summary.model:<15}{decisions:>6}{failed:>8}{retried:>8}{summary.lenient:>8}{agree:>8}"
         f"{gap:>6}{widest:>6}{seconds:>6}{gpu:>6}"
+    )
+
+
+# The devil's advocate has no checks to compare, so it is judged against the gaps the tech lead's key
+# already knows: the must-haves the key fails, traced to the posting lines they come from.
+
+
+def must_haves_named(requirement: str | None, checklist: Checklist) -> list[str]:
+    """Ids of the must-haves whose posting lines the quoted requirement is part of (or contains)."""
+    return [
+        item.id
+        for item in checklist.items
+        if item.importance == "must"
+        and any(evidence_matches(requirement, source) for source in item.sources)
+    ]
+
+
+@dataclass
+class ObjectionReport:
+    """How one devil's-advocate run compares with the tech lead's key for the same CV."""
+
+    case_id: str
+    expected_decision: Decision
+    gaps: list[str]
+    status: str
+    severities: list[str]
+    # None when the key has no failed must-have: there is no gap to find.
+    hit: bool | None
+    # High objections that name only must-haves the key says the CV meets.
+    false_alarms: int
+    ungrounded: int
+    seconds: float | None
+
+
+def compare_objections(case: Case, record: RunRecord, checklist: Checklist) -> ObjectionReport:
+    """Did a grounded high objection name a must-have the key fails, and did any accuse the CV of
+    missing a must-have the key says it has?"""
+    must_ids = {item.id for item in checklist.items if item.importance == "must"}
+    gaps = [check_id for check_id in must_ids if not case.expected[check_id].passed]
+    gaps.sort()
+    objections = record.objections or []
+    grounded_highs = [
+        objection
+        for position, objection in enumerate(objections)
+        if objection.severity == "high" and position not in record.ungrounded_objections
+    ]
+    named = [must_haves_named(objection.requirement, checklist) for objection in grounded_highs]
+    return ObjectionReport(
+        case_id=case.id,
+        expected_decision=case.expected_decision,
+        gaps=gaps,
+        status=record.status,
+        severities=[objection.severity for objection in objections],
+        hit=any(set(ids) & set(gaps) for ids in named) if gaps else None,
+        false_alarms=sum(1 for ids in named if ids and not set(ids) & set(gaps)),
+        ungrounded=len(record.ungrounded_objections),
+        seconds=record.seconds,
+    )
+
+
+OBJECTION_HEADER = (
+    f"{'case':<{CASE_WIDTH}}{'tech lead':<12}{'gaps':<14}{'severity':<10}"
+    f"{'hit':<5}{'false':>6}{'ungrounded':>11}"
+)
+
+
+def format_objection_row(report: ObjectionReport) -> str:
+    """One line of the devil's-advocate table, aligned under OBJECTION_HEADER."""
+    gaps = ",".join(report.gaps) or "-"
+    # H M L: high, medium, low, strongest first.
+    severities = " ".join(s[0].upper() for s in report.severities) or report.status
+    hit = "-" if report.hit is None else ("yes" if report.hit else "NO")
+    return (
+        f"{report.case_id:<{CASE_WIDTH}}{report.expected_decision:<12}{gaps:<14}{severities:<10}"
+        f"{hit:<5}{report.false_alarms:>6}{report.ungrounded:>11}"
     )
