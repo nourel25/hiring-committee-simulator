@@ -37,3 +37,8 @@ min_years = 3
 [hiring_manager]
 system = "a service that processes card payments or pays out money"
 goals = ["fewer failed payments", "new payment methods"]
+
+# Requirements lines the devil's advocate skips (Step 4.3f): a trait no CV can prove, already
+# dropped from the tech lead's checklist; every CV would get a "not shown" objection for it.
+[devils_advocate]
+ignore = ["Team player with great communication skills"]

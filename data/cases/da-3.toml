@@ -1,0 +1,100 @@
+# Held-out case for the devil's advocate (v2): a CV that shows every Requirements line, including
+# deployment, monitoring and on-call. It should get no high objection (v1 gave a high to 6 of 14
+# gap-free CVs). Written and keyed before any v2 run; not yet independently reviewed.
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "da-3"
+label = "good"
+split = "heldout"
+checklist = "backend_payments"
+# Everything passes: 16/16 = 10.0 -> strong_hire.
+expected_decision = "strong_hire"
+
+cv = """
+Backend Engineer, online marketplace (2019-present)
+- Built and maintain the Python REST APIs for seller listings, used by 40,000 sellers in production
+- Designed the PostgreSQL schema for listings and offers: which tables exist and how they relate
+- Deploy my services to production myself, watch their Grafana dashboards and join the on-call rotation
+- Run our services on Kubernetes in AWS
+- Cut the search API's p95 latency from 900 ms to 200 ms with query indexes
+- Mentor two junior engineers through weekly pairing
+
+Junior Developer, bank (2016-2019)
+- Built internal Java tools
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Built and maintain the Python REST APIs for seller listings, used by 40,000 sellers in production"
+
+[expected.TL2]
+passed = true
+evidence = "Built and maintain the Python REST APIs for seller listings, used by 40,000 sellers in production"
+
+[expected.TL3]
+passed = true
+evidence = "Designed the PostgreSQL schema for listings and offers: which tables exist and how they relate"
+
+[expected.TL4]
+passed = true
+evidence = "Deploy my services to production myself, watch their Grafana dashboards and join the on-call rotation"
+
+[expected.TL5]
+passed = true
+evidence = "Deploy my services to production myself, watch their Grafana dashboards and join the on-call rotation"
+
+[expected.TL6]
+passed = true
+evidence = "Run our services on Kubernetes in AWS"
+
+[expected.TL7]
+passed = true
+evidence = "Cut the search API's p95 latency from 900 ms to 200 ms with query indexes"
+
+[expected.TL8]
+passed = true
+evidence = "Mentor two junior engineers through weekly pairing"
+
+# The recruiter's key, judged on the top third (the first 3 of 9 lines; the model sees lines 2-3).
+# Everything passes: 12/12 = 10.0 -> strong_hire.
+[recruiter]
+expected_decision = "strong_hire"
+
+[recruiter.expected.R1]
+passed = true
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = true
+
+[recruiter.expected.C1]
+passed = true
+evidence = "Built and maintain the Python REST APIs for seller listings, used by 40,000 sellers in production"
+
+[recruiter.expected.C2]
+passed = true
+evidence = "used by 40,000 sellers in production"
+
+[recruiter.expected.R4]
+passed = true
+
+# The hiring manager's key (checklist v2). HM3, HM4 (2) = 2/4 = 5.0 -> lean_no.
+[hiring_manager]
+expected_decision = "lean_no"
+
+[hiring_manager.expected.HM1]
+# Seller listings; the main job is not processing payments.
+passed = false
+
+[hiring_manager.expected.HM2]
+passed = false
+
+[hiring_manager.expected.HM3]
+passed = true
+evidence = "Cut the search API's p95 latency from 900 ms to 200 ms with query indexes"
+
+[hiring_manager.expected.HM4]
+passed = true
+evidence = "Deploy my services to production myself, watch their Grafana dashboards and join the on-call rotation"

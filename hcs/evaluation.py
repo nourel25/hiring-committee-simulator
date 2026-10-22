@@ -268,33 +268,41 @@ class ObjectionReport:
     severities: list[str]
     # None when the key has no failed must-have: there is no gap to find.
     hit: bool | None
-    # High objections that name only must-haves the key says the CV meets.
+    # High objections ("not shown at all") that name only must-haves the key says the CV meets.
     false_alarms: int
     ungrounded: int
     seconds: float | None
 
 
 def compare_objections(case: Case, record: RunRecord, checklist: Checklist) -> ObjectionReport:
-    """Did a grounded high objection name a must-have the key fails, and did any accuse the CV of
-    missing a must-have the key says it has?"""
+    """Did an objection name a must-have the key fails, and did a high one claim the CV lacks a
+    must-have the key says it has?
+
+    v2 (Step 4.3f): a hit is an objection of any severity, because code only picks requirement lines
+    the model rated as not fully shown; a line with several parts (scheduling, quality checks and
+    on-call) shown only in part is "partly", so medium, and still a real finding. v1 counted highs only.
+    """
     must_ids = {item.id for item in checklist.items if item.importance == "must"}
-    gaps = [check_id for check_id in must_ids if not case.expected[check_id].passed]
-    gaps.sort()
-    objections = record.objections or []
-    grounded_highs = [
+    gaps = sorted(check_id for check_id in must_ids if not case.expected[check_id].passed)
+    objections = [
         objection
-        for position, objection in enumerate(objections)
-        if objection.severity == "high" and position not in record.ungrounded_objections
+        for position, objection in enumerate(record.objections or [])
+        if position not in record.ungrounded_objections
     ]
-    named = [must_haves_named(objection.requirement, checklist) for objection in grounded_highs]
+    named = [must_haves_named(objection.requirement, checklist) for objection in objections]
+    named_by_highs = [
+        ids
+        for ids, objection in zip(named, objections, strict=True)
+        if objection.severity == "high"
+    ]
     return ObjectionReport(
         case_id=case.id,
         expected_decision=case.expected_decision,
         gaps=gaps,
         status=record.status,
-        severities=[objection.severity for objection in objections],
+        severities=[objection.severity for objection in record.objections or []],
         hit=any(set(ids) & set(gaps) for ids in named) if gaps else None,
-        false_alarms=sum(1 for ids in named if ids and not set(ids) & set(gaps)),
+        false_alarms=sum(1 for ids in named_by_highs if ids and not set(ids) & set(gaps)),
         ungrounded=len(record.ungrounded_objections),
         seconds=record.seconds,
     )

@@ -31,6 +31,12 @@ class HiringManagerTargets(BaseModel):
     goals: list[str] = Field(min_length=1)
 
 
+class DevilsAdvocateLines(BaseModel):
+    """Requirements lines the devil's advocate skips, reviewed by a person: traits no CV can prove."""
+
+    ignore: list[str] = []
+
+
 class Posting(BaseModel):
     """A job posting as published, plus a hand-written company brief, the recruiter's screen and
     the hiring manager's targets."""
@@ -42,6 +48,7 @@ class Posting(BaseModel):
     brief: str
     recruiter: RecruiterScreen
     hiring_manager: HiringManagerTargets
+    devils_advocate: DevilsAdvocateLines = DevilsAdvocateLines()
 
 
 class Checklist(BaseModel):

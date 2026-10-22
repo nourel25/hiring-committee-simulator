@@ -1,6 +1,6 @@
 """Rules applied to a reviewer's reply after the model answers. Agent-independent."""
 
-from hcs.schemas import Check, ChecklistItem, Decision, Objections, Review
+from hcs.schemas import Check, ChecklistItem, Decision, RequirementRatings, Review
 
 # Characters models sometimes write instead of the plain ones in the CV.
 LOOKALIKES = str.maketrans(
@@ -99,18 +99,14 @@ def decide(score: float, failed: list[str]) -> Decision:
     return decision
 
 
-def ungrounded_objections(objections: Objections, posting_text: str, cv_text: str) -> list[int]:
-    """Positions of objections that cite nothing, or quote a line missing from the posting or the CV.
-
-    The committee should ignore these: an objection nobody can trace is an opinion, not evidence.
-    """
-    return [
-        position
-        for position, objection in enumerate(objections.objections)
-        if (objection.requirement is None and objection.evidence is None)
-        or (
-            objection.requirement is not None
-            and not quote_in_cv(objection.requirement, posting_text)
-        )
-        or (objection.evidence is not None and not quote_in_cv(objection.evidence, cv_text))
-    ]
+def apply_rating_policy(ratings: RequirementRatings, cv_text: str) -> int:
+    """A requirement rated as shown (fully or partly) without a real CV quote counts as not shown,
+    like a pass without evidence. Returns how many ratings changed."""
+    changed = 0
+    for rating in ratings.ratings:
+        if rating.shown != "not" and (
+            rating.evidence is None or not quote_in_cv(rating.evidence, cv_text)
+        ):
+            rating.shown = "not"
+            changed += 1
+    return changed

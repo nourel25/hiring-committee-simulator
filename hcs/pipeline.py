@@ -11,14 +11,20 @@ from hcs.cases import Case, Checklist, Posting
 from hcs.llm import LLMOutputError, get_structured
 from hcs.policies import (
     apply_evidence_policy,
+    apply_rating_policy,
     apply_truth_check,
     compute_score,
     decide,
     failed_must_haves,
-    ungrounded_objections,
 )
 from hcs.runlog import RUNS_PATH, RunRecord, append_run
-from hcs.schemas import Check, Objections, Review, review_model_for
+from hcs.schemas import (
+    Check,
+    RequirementRatings,
+    Review,
+    ratings_model_for,
+    review_model_for,
+)
 from hcs.screening import recruiter_view, screening_checks
 
 
@@ -253,9 +259,10 @@ def review_devils_advocate(
     max_tokens: int = devils_advocate.MAX_TOKENS,
     strict: bool = False,
 ) -> RunRecord:
-    """Run the devil's advocate on one case: three objections, each traced to the posting or the
-    CV. No checklist, no score and no decision."""
-    messages = devils_advocate.build_messages(posting.text, case.cv)
+    """Run the devil's advocate on one case: the model rates every requirement line, the rating
+    policy checks its quotes, and code picks the objections. No checklist, score or decision."""
+    lines = devils_advocate.requirement_lines(posting.text, posting.devils_advocate.ignore)
+    messages = devils_advocate.build_messages(lines, case.cv)
     common = run_identity(
         agent="devils_advocate",
         prompt_version=devils_advocate.PROMPT_VERSION,
@@ -273,7 +280,7 @@ def review_devils_advocate(
         result = get_structured(
             client,
             messages,
-            response_model=Objections,
+            response_model=ratings_model_for(list(lines)),
             model=model,
             temperature=temperature,
             seed=seed,
@@ -292,7 +299,8 @@ def review_devils_advocate(
         append_run(record, runs_path)
         return record
 
-    objections = Objections.model_validate(result.parsed.model_dump())
+    ratings = RequirementRatings.model_validate(result.parsed.model_dump())
+    changes = apply_rating_policy(ratings, case.cv)
     record = RunRecord(
         **common,
         status="ok",
@@ -301,8 +309,8 @@ def review_devils_advocate(
         prompt_tokens=result.prompt_tokens,
         completion_tokens=result.completion_tokens,
         raw_reply=result.raw_reply,
-        objections=objections.objections,
-        ungrounded_objections=ungrounded_objections(objections, posting.text, case.cv),
+        truth_check_changes=changes,
+        objections=devils_advocate.pick_objections(ratings, lines),
     )
     append_run(record, runs_path)
     return record

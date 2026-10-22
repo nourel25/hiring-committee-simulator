@@ -1,6 +1,13 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, create_model, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    create_model,
+    field_validator,
+    model_validator,
+)
 
 
 class Check(BaseModel):
@@ -116,32 +123,75 @@ class JobAnalysis(BaseModel):
     )
 
 
-# The devil's advocate's reply: no checks, no score.
+# The devil's advocate (v2): the model rates every requirement line; code picks the objections.
+Shown = Literal["fully", "partly", "not"]
 Severity = Literal["low", "medium", "high"]
 
 
-class Objection(BaseModel):
-    """One reason not to hire. The quotes come before the reason and the severity, so the model
-    grounds the objection before it judges how serious it is."""
+def null_if_written_out(value: object) -> object:
+    """A model sometimes writes null as the word "null"; treat that (and "None" or "") as missing."""
+    if isinstance(value, str) and value.strip().casefold() in {"", "null", "none"}:
+        return None
+    return value
 
-    requirement: str | None = Field(
-        max_length=200,
-        description="The shortest exact quote from the posting this objection is about, or null.",
-    )
+
+class LineRating(BaseModel):
+    """How well the CV shows one requirement line. The quote comes before the verdict."""
+
+    id: str = Field(description="The requirement's id, copied exactly from the input, e.g. 'D1'.")
     evidence: str | None = Field(
         max_length=200,
-        description=(
-            "The shortest exact quote from the CV that shows the problem, or null when the "
-            "problem is that the CV never shows something."
-        ),
+        description="The shortest exact quote from the CV most relevant to the requirement, or null.",
     )
     reason: str = Field(
-        max_length=300, description="One sentence: why this is a reason not to hire."
+        max_length=300,
+        description="One sentence on what the CV shows or fails to show for this requirement.",
     )
-    severity: Severity = Field(description="'high', 'medium' or 'low', as the instructions define.")
+    shown: Shown = Field(description="'fully', 'partly' or 'not', as the instructions define.")
+
+    _evidence_null = field_validator("evidence", mode="before")(null_if_written_out)
 
 
-class Objections(BaseModel):
-    objections: list[Objection] = Field(
-        min_length=3, max_length=3, description="Exactly three objections, strongest first."
+class RequirementRatings(BaseModel):
+    ratings: list[LineRating] = Field(
+        min_length=1, description="One rating per requirement, in the order given."
     )
+
+
+def ratings_model_for(ids: list[str]) -> type[RequirementRatings]:
+    """RequirementRatings whose ids can only be the given ids, each rated exactly once.
+
+    The enum stops the grammar writing other ids; the validator sends a reply that skips or repeats
+    a requirement back for repair, so no requirement goes unrated.
+    """
+    rating_model = create_model(
+        "LineRating",
+        __base__=LineRating,
+        id=(Literal[tuple(ids)], Field(description=LineRating.model_fields["id"].description)),
+    )
+
+    def every_line_once(ratings: RequirementRatings) -> RequirementRatings:
+        got = [rating.id for rating in ratings.ratings]
+        if sorted(got) != sorted(ids):
+            raise ValueError(f"rate each of {', '.join(ids)} exactly once; got {', '.join(got)}")
+        return ratings
+
+    return create_model(
+        "RequirementRatings",
+        __base__=RequirementRatings,
+        __validators__={"every_line_once": model_validator(mode="after")(every_line_once)},
+        ratings=(
+            list[rating_model],
+            Field(min_length=1, description=RequirementRatings.model_fields["ratings"].description),
+        ),
+    )
+
+
+class Objection(BaseModel):
+    """One reason not to hire, built by code from a rating: the requirement line, the CV quote,
+    the model's reason, and a severity code sets from the rating."""
+
+    requirement: str | None = Field(max_length=200)
+    evidence: str | None = Field(max_length=200)
+    reason: str = Field(max_length=300)
+    severity: Severity

@@ -36,3 +36,8 @@ min_years = 3
 [hiring_manager]
 system = "data pipelines that load a warehouse which business teams, such as operations or finance, use to plan their work"
 goals = ["predicting delivery delays", "a lower warehouse bill"]
+
+# Requirements lines the devil's advocate skips (Step 4.3f): a trait no CV can prove, already
+# dropped from the tech lead's checklist; every CV would get a "not shown" objection for it.
+[devils_advocate]
+ignore = ["Strong stakeholder management"]

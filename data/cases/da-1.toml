@@ -1,0 +1,98 @@
+# Held-out case for the devil's advocate (v2): the gap is on the posting's fourth Requirements line,
+# which v1 never reached. A release team deploys and monitors the candidate's work (TL4 fails).
+# Written and keyed before any v2 run; not yet independently reviewed.
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "da-1"
+label = "borderline"
+split = "heldout"
+checklist = "backend_payments"
+# TL1, TL2, TL3 (9) + TL7, TL8 (2) = 11/16 = 6.9 -> lean_hire, capped at lean_no (TL4 fails).
+expected_decision = "lean_no"
+
+cv = """
+Backend Engineer, food ordering app (2020-present)
+- Built and maintain the Python REST APIs for restaurant menus and orders, used by 20,000 diners a day
+- Designed the PostgreSQL schema for menus, orders and restaurants: which tables exist and how they relate
+- Hand my finished changes to the release team, who deploy and monitor them in production
+- Cut the menu API's response time from 700 ms to 120 ms by adding Redis caching
+- Mentor a junior developer through weekly code reviews
+
+Junior Developer, marketing agency (2017-2020)
+- Built PHP websites for clients
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Built and maintain the Python REST APIs for restaurant menus and orders, used by 20,000 diners a day"
+
+[expected.TL2]
+passed = true
+evidence = "Built and maintain the Python REST APIs for restaurant menus and orders, used by 20,000 diners a day"
+
+[expected.TL3]
+passed = true
+evidence = "Designed the PostgreSQL schema for menus, orders and restaurants: which tables exist and how they relate"
+
+[expected.TL4]
+# Trap: the release team deploys their changes.
+passed = false
+
+[expected.TL5]
+# The release team monitors them too.
+passed = false
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+passed = true
+evidence = "Cut the menu API's response time from 700 ms to 120 ms by adding Redis caching"
+
+[expected.TL8]
+passed = true
+evidence = "Mentor a junior developer through weekly code reviews"
+
+# The recruiter's key, judged on the top third (the first 3 of 8 lines; the model sees lines 2-3).
+# Everything passes: 12/12 = 10.0 -> strong_hire.
+[recruiter]
+expected_decision = "strong_hire"
+
+[recruiter.expected.R1]
+passed = true
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = true
+
+[recruiter.expected.C1]
+passed = true
+evidence = "Built and maintain the Python REST APIs for restaurant menus and orders, used by 20,000 diners a day"
+
+[recruiter.expected.C2]
+passed = true
+evidence = "used by 20,000 diners a day"
+
+[recruiter.expected.R4]
+passed = true
+
+# The hiring manager's key (checklist v2). HM3 (1) = 1/4 = 2.5 -> strong_no.
+[hiring_manager]
+expected_decision = "strong_no"
+
+[hiring_manager.expected.HM1]
+# Menus and orders; the main job is not processing payments.
+passed = false
+
+[hiring_manager.expected.HM2]
+passed = false
+
+[hiring_manager.expected.HM3]
+passed = true
+evidence = "Cut the menu API's response time from 700 ms to 120 ms by adding Redis caching"
+
+[hiring_manager.expected.HM4]
+# Trap: the release team deploys and monitors their work.
+passed = false

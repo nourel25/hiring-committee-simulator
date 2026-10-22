@@ -10,16 +10,17 @@ from hcs.pipeline import review_devils_advocate
 def main() -> None:
     client = make_client()
     reports = []
+    downgraded = 0
 
     print(OBJECTION_HEADER)
     for case in load_cases():
         record = review_devils_advocate(client, case, load_posting(case.checklist))
         report = compare_objections(case, record, load_checklist(case.checklist))
         reports.append(report)
+        downgraded += record.truth_check_changes or 0
         print(format_objection_row(report))
-        for position, objection in enumerate(record.objections or []):
-            flag = "  UNGROUNDED" if position in record.ungrounded_objections else ""
-            print(f"    [{objection.severity}] {objection.reason}{flag}")
+        for objection in record.objections or []:
+            print(f"    [{objection.severity}] {objection.reason}")
             print(f"        posting: {objection.requirement}")
             print(f"        cv:      {objection.evidence}")
 
@@ -28,9 +29,10 @@ def main() -> None:
     total = sum(len(report.severities) for report in reports)
     print()
     print(f"Failed runs: {sum(1 for report in reports if report.status != 'ok')}/{len(reports)}")
-    print(f"Grounded objections: {total - sum(r.ungrounded for r in reports)}/{total}")
+    print(f"Objections: {total} (at most 3 per case)")
+    print(f"Ratings turned to 'not' for lack of a real quote: {downgraded}")
     print(
-        f"Gaps found (a grounded high objection on a failed must-have): "
+        f"Gaps found (an objection on a failed must-have's line): "
         f"{sum(1 for report in with_gaps if report.hit)}/{len(with_gaps)}"
     )
     print(
