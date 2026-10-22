@@ -11,10 +11,10 @@ import re
 from hcs.cases import RecruiterScreen
 from hcs.schemas import Check
 
-# "(2021-present)" or "(2018 – 2021)": the dated roles in a CV.
 # A line longer than this is a paragraph, not a bullet a recruiter can read at a glance. The longest
 # bullet in the 14 labelled CVs is about 130 characters; a paragraph is several hundred.
 MAX_LINE = 200
+# "(2021-present)" or "(2018 – 2021)": the dated roles in a CV.
 PERIOD = re.compile(r"\((\d{4})\s*[-–]\s*(\d{4}|present)\)", re.IGNORECASE)
 
 
