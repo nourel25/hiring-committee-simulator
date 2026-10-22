@@ -24,6 +24,15 @@ def top_third(cv: str) -> str:
     return "\n".join(lines[: math.ceil(len(lines) / 3)])
 
 
+def recruiter_view(cv: str) -> str:
+    """The top third without its dated role lines: what the recruiter model sees.
+
+    Title and years are R1's and R2's job. With recruiter checklist v3 the model quoted the title line
+    as evidence for C1 in 11 of 19 cases, so code removes those lines and the model cannot pick them.
+    """
+    return "\n".join(line for line in top_third(cv).splitlines() if not PERIOD.search(line))
+
+
 def periods(cv: str, this_year: int) -> list[tuple[int, int]]:
     """Every dated role as (start, end) years; 'present' is this year; a reversed range is skipped."""
     found = []

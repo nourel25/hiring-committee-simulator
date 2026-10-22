@@ -1,0 +1,79 @@
+# Held-out case for recruiter checklist v4, against a too-strict fix: the scale is "all 40 of our
+# warehouses", which sounds like the size of the company but is how much the candidate's pipelines
+# cover. C1 and C2 should pass. Written and keyed before any v4 run.
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "present-10"
+label = "good"
+split = "heldout"
+checklist = "data_logistics"
+# TL1, TL2, TL3 (9) + TL4, TL7 (2) = 11/14 = 7.9 -> lean_hire.
+expected_decision = "lean_hire"
+
+cv = """
+Data Engineer, wholesale distributor (2020-present)
+- Build and run the nightly Python and SQL pipelines that load stock levels into BigQuery for the planning team
+- My pipelines load the stock data for all 40 of our warehouses every night
+- Designed the warehouse models for stock and orders: which fact and dimension tables exist and how they join
+- Schedule my pipelines myself in Airflow, with tests on nulls and row counts that stop a bad load
+- Cut the nightly load from 3 hours to 50 minutes by switching to incremental loads
+
+Junior Analyst, consultancy (2018-2020)
+- Built Excel models for clients
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Build and run the nightly Python and SQL pipelines that load stock levels into BigQuery for the planning team"
+
+[expected.TL2]
+passed = true
+evidence = "Designed the warehouse models for stock and orders: which fact and dimension tables exist and how they join"
+
+[expected.TL3]
+passed = true
+evidence = "Schedule my pipelines myself in Airflow"
+
+[expected.TL4]
+passed = true
+evidence = "with tests on nulls and row counts that stop a bad load"
+
+[expected.TL5]
+passed = false
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+passed = true
+evidence = "Cut the nightly load from 3 hours to 50 minutes by switching to incremental loads"
+
+[expected.TL8]
+passed = false
+
+# The recruiter's key, judged on the top third (the first 3 of 9 lines; the model sees lines 2-3).
+# Everything passes: 12/12 = 10.0 -> strong_hire.
+[recruiter]
+expected_decision = "strong_hire"
+
+[recruiter.expected.R1]
+passed = true
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = true
+
+[recruiter.expected.C1]
+passed = true
+evidence = "Build and run the nightly Python and SQL pipelines that load stock levels into BigQuery for the planning team"
+
+[recruiter.expected.C2]
+# The warehouses are counted because the candidate's pipelines cover them: a scale of their work,
+# not a description of the company.
+passed = true
+evidence = "My pipelines load the stock data for all 40 of our warehouses every night"
+
+[recruiter.expected.R4]
+passed = true

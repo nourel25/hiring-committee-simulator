@@ -7,9 +7,13 @@
 # read two ways, and leaves the title's position to R1.
 # v3 (Step 4.3d): C1 and C2 say what does not count. On held-out cases v2 passed C1 on buzzwords and
 # on the job title line alone, and C2 on the employer's numbers: form over meaning.
+# v4 (Step 4.3d): v3 quoted the title line for C1 in 11 of 19 cases, so code now removes the dated
+# role lines from what the model sees (hcs/screening.py, recruiter_view) and C1 no longer names
+# titles; v3's C2 also failed users of the candidate's work ("12,000 merchants"), so C2 now
+# excludes numbers that describe the company as a whole.
 name = "recruiter"
 posting = "any"
-version = 3
+version = 4
 
 # Must-haves: weight 3. Any failed must-have caps the decision at lean_no.
 
@@ -25,7 +29,7 @@ importance = "must"
 
 [[items]]
 id = "C1"
-text = "The top of the CV says what kind of work the candidate does, such as what they build or run; a job title alone, personal qualities or general phrases such as 'digital transformation' do not count"
+text = "The top of the CV says what kind of work the candidate does, such as what they build or run; personal qualities or general phrases such as 'digital transformation' do not count"
 importance = "must"
 
 # Nice-to-haves: weight 1.
@@ -43,5 +47,5 @@ importance = "nice"
 
 [[items]]
 id = "C2"
-text = "At least one bullet states a result or a scale of the candidate's own work with a number, such as users, requests, money or time saved; numbers about the employer and duties without numbers do not count"
+text = "At least one bullet states a result or a scale of the candidate's work with a number, such as users, requests, money or time saved; numbers that describe the company as a whole and duties without numbers do not count"
 importance = "nice"

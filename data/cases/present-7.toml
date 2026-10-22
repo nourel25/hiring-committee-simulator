@@ -56,6 +56,7 @@ evidence = "Mentor a junior developer through weekly code reviews"
 # The recruiter's key, judged on the top third (the first 3 of 9 lines).
 # R1, R2 (6) + R4 (1) = 7/12 = 5.8 -> lean_no. A lenient C1 alone gives 10/12 = 8.3 strong_hire,
 # so the C1 trap decides the outcome.
+# Dev case for the recruiter since Step 4.3d part 3: its v3 run motivated recruiter checklist v4.
 [recruiter]
 expected_decision = "lean_no"
 

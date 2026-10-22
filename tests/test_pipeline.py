@@ -126,7 +126,9 @@ def test_the_recruiter_model_sees_only_the_top_third_and_only_its_own_checks(tmp
     )
 
     user_message = client.calls[0][1]["content"]
-    assert "Backend Engineer, shop (2020-present)" in user_message
+    assert "- Built the shop API" in user_message
+    # The dated role line is R1's and R2's job, and lines below the top third are never shown.
+    assert "Backend Engineer, shop (2020-present)" not in user_message
     assert "Hidden line" not in user_message
     assert "- C1:" in user_message and "R1" not in user_message and "R4" not in user_message
     schema = client.kwargs[0]["response_format"]["json_schema"]["schema"]

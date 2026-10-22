@@ -54,6 +54,7 @@ evidence = "Coach new analysts on SQL during their onboarding"
 
 # The recruiter's key, judged on the top third (the first 3 of 9 lines).
 # Everything passes: 12/12 = 10.0 -> strong_hire.
+# Dev case for the recruiter since Step 4.3d part 3: its v3 run motivated recruiter checklist v4.
 [recruiter]
 expected_decision = "strong_hire"
 

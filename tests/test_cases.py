@@ -6,7 +6,7 @@ from pydantic import ValidationError
 from hcs.cases import key_problems, load_case, load_cases, load_checklist, save_checklist
 from hcs.policies import apply_truth_check, compute_score, decide, failed_must_haves
 from hcs.schemas import Check, Review
-from hcs.screening import top_third
+from hcs.screening import recruiter_view
 from tests.fakes import TINY_CHECKLIST
 
 CHECKLIST_TOML = """
@@ -112,7 +112,8 @@ def test_real_answer_key_is_consistent(case):
     "case", [case for case in load_cases() if case.recruiter], ids=lambda case: case.id
 )
 def test_real_recruiter_key_is_consistent(case):
-    # The recruiter reads only the top third, so its quotes must come from there.
+    # The recruiter model reads only the top third without its dated role lines, so its quotes
+    # must come from there.
     checklist = load_checklist("recruiter")
     review = Review(
         checks=[
@@ -121,7 +122,7 @@ def test_real_recruiter_key_is_consistent(case):
         ]
     )
 
-    _, missing_quotes = apply_truth_check(review, top_third(case.cv))
+    _, missing_quotes = apply_truth_check(review, recruiter_view(case.cv))
     score = compute_score(review, checklist.items)
     decision = decide(score, failed_must_haves(review, checklist.items))
 

@@ -18,7 +18,7 @@ from hcs.policies import (
 )
 from hcs.runlog import RUNS_PATH, RunRecord, append_run
 from hcs.schemas import Check, Review, review_model_for
-from hcs.screening import screening_checks, top_third
+from hcs.screening import recruiter_view, screening_checks
 
 
 def run_review(
@@ -154,7 +154,7 @@ def review_recruiter(
     strict: bool = False,
 ) -> RunRecord:
     """Run the recruiter on one case: code screens, the model judges the top third's clarity."""
-    cv_top = top_third(case.cv)
+    cv_top = recruiter_view(case.cv)
     checks = recruiter.model_items(checklist.items)
     return run_review(
         client,

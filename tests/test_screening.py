@@ -6,6 +6,7 @@ from hcs.cases import RecruiterScreen, load_case, load_cases, load_posting
 from hcs.screening import (
     current_title,
     keywords_found,
+    recruiter_view,
     screening_checks,
     top_third,
     years_of_experience,
@@ -21,6 +22,14 @@ THIS_YEAR = 2026
 def test_top_third_rounds_up_and_ignores_blank_lines(line_count, kept):
     cv = "\n\n".join(f"line {number}" for number in range(1, line_count + 1))
     assert top_third(cv).splitlines() == [f"line {number}" for number in range(1, kept + 1)]
+
+
+def test_the_recruiter_view_drops_dated_role_lines_but_keeps_other_numbers():
+    cv = (
+        "Data Engineer, shop (2021-present)\nAWS Certified (2023)\n- Built pipelines\n- a\n- b\n- c"
+    )
+
+    assert recruiter_view(cv) == "AWS Certified (2023)"
 
 
 @pytest.mark.parametrize(
