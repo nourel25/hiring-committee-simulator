@@ -1,0 +1,83 @@
+# Held-out case for the recruiter: strong backend work behind a consulting title and two lines of
+# buzzwords, so the top third never says what the candidate does. Written and keyed before any run.
+# Trap for a lenient C1: there is no personal-qualities summary for the "does not count" clause to
+# catch, but the main clause still fails.
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "present-6"
+label = "good"
+split = "heldout"
+checklist = "backend_payments"
+# TL1-TL4 (12) + TL7 (1) = 13/16 = 8.1 -> strong_hire.
+expected_decision = "strong_hire"
+
+cv = """
+Technology Consultant, global consulting firm (2019-present)
+- Drive digital transformation for clients across banking and retail
+- Trusted partner to senior stakeholders, turning business vision into delivery
+- Built and maintained Python REST APIs for a bank's card-payments platform, used by its mobile app customers in production
+- Designed the PostgreSQL schema for the bank's disputes service: which tables exist and how they relate
+- Deployed the services to production myself through the client's Jenkins pipeline
+- Cut the disputes API's response time from 2 seconds to 300 ms by adding indexes and caching
+
+Graduate Developer, insurance company (2017-2019)
+- Wrote Java batch jobs
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Built and maintained Python REST APIs for a bank's card-payments platform, used by its mobile app customers in production"
+
+[expected.TL2]
+passed = true
+evidence = "Built and maintained Python REST APIs for a bank's card-payments platform, used by its mobile app customers in production"
+
+[expected.TL3]
+passed = true
+evidence = "Designed the PostgreSQL schema for the bank's disputes service: which tables exist and how they relate"
+
+[expected.TL4]
+passed = true
+evidence = "Deployed the services to production myself through the client's Jenkins pipeline"
+
+[expected.TL5]
+passed = false
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+passed = true
+evidence = "Cut the disputes API's response time from 2 seconds to 300 ms by adding indexes and caching"
+
+[expected.TL8]
+# Trap: being a partner to stakeholders is not mentoring engineers.
+passed = false
+
+# The recruiter's key, judged on the top third (the first 3 of 9 lines).
+# R2, R4 (4) = 4/12 = 3.3 -> strong_no. The tech lead would hire; the first look rejects. Every
+# failure is presentation: a "Backend Engineer" title and the API bullet moved up would fix R1, R3,
+# C1 and C2.
+[recruiter]
+expected_decision = "strong_no"
+
+[recruiter.expected.R1]
+passed = false
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+# Python and REST appear only on line 4.
+passed = false
+
+[recruiter.expected.C1]
+# Trap: "digital transformation" and "trusted partner" could describe any job. Rule, for every case:
+# C1 fails when the top third does not say what kind of work the candidate does, whatever it says instead.
+passed = false
+
+[recruiter.expected.C2]
+passed = false
+
+[recruiter.expected.R4]
+passed = true

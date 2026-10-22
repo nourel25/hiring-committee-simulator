@@ -1,0 +1,81 @@
+# Held-out case for the recruiter: the only numbers in the top third describe the employer, not the
+# candidate's work. Written and keyed before any run. Trap for a lenient C2.
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "present-4"
+label = "good"
+split = "heldout"
+checklist = "backend_payments"
+# TL1-TL4 (12) + TL5, TL7 (2) = 14/16 = 8.75 -> strong_hire.
+expected_decision = "strong_hire"
+
+cv = """
+Backend Engineer, PayNest (2021-present)
+PayNest is one of Europe's fastest-growing payment apps, with 4 million users in 12 countries and 2 billion euros processed a year.
+- Build and maintain the Python REST APIs that merchants use in production to receive their payouts
+- Designed the PostgreSQL schema for payouts and refunds: which tables exist and how they relate
+- Deploy my services to production myself with GitLab CI
+- Cut the payout API's p95 latency from 800 ms to 150 ms by batching ledger writes
+- Take part in the team's on-call rotation and maintain its Grafana alerts
+
+Junior Python Developer, travel agency (2018-2021)
+- Built Django booking pages
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Build and maintain the Python REST APIs that merchants use in production to receive their payouts"
+
+[expected.TL2]
+passed = true
+evidence = "Build and maintain the Python REST APIs that merchants use in production to receive their payouts"
+
+[expected.TL3]
+passed = true
+evidence = "Designed the PostgreSQL schema for payouts and refunds: which tables exist and how they relate"
+
+[expected.TL4]
+passed = true
+evidence = "Deploy my services to production myself with GitLab CI"
+
+[expected.TL5]
+passed = true
+evidence = "Take part in the team's on-call rotation and maintain its Grafana alerts"
+
+[expected.TL6]
+# GitLab CI is not an orchestration platform.
+passed = false
+
+[expected.TL7]
+passed = true
+evidence = "Cut the payout API's p95 latency from 800 ms to 150 ms by batching ledger writes"
+
+[expected.TL8]
+passed = false
+
+# The recruiter's key, judged on the top third (the first 3 of 9 lines).
+# R1, R2, C1 (9) + R3, R4 (2) = 11/12 = 9.2 -> strong_hire. C2 fails: the fix is to move the
+# latency result (line 6) into the top third.
+[recruiter]
+expected_decision = "strong_hire"
+
+[recruiter.expected.R1]
+passed = true
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = true
+
+[recruiter.expected.C1]
+passed = true
+evidence = "Build and maintain the Python REST APIs that merchants use in production to receive their payouts"
+
+[recruiter.expected.C2]
+# Trap: 4 million users and 2 billion euros are the company's numbers. Rule, for every case: C2 needs
+# a number about the candidate's own work (its result or how much it is used), not about the employer.
+passed = false
+
+[recruiter.expected.R4]
+passed = true

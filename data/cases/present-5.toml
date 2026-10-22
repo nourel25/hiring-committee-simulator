@@ -1,0 +1,78 @@
+# Held-out case for the recruiter: the scale is written in words ("about two million orders a day"),
+# with no digits in the top third except the dates. Written and keyed before any run. Trap for a
+# strict C2 (the recruiter's only check error in run 2 was a strict C2 on a scale: poor-2).
+# Scoring rule (Option B): passed is always scored; evidence only when expected passed is true.
+# No evidence key = no evidence (TOML has no null).
+id = "present-5"
+label = "good"
+split = "heldout"
+checklist = "data_logistics"
+# TL1, TL2, TL3 (9) + TL4, TL8 (2) = 11/14 = 7.9 -> lean_hire.
+expected_decision = "lean_hire"
+
+cv = """
+Analytics Engineer, food delivery company (2021-present)
+- Build the batch pipelines in Python and SQL that load about two million orders a day into BigQuery for the operations team
+- Designed the warehouse models for orders and couriers: which fact and dimension tables exist and how they join
+- Schedule and run my pipelines myself in Dagster, with data-quality checks on row counts that stop a bad load
+- Coach the operations analysts on SQL in monthly workshops
+
+Data Analyst, retail chain (2018-2021)
+- Built weekly sales dashboards in Looker
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Build the batch pipelines in Python and SQL that load about two million orders a day into BigQuery for the operations team"
+
+[expected.TL2]
+passed = true
+evidence = "Designed the warehouse models for orders and couriers: which fact and dimension tables exist and how they join"
+
+[expected.TL3]
+passed = true
+evidence = "Schedule and run my pipelines myself in Dagster"
+
+[expected.TL4]
+passed = true
+evidence = "with data-quality checks on row counts that stop a bad load"
+
+[expected.TL5]
+passed = false
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+passed = false
+
+[expected.TL8]
+passed = true
+evidence = "Coach the operations analysts on SQL in monthly workshops"
+
+# The recruiter's key, judged on the top third (the first 3 of 7 lines).
+# Everything passes: 12/12 = 10.0 -> strong_hire. A strict C2 gives 11/12 = 9.2, the same decision,
+# so this case measures the check, not the decision.
+[recruiter]
+expected_decision = "strong_hire"
+
+[recruiter.expected.R1]
+passed = true
+
+[recruiter.expected.R2]
+passed = true
+
+[recruiter.expected.R3]
+passed = true
+
+[recruiter.expected.C1]
+passed = true
+evidence = "Build the batch pipelines in Python and SQL that load about two million orders a day into BigQuery for the operations team"
+
+[recruiter.expected.C2]
+# Trap: the number is written in words. Rule, for every case: a number written in words counts.
+passed = true
+evidence = "load about two million orders a day"
+
+[recruiter.expected.R4]
+passed = true
