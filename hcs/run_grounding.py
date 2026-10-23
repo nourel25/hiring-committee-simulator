@@ -22,6 +22,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--strict", action="store_true", help="ask the provider to enforce the schema"
     )
+    parser.add_argument(
+        "--retries", type=int, help="repair retries per call (default: grounding_judge.MAX_RETRIES)"
+    )
     return parser.parse_args(argv)
 
 
