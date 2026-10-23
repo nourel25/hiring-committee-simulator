@@ -221,13 +221,6 @@ class ClaimJudgement(BaseModel):
     """One claim judged against the facts it cites. The unsupported part comes before the verdict."""
 
     id: str = Field(description="The claim's id, copied exactly from the input, e.g. 'G1'.")
-    # v2: quotes from the facts first, so the model matches meaning before it names what is new.
-    # The default only reads v1 records; judgement_model_for makes it required for the model.
-    support: list[Quote] = Field(
-        default=[],
-        max_length=3,
-        description="Words copied from the cited facts that say what the claim says, one per fact.",
-    )
     unsupported: str | None = Field(
         max_length=300,
         description="The words of the claim that the cited facts do not say, or null if none.",
@@ -237,7 +230,6 @@ class ClaimJudgement(BaseModel):
     )
 
     _unsupported_null = field_validator("unsupported", mode="before")(null_if_written_out)
-    _support_list = field_validator("support", mode="before")(quote_list)
 
 
 class GroundingJudgement(BaseModel):
@@ -252,10 +244,6 @@ def judgement_model_for(ids: list[str]) -> type[GroundingJudgement]:
         "ClaimJudgement",
         __base__=ClaimJudgement,
         id=(Literal[tuple(ids)], Field(description=ClaimJudgement.model_fields["id"].description)),
-        support=(
-            list[Quote],
-            Field(max_length=3, description=ClaimJudgement.model_fields["support"].description),
-        ),
     )
 
     def every_claim_once(judgement: GroundingJudgement) -> GroundingJudgement:
