@@ -12,8 +12,14 @@ summary on the first line hid the title from R1 (a must-have) in every refined C
 recruiter reviews again, because the refiner changes only the top of the CV and the other members
 judge the experience below it, which never changes. In v1 they picked the shorter summary line as
 evidence, lost words like "myself", and two good CVs lost their hire verdict.
+
+v3 (after the second run): code does the triage the design gives the refiner. For each fixable
+recruiter check it looks for a fact that can fix it (a bullet with the missing keyword, a bullet
+with a number, a bullet saying what the work is); a check no fact can fix is a gap. The model only
+shortens the chosen facts, and a fact whose shortened line fails grounding twice is used as written.
 """
 
+import re
 from dataclasses import dataclass, field
 
 from openai import OpenAI
@@ -26,8 +32,8 @@ from hcs.llm import LLMOutputError, get_structured
 from hcs.pipeline import judge_claims, run_identity
 from hcs.profile import Fact, build_facts
 from hcs.runlog import RUNS_PATH, RunRecord, append_run
-from hcs.schemas import Refinement, SummaryLine, refinement_model_for
-from hcs.screening import PERIOD, current_title
+from hcs.schemas import MAX_SUMMARY_LINES, Refinement, SummaryLine, refinement_model_for
+from hcs.screening import PERIOD, current_title, keywords_found, top_third
 
 MAX_ROUNDS = 3
 # The recruiter's checks a summary can fix by rewording real facts. R1 (title) and R2 (years) are
@@ -35,6 +41,9 @@ MAX_ROUNDS = 3
 FIXABLE = ("R3", "R4", "C1", "C2")
 # Members whose reviews carry over between rounds: they judge the experience, which never changes.
 CARRIED = ("hiring_manager", "tech_lead", "devils_advocate")
+# A fact used as written when its shortened line fails grounding twice: longer ones are paragraphs.
+MAX_VERBATIM_WORDS = 25
+YEAR = re.compile(r"(?:19|20)\d{2}")
 
 
 @dataclass
@@ -50,6 +59,17 @@ class Draft:
     kept: list[SummaryLine]
     rejected: list[GroundedLine]
     records: list[RunRecord] = field(default_factory=list)
+    # Facts used as written because every shortened line for them was rejected.
+    verbatim: list[str] = field(default_factory=list)
+
+
+@dataclass
+class Plan:
+    """The triage: which facts to put in the summary, and which failed checks no fact can fix."""
+
+    facts: list[Fact]
+    fixable: list[str]
+    gaps: list[str]
 
 
 @dataclass
@@ -57,8 +77,12 @@ class Round:
     number: int
     cv: str
     committee: CommitteeRound
-    fixable: list[str]
+    plan: Plan
     draft: Draft | None = None
+
+    @property
+    def fixable(self) -> list[str]:
+        return self.plan.fixable
 
 
 @dataclass
@@ -70,17 +94,55 @@ class Session:
     gaps: list[str]
 
 
-def fixable_objections(committee: CommitteeRound, checklists: Checklists) -> list[str]:
-    """The recruiter's failed checks that a new summary could fix, as check texts."""
+def bullets(facts: list[Fact]) -> list[Fact]:
+    """The facts that describe work: lines under a dated role, not the role lines themselves."""
+    return [fact for fact in facts if fact.role is not None and not PERIOD.search(fact.text)]
+
+
+def has_result_number(fact: Fact) -> bool:
+    """A number that isn't a year: a count, an amount, a time or a share."""
+    return any(not YEAR.fullmatch(number) for number in fact.metrics)
+
+
+def triage(cv: str, committee: CommitteeRound, facts: list[Fact], keywords: list[str]) -> Plan:
+    """For each failed fixable recruiter check, find facts that can fix it; the rest are gaps."""
     record = committee.records.get("recruiter")
     if record is None or record.review is None:
-        return []
-    texts = {item.id: item.text for item in checklists.recruiter.items}
-    return [
-        texts[check.id]
-        for check in record.review.checks
-        if check.id in FIXABLE and not check.passed
+        return Plan([], [], [])
+    failed = [
+        check.id for check in record.review.checks if check.id in FIXABLE and not check.passed
     ]
+    work = bullets(facts)
+    chosen: list[Fact] = []
+    fixable: list[str] = []
+    gaps: list[str] = []
+
+    def choose(fact: Fact | None) -> bool:
+        if fact is None:
+            return False
+        if fact not in chosen:
+            chosen.append(fact)
+        return True
+
+    for check_id in failed:
+        if check_id == "R3":
+            missing = [kw for kw in keywords if not keywords_found(top_third(cv), [kw])]
+            found = [
+                choose(next((f for f in work if keywords_found(f.text, [kw])), None))
+                for kw in missing
+            ]
+            (fixable if any(found) else gaps).append(check_id)
+        elif check_id == "C2":
+            ok = choose(next((f for f in work if has_result_number(f)), None))
+            (fixable if ok else gaps).append(check_id)
+        elif check_id == "C1":
+            ok = choose(work[0] if work else None)
+            (fixable if ok else gaps).append(check_id)
+        else:  # R4: a long line in the top third; a short summary pushes it down
+            (fixable if work else gaps).append(check_id)
+    if fixable and not chosen and work:
+        chosen.append(work[0])
+    return Plan(chosen[:MAX_SUMMARY_LINES], fixable, gaps)
 
 
 def gap_objections(committee: CommitteeRound) -> list[str]:
@@ -138,15 +200,14 @@ def ground(
 
 def call_refiner(
     client: OpenAI,
-    facts: list[Fact],
-    problems: list[str],
+    chosen: list[Fact],
     keywords: list[str],
     feedback: list[str],
     case_id: str,
     runs_path,
     model: str,
 ) -> tuple[RunRecord, list[SummaryLine]]:
-    messages = refiner.build_messages(facts, problems, keywords, feedback)
+    messages = refiner.build_messages(chosen, keywords, feedback)
     common = run_identity(
         agent="refiner",
         prompt_version=refiner.PROMPT_VERSION,
@@ -163,7 +224,7 @@ def call_refiner(
         result = get_structured(
             client,
             messages,
-            response_model=refinement_model_for([fact.id for fact in facts]),
+            response_model=refinement_model_for([fact.id for fact in chosen]),
             model=model,
             temperature=refiner.TEMPERATURE,
             seed=refiner.SEED,
@@ -198,26 +259,35 @@ def call_refiner(
 def write_summary(
     client: OpenAI,
     facts: list[Fact],
-    problems: list[str],
+    chosen: list[Fact],
     keywords: list[str],
     case_id: str,
     runs_path=RUNS_PATH,
     model: str = refiner.MODEL,
 ) -> Draft:
-    """One refiner pass with the grounding check; rejected lines go back once with the reasons."""
-    record, lines = call_refiner(client, facts, problems, keywords, [], case_id, runs_path, model)
+    """Shorten the chosen facts and ground each line; rejected lines go back once with the reasons.
+    A chosen fact still without a line after that is used as written when it is short."""
+    record, lines = call_refiner(client, chosen, keywords, [], case_id, runs_path, model)
     records = [record]
     kept, rejected, judge = ground(client, lines, facts, keywords, case_id, runs_path)
     records += [judge] if judge else []
-    if rejected:
+    if rejected or not lines:
         feedback = [f'"{item.line.text}": {"; ".join(item.problems)}' for item in rejected]
-        record, lines = call_refiner(
-            client, facts, problems, keywords, feedback, case_id, runs_path, model
-        )
+        redo = [fact for fact in chosen if all(fact.id not in line.facts for line in kept)]
+        record, lines = call_refiner(client, redo, keywords, feedback, case_id, runs_path, model)
         records.append(record)
-        kept, rejected, judge = ground(client, lines, facts, keywords, case_id, runs_path)
+        more, rejected, judge = ground(client, lines, facts, keywords, case_id, runs_path)
+        kept += more
         records += [judge] if judge else []
-    return Draft(kept=kept, rejected=rejected, records=records)
+    verbatim = []
+    for fact in chosen:
+        covered = any(fact.id in line.facts for line in kept)
+        if not covered and len(fact.text.split()) <= MAX_VERBATIM_WORDS:
+            kept.append(SummaryLine(facts=[fact.id], text=fact.text))
+            verbatim.append(fact.id)
+    order = [fact.id for fact in chosen]
+    kept.sort(key=lambda line: order.index(line.facts[0]))
+    return Draft(kept=kept, rejected=rejected, records=records, verbatim=verbatim)
 
 
 def run_session(
@@ -234,6 +304,7 @@ def run_session(
     checklists = Checklists.for_posting(case.checklist)
     # The knowledge base is the original CV: a refined summary is never a source of facts.
     facts = build_facts(case.cv)
+    keywords = posting.recruiter.keywords
     cv = case.cv
     rounds: list[Round] = []
     reason = "round limit"
@@ -246,15 +317,15 @@ def run_session(
         committee = run_committee(
             client, current, this_year, posting, checklists, runs_path, carried
         )
-        fixable = fixable_objections(committee, checklists)
-        rounds.append(Round(number, cv, committee, fixable))
-        if not fixable:
+        plan = triage(cv, committee, facts, keywords)
+        rounds.append(Round(number, cv, committee, plan))
+        if not plan.facts:
             reason = "hire" if committee.verdict.verdict == "hire" else "only gaps remain"
             break
         if number == max_rounds:
             break
         draft = write_summary(
-            client, facts, fixable, posting.recruiter.keywords, case.id, runs_path, refiner_model
+            client, facts, plan.facts, keywords, case.id, runs_path, refiner_model
         )
         rounds[-1].draft = draft
         if not draft.kept:

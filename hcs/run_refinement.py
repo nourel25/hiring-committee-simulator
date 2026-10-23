@@ -51,6 +51,8 @@ def save(session: Session, label: str, path: Path = SESSIONS_PATH) -> None:
             for draft in drafts
             for item in draft.rejected
         ],
+        "verbatim": [fact_id for draft in drafts for fact_id in draft.verbatim],
+        "recruiter_gaps": session.rounds[-1].plan.gaps,
         "gaps": session.gaps,
     }
     path.parent.mkdir(parents=True, exist_ok=True)

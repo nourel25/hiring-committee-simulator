@@ -1,9 +1,9 @@
-# Held-out case for refinement v2, written before any v2 run (2026-10-23; unreviewed by the user).
+# Held-out for refinement v2 (written before the v2 run; unreviewed by the user). Dev from v3 on.
 # A poor fit for the data engineer role (an analyst: queries, a notebook run by hand, slides).
 # Guard: it must stay no_hire, and the summary must not claim pipelines others rely on.
 id = "ref-4"
 label = "poor"
-split = "heldout"
+split = "dev"
 checklist = "data_logistics"
 # No check passes: 0/14 -> strong_no.
 expected_decision = "strong_no"

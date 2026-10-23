@@ -1,0 +1,22 @@
+# Held-out case for refinement v3, written before any v3 run (2026-10-23; unreviewed by the user).
+# A poor fit for the backend role (a QA engineer: test scripts, test plans, bug triage). Guard: it
+# must stay no_hire, and the summary must not claim building backend services.
+id = "ref-8"
+label = "poor"
+split = "heldout"
+checklist = "backend_payments"
+# No check passes: 0/16 -> strong_no.
+expected_decision = "strong_no"
+
+cv = """
+QA Engineer, payments company (2020-present)
+- Detail-oriented tester who cares about quality
+- Write Python test scripts that call our payment APIs before each release
+- Wrote test plans for the card checkout and reported 300 bugs a year
+- Run the weekly bug triage meeting with product managers
+
+Customer Support Agent, bank (2017-2020)
+- Answered customer questions about card payments
+"""
+
+[expected]

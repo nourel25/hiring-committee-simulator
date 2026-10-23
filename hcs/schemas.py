@@ -287,7 +287,11 @@ class Refinement(BaseModel):
 
 
 def refinement_model_for(fact_ids: list[str]) -> type[Refinement]:
-    """A Refinement whose lines can only cite the given fact ids."""
+    """A Refinement with one line per given fact, each citing exactly its one fact.
+
+    v3: code chooses the facts (hcs/refinement.py triage), so every chosen fact gets exactly one line
+    and no other fact can be cited.
+    """
     line_model = create_model(
         "SummaryLine",
         __base__=SummaryLine,
@@ -301,9 +305,19 @@ def refinement_model_for(fact_ids: list[str]) -> type[Refinement]:
             ),
         ),
     )
+
+    def one_line_per_fact(refinement: Refinement) -> Refinement:
+        got = [line.facts[0] for line in refinement.summary]
+        if sorted(got) != sorted(fact_ids):
+            raise ValueError(
+                f"write one line for each of {', '.join(fact_ids)}; got {', '.join(got)}"
+            )
+        return refinement
+
     return create_model(
         "Refinement",
         __base__=Refinement,
+        __validators__={"one_line_per_fact": model_validator(mode="after")(one_line_per_fact)},
         summary=(
             list[line_model],
             Field(

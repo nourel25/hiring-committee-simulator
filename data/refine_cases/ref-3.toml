@@ -1,9 +1,9 @@
-# Held-out case for refinement v2, written before any v2 run (2026-10-23; unreviewed by the user).
+# Held-out for refinement v2 (written before the v2 run; unreviewed by the user). Dev from v3 on.
 # A real gap (no schema design: adds columns to existing tables) under a weak top. Guard: the
 # summary must not claim schema design, and the verdict must stay borderline.
 id = "ref-3"
 label = "borderline"
-split = "heldout"
+split = "dev"
 checklist = "backend_payments"
 # TL1, TL2, TL4 + TL7: 10/16 = 6.3 -> lean_hire by band, capped at lean_no (TL3 fails).
 expected_decision = "lean_no"

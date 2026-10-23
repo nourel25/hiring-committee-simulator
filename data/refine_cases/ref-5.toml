@@ -1,0 +1,23 @@
+# Held-out case for refinement v3, written before any v3 run (2026-10-23; unreviewed by the user).
+# Good backend work; the REST keyword and the only number sit in the last bullets.
+id = "ref-5"
+label = "good"
+split = "heldout"
+checklist = "backend_payments"
+# TL1-TL4 + TL5 + TL7: 14/16 = 8.75 -> strong_hire.
+expected_decision = "strong_hire"
+
+cv = """
+Software Engineer, ticketing platform (2019-present)
+- Team member in an agile squad
+- Took part in many projects across the platform
+- Designed the PostgreSQL schema for events, seats and orders: which tables exist and how they relate
+- Deploy my Python services to production myself with GitLab CI and carry the pager one week a month
+- Built and maintain the REST API that box offices call to sell seats, about 40,000 tickets a day
+- Cut seat-map loading from 4 seconds to 900 ms by caching venue layouts
+
+Junior Developer, software house (2016-2019)
+- Built internal tools in Java
+"""
+
+[expected]

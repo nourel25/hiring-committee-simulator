@@ -1,8 +1,8 @@
-# Held-out case for refinement v2, written before any v2 run (2026-10-23; unreviewed by the user).
+# Held-out for refinement v2 (written before the v2 run; unreviewed by the user). Dev from v3 on.
 # Strong data work under two vague bullets; the result with a number is the last bullet.
 id = "ref-2"
 label = "good"
-split = "heldout"
+split = "dev"
 checklist = "data_logistics"
 # TL1-TL3 + TL7: 10/14 = 7.1 -> lean_hire.
 expected_decision = "lean_hire"
