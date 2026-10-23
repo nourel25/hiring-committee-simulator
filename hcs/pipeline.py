@@ -330,6 +330,7 @@ def judge_claims(
     seed: int = grounding_judge.SEED,
     max_tokens: int = grounding_judge.MAX_TOKENS,
     strict: bool = False,
+    max_retries: int = grounding_judge.MAX_RETRIES,
 ) -> RunRecord:
     """Run the grounding judge on (claim, cited fact ids) pairs. A claim with an unsupported part is
     never supported, whatever the model's verdict says."""
@@ -344,7 +345,7 @@ def judge_claims(
         temperature=temperature,
         seed=seed,
         max_tokens=max_tokens,
-        max_retries=grounding_judge.MAX_RETRIES,
+        max_retries=max_retries,
     )
     try:
         result = get_structured(
@@ -355,7 +356,7 @@ def judge_claims(
             temperature=temperature,
             seed=seed,
             max_tokens=max_tokens,
-            max_retries=grounding_judge.MAX_RETRIES,
+            max_retries=max_retries,
             strict=strict,
         )
     except LLMOutputError as error:

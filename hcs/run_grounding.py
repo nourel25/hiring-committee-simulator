@@ -31,6 +31,8 @@ def main() -> None:
     settings = {"model": args.model} if args.model else {}
     if args.provider != "ollama":
         settings |= {"max_tokens": API_MAX_TOKENS, "strict": args.strict}
+    if args.retries is not None:
+        settings["max_retries"] = args.retries
     results = {"dev": [], "heldout": []}
     failed = 0
     seconds = 0.0
