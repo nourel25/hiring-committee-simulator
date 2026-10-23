@@ -12,6 +12,7 @@ import streamlit as st
 
 from hcs.cases import Case, load_cases, load_posting
 from hcs.llm import make_client
+from hcs.parsing import normalise_cv, text_from_upload
 from hcs.refinement import MAX_ROUNDS, Judge, Session, run_session
 from hcs.session import diff
 from hcs.tracing import build, summary
@@ -78,10 +79,14 @@ def new_session() -> None:
 
     examples = {case.id: case for case in load_cases() if case.checklist == posting_name}
     example = st.selectbox("Start from a labelled example CV (synthetic)", ["(none)", *examples])
-    uploaded = st.file_uploader("…or upload a plain-text CV", type=["txt"])
+    uploaded = st.file_uploader("…or upload your CV", type=["pdf", "docx", "txt"])
     default = ""
     if uploaded is not None:
-        default = uploaded.getvalue().decode("utf-8")
+        default = normalise_cv(text_from_upload(uploaded.name, uploaded.getvalue()))
+        st.info(
+            "Check the text below before you run: PDFs lose layout. Contact details and your name "
+            "were removed, so the committee judges the work only. Scanned PDFs have no text to read."
+        )
     elif example != "(none)":
         default = examples[example].cv
     cv = st.text_area(
@@ -90,8 +95,10 @@ def new_session() -> None:
         height=260,
     )
     rounds = st.slider("Round limit", 1, MAX_ROUNDS, MAX_ROUNDS)
+    # An uploaded file is probably a real CV, so it stays on this machine unless the user says not.
     local = st.checkbox(
-        "Keep everything on this machine (local grounding judge, weaker: 7/12 on held-out claims)"
+        "Keep everything on this machine (local grounding judge, weaker: 7/12 on held-out claims)",
+        value=uploaded is not None,
     )
     if not local:
         st.caption("The grounding judge sends each summary line and its facts to Groq.")

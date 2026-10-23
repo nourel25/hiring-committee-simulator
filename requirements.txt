@@ -2,3 +2,5 @@ openai==3.24.0
 pydantic==2.13.5
 python-dotenv==1.2.4
 tomli-w==1.2.0
+pypdf==6.21.2
+python-docx==1.2.0

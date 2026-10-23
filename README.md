@@ -134,7 +134,14 @@ streamlit run app.py
 ```
 
 It has three pages:
-- **New session.** Paste or upload a CV, or start from a labelled example, and pick a posting.
+- **New session.** Paste or upload a CV (PDF, Word or text), or start from a labelled example, and
+  pick a posting. An upload is read into the plain format and shown for you to correct before
+  anything runs:
+  - bullets become `- ` and date ranges become `(2021-present)`;
+  - wrapped lines are joined;
+  - your name, email, phone and links are removed, so the committee judges the work only.
+
+  Scanned PDFs have no text to read, and two-column layouts come out in the wrong order.
   For every round you see:
   - each member's checks with their quotes, and the devil's advocate's objections;
   - the chair's verdict, confidence, dissent and ranked objections;
@@ -144,7 +151,8 @@ It has three pages:
 - **Past sessions.** The logged refinement runs.
 - **Cost and latency.** Calls, failures, seconds and tokens per agent and model, from the run log.
 
-A checkbox keeps the grounding judge local, so nothing leaves the machine.
+A checkbox keeps the grounding judge local, so nothing leaves the machine. It is ticked for you
+when you upload a file.
 
 The held-out judge needs a Groq key in `.env` (see `.env.example`):
 
@@ -180,6 +188,5 @@ python -m hcs.run_held_out
   gives a 7B model room to invent.
 - These parts of the design are not built yet:
   - the company researcher (each posting has a hand-written brief);
-  - CV parsing from PDF;
   - logging real outcomes;
   - PDF export.
