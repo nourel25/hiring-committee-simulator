@@ -7,7 +7,7 @@ import json
 from datetime import date
 from pathlib import Path
 
-from hcs.cases import load_case, load_cases
+from hcs.cases import CASES_DIR, load_case, load_cases
 from hcs.evaluation import CASE_WIDTH
 from hcs.llm import make_client
 from hcs.refinement import Session, run_session
@@ -24,6 +24,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("cases", nargs="*", help="case ids (default: every case)")
     parser.add_argument("--refiner", help="the refiner's Ollama model (default: refiner.MODEL)")
+    parser.add_argument(
+        "--dir", type=Path, default=CASES_DIR, help="where the cases are (default: data/cases)"
+    )
     return parser.parse_args(argv)
 
 
@@ -58,7 +61,11 @@ def save(session: Session, label: str, path: Path = SESSIONS_PATH) -> None:
 def main() -> None:
     args = parse_args()
     client = make_client()
-    cases = [load_case(case_id) for case_id in args.cases] if args.cases else load_cases()
+    cases = (
+        [load_case(case_id, args.dir) for case_id in args.cases]
+        if args.cases
+        else load_cases(args.dir)
+    )
     settings = {"refiner_model": args.refiner} if args.refiner else {}
     results = []
 

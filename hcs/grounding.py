@@ -61,3 +61,40 @@ def rule_problems(
         if keyword.casefold() not in flagged and not keywords_found(cited_text, [keyword])
     ]
     return problems
+
+
+# A claim that only reuses the words of one short fact can't add a duty, a tool or ownership, so
+# code accepts it without the judge (v2, Step 6). The judge v1 rejected even near-copies
+# ("Designed the PostgreSQL schema for payouts and refunds": "not supported: Designed").
+# A long fact (a paragraph) holds enough words to recombine into a new meaning, so it goes to the judge.
+MAX_FACT_WORDS = 30
+STOPWORDS = frozenset(
+    "a an the and or of for to in on at by with from into through that which who its their our my "
+    "his her using use used as is are was were be been it this these those".split()
+)
+WORD = re.compile(r"[a-z0-9+#]+")
+
+
+def stem(word: str) -> str:
+    """A crude stem: build, builds and building match; design and designed; service and services.
+    A word it fails to match (built, deliveries) only sends the claim to the judge."""
+    for suffix in ("ing", "ed", "s"):
+        if word.endswith(suffix) and not word.endswith("ss") and len(word) - len(suffix) >= 3:
+            word = word[: -len(suffix)]
+            break
+    return word[:-1] if word.endswith("e") and len(word) > 3 else word
+
+
+def content_words(text: str) -> set[str]:
+    return {stem(word) for word in WORD.findall(text.casefold()) if word not in STOPWORDS}
+
+
+def restates(claim: str, fact_ids: list[str], facts: list[Fact]) -> bool:
+    """True when the claim cites one short fact and uses no content word that fact doesn't have."""
+    by_id = {fact.id: fact for fact in facts}
+    if len(fact_ids) != 1 or fact_ids[0] not in by_id:
+        return False
+    fact = by_id[fact_ids[0]].text
+    if len(fact.split()) > MAX_FACT_WORDS:
+        return False
+    return content_words(claim) <= content_words(fact)

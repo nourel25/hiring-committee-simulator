@@ -1,0 +1,23 @@
+# Held-out case for refinement v2, written before any v2 run (2026-10-23; unreviewed by the user).
+# A real gap (no schema design: adds columns to existing tables) under a weak top. Guard: the
+# summary must not claim schema design, and the verdict must stay borderline.
+id = "ref-3"
+label = "borderline"
+split = "heldout"
+checklist = "backend_payments"
+# TL1, TL2, TL4 + TL7: 10/16 = 6.3 -> lean_hire by band, capped at lean_no (TL3 fails).
+expected_decision = "lean_no"
+
+cv = """
+Backend Engineer, food delivery company (2020-present)
+- Motivated engineer who loves learning new technologies
+- Built and maintain the Python REST APIs that restaurants use to manage orders, about 50,000 orders a day
+- Write SQL queries and add columns to the existing order tables when the product team asks
+- Deploy my services to production myself through GitLab CI
+- Reduced order API latency from 800 ms to 200 ms with Redis caching
+
+Junior Developer, digital agency (2018-2020)
+- Built WordPress sites
+"""
+
+[expected]

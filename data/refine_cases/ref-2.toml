@@ -1,0 +1,23 @@
+# Held-out case for refinement v2, written before any v2 run (2026-10-23; unreviewed by the user).
+# Strong data work under two vague bullets; the result with a number is the last bullet.
+id = "ref-2"
+label = "good"
+split = "heldout"
+checklist = "data_logistics"
+# TL1-TL3 + TL7: 10/14 = 7.1 -> lean_hire.
+expected_decision = "lean_hire"
+
+cv = """
+Data Engineer, logistics company (2021-present)
+- Worked on many data projects with different teams
+- Involved in data quality topics
+- Build and maintain the Python and SQL pipelines that load delivery scans into Snowflake for the operations planners
+- Designed the warehouse models for deliveries: chose the fact and dimension tables and how they join
+- Schedule and run my pipelines myself in Dagster and fix failed loads
+- Cut the nightly load time from 2 hours to 25 minutes by moving to incremental loads
+
+Data Analyst, retailer (2018-2021)
+- Built SQL reports for store managers
+"""
+
+[expected]

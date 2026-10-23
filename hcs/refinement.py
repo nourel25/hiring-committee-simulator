@@ -6,6 +6,12 @@ Stop conditions (any one ends the session and goes to the user):
 - the refiner wrote no line that passed the grounding check, or the CV did not change.
 "Verdict is hire" is not a stop condition on its own here (unlike the design draft): the chair's
 verdict reads the requirements only, so a good CV with a weak top would never be refined.
+
+v2 (after the first run): the summary goes under a headline with the current job title, because a
+summary on the first line hid the title from R1 (a must-have) in every refined CV; and only the
+recruiter reviews again, because the refiner changes only the top of the CV and the other members
+judge the experience below it, which never changes. In v1 they picked the shorter summary line as
+evidence, lost words like "myself", and two good CVs lost their hire verdict.
 """
 
 from dataclasses import dataclass, field
@@ -15,18 +21,20 @@ from openai import OpenAI
 from hcs.agents import refiner
 from hcs.cases import Case, Posting, load_posting
 from hcs.committee import Checklists, CommitteeRound, run_committee
-from hcs.grounding import rule_problems
+from hcs.grounding import restates, rule_problems
 from hcs.llm import LLMOutputError, get_structured
 from hcs.pipeline import judge_claims, run_identity
 from hcs.profile import Fact, build_facts
 from hcs.runlog import RUNS_PATH, RunRecord, append_run
 from hcs.schemas import Refinement, SummaryLine, refinement_model_for
-from hcs.screening import PERIOD
+from hcs.screening import PERIOD, current_title
 
 MAX_ROUNDS = 3
 # The recruiter's checks a summary can fix by rewording real facts. R1 (title) and R2 (years) are
 # facts about the career, so a failure there is a gap.
 FIXABLE = ("R3", "R4", "C1", "C2")
+# Members whose reviews carry over between rounds: they judge the experience, which never changes.
+CARRIED = ("hiring_manager", "tech_lead", "devils_advocate")
 
 
 @dataclass
@@ -81,10 +89,12 @@ def gap_objections(committee: CommitteeRound) -> list[str]:
 
 
 def with_summary(cv: str, lines: list[str]) -> str:
-    """The CV with the lines above its first dated role replaced by the new summary."""
+    """The CV with the lines above its first dated role replaced by a headline (the current job title,
+    so the recruiter's title check still reads it first) and the new summary."""
     body = [line for line in cv.strip().splitlines()]
     first_role = next((index for index, line in enumerate(body) if PERIOD.search(line)), 0)
-    return "\n".join([*lines, "", *body[first_role:]])
+    headline = current_title(body[first_role])
+    return "\n".join([headline, *lines, "", *body[first_role:]])
 
 
 def ground(
@@ -103,18 +113,21 @@ def ground(
         if (problems := rule_problems(line.text, line.facts, facts, keywords))
     ]
     passed = [line for line in lines if not rule_problems(line.text, line.facts, facts, keywords)]
+    # A line that only reuses one short fact's words needs no judge.
+    restated = [line for line in passed if restates(line.text, line.facts, facts)]
+    passed = [line for line in passed if line not in restated]
     if not passed:
-        return [], rejected, None
+        return restated, rejected, None
     record = judge_claims(
         client, [(line.text, line.facts) for line in passed], facts, case_id, runs_path
     )
     if record.status != "ok":
         return (
-            [],
+            restated,
             rejected + [GroundedLine(line, ["the grounding judge failed"]) for line in passed],
             record,
         )
-    kept = []
+    kept = list(restated)
     for line, judgement in zip(passed, record.judgements, strict=True):
         if judgement.supported:
             kept.append(line)
@@ -227,7 +240,12 @@ def run_session(
 
     for number in range(1, max_rounds + 1):
         current = case.model_copy(update={"cv": cv})
-        committee = run_committee(client, current, this_year, posting, checklists, runs_path)
+        carried = (
+            {member: rounds[0].committee.records[member] for member in CARRIED} if rounds else {}
+        )
+        committee = run_committee(
+            client, current, this_year, posting, checklists, runs_path, carried
+        )
         fixable = fixable_objections(committee, checklists)
         rounds.append(Round(number, cv, committee, fixable))
         if not fixable:

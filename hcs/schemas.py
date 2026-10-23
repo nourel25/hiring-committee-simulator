@@ -267,7 +267,8 @@ def judgement_model_for(ids: list[str]) -> type[GroundingJudgement]:
 
 # The refiner (Step 6): a short summary at the top of the CV, each line citing the facts it uses.
 MAX_SUMMARY_LINES = 3
-MAX_SUMMARY_LINE = 160
+# Wider than the 20 words the prompt asks for: the grammar cuts a string at its limit, mid-word.
+MAX_SUMMARY_LINE = 200
 
 
 class SummaryLine(BaseModel):
@@ -290,9 +291,14 @@ def refinement_model_for(fact_ids: list[str]) -> type[Refinement]:
     line_model = create_model(
         "SummaryLine",
         __base__=SummaryLine,
+        # v2: exactly one fact per line, so a line can't move a detail from one fact to another.
         facts=(
             list[Literal[tuple(fact_ids)]],
-            Field(min_length=1, description=SummaryLine.model_fields["facts"].description),
+            Field(
+                min_length=1,
+                max_length=1,
+                description=SummaryLine.model_fields["facts"].description,
+            ),
         ),
     )
     return create_model(

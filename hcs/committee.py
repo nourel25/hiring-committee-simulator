@@ -64,20 +64,26 @@ def run_committee(
     posting: Posting | None = None,
     checklists: Checklists | None = None,
     runs_path=RUNS_PATH,
+    carried: dict[str, RunRecord] | None = None,
 ) -> CommitteeRound:
-    """Run the four members on one CV (none sees another's output), then the chair."""
+    """Run the four members on one CV (none sees another's output), then the chair. Members in
+    `carried` are not run again: their earlier reviews are reused."""
     posting = posting or load_posting(case.checklist)
     checklists = checklists or Checklists.for_posting(case.checklist)
-    start = time.perf_counter()
-    records = {
-        "recruiter": review_recruiter(
+    carried = carried or {}
+    calls = {
+        "recruiter": lambda: review_recruiter(
             client, case, posting, checklists.recruiter, this_year, runs_path
         ),
-        "hiring_manager": review_hiring_manager(
+        "hiring_manager": lambda: review_hiring_manager(
             client, case, posting, checklists.hiring_manager, runs_path
         ),
-        "tech_lead": review_case(client, case, checklists.tech_lead, runs_path),
-        "devils_advocate": review_devils_advocate(client, case, posting, runs_path),
+        "tech_lead": lambda: review_case(client, case, checklists.tech_lead, runs_path),
+        "devils_advocate": lambda: review_devils_advocate(client, case, posting, runs_path),
+    }
+    start = time.perf_counter()
+    records = {
+        member: carried[member] if member in carried else call() for member, call in calls.items()
     }
     return CommitteeRound(
         case_id=case.id,

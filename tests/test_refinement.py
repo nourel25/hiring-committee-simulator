@@ -2,12 +2,15 @@
 
 import json
 
+import pytest
+from pydantic import ValidationError
+
 from hcs.cases import load_case, load_posting
 from hcs.committee import Checklists
 from hcs.profile import build_facts
 from hcs.refinement import ground, run_session, with_summary, write_summary
 from hcs.runlog import read_runs
-from hcs.schemas import SummaryLine
+from hcs.schemas import SummaryLine, refinement_model_for
 from tests.fakes import FakeClient, make_response
 
 CASE = load_case("present-1")
@@ -28,7 +31,6 @@ def judged(*supported: bool) -> str:
             "judgements": [
                 {
                     "id": f"G{n}",
-                    "support": [],
                     "unsupported": None if ok else "leads a team",
                     "supported": ok,
                 }
@@ -43,15 +45,32 @@ def review(ids: list[str], passed: bool, evidence: str) -> str:
     return json.dumps({"checks": checks})
 
 
-def test_the_summary_replaces_the_lines_above_the_first_role():
+def test_the_summary_goes_under_a_headline_with_the_current_title():
     cv = with_summary(CASE.cv, ["Builds Python REST APIs"])
 
-    assert cv.splitlines()[:3] == [
+    # The recruiter's title check reads the first line, so the title stays first.
+    assert cv.splitlines()[:4] == [
+        "Backend Developer",
         "Builds Python REST APIs",
         "",
         "Backend Developer, online pharmacy (2021-present)",
     ]
     assert "Passionate" not in cv
+
+
+def test_a_line_that_restates_one_short_fact_needs_no_judge(tmp_path):
+    line = SummaryLine(facts=["F5"], text="Designed the PostgreSQL schema for prescriptions")
+
+    kept, rejected, record = ground(FakeClient([]), [line], FACTS, [], "x", tmp_path / "r.jsonl")
+
+    assert (kept, rejected, record) == ([line], [], None)
+
+
+def test_each_summary_line_cites_exactly_one_fact():
+    model = refinement_model_for(["F1", "F2"])
+
+    with pytest.raises(ValidationError):
+        model.model_validate({"summary": [{"facts": ["F1", "F2"], "text": "x"}]})
 
 
 def test_rules_reject_before_the_judge_and_the_judge_rejects_meaning(tmp_path):
@@ -121,7 +140,8 @@ def test_a_session_refines_until_nothing_fixable_is_left(tmp_path):
             *committee(recruiter_passes=False),
             make_response(summary(TRUE_LINE)),
             make_response(judged(True)),
-            *committee(recruiter_passes=True),
+            # Round 2: only the recruiter reads the CV again.
+            committee(recruiter_passes=True)[0],
         ]
     )
 
@@ -129,9 +149,11 @@ def test_a_session_refines_until_nothing_fixable_is_left(tmp_path):
 
     assert [round_.number for round_ in session.rounds] == [1, 2]
     assert session.stop_reason == "hire"
-    assert session.final_cv.startswith(TRUE_LINE["text"])
-    # Round 2's recruiter reads the new top of the CV.
+    assert session.final_cv.splitlines()[:2] == ["Backend Developer", TRUE_LINE["text"]]
     assert TRUE_LINE["text"] in client.calls[6][1]["content"]
+    first, second = (round_.committee.records for round_ in session.rounds)
+    assert second["tech_lead"] is first["tech_lead"]
+    assert second["recruiter"] is not first["recruiter"]
 
 
 def test_a_session_stops_when_no_line_survives_the_grounding_check(tmp_path):

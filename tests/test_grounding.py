@@ -7,7 +7,7 @@ from pydantic import ValidationError
 
 from hcs.agents.grounding_judge import build_user_message
 from hcs.cases import load_case, load_claims
-from hcs.grounding import names_in, rule_problems
+from hcs.grounding import names_in, restates, rule_problems
 from hcs.pipeline import judge_claims
 from hcs.profile import build_facts, format_facts, numbers_in
 from hcs.runlog import read_runs
@@ -133,3 +133,18 @@ def test_a_judgement_must_cover_every_claim_once():
 
     with pytest.raises(ValidationError):
         model.model_validate({"judgements": [one]})
+
+
+@pytest.mark.parametrize(
+    "claim", [c for c in load_claims() if not c.supported], ids=lambda claim: claim.text[:40]
+)
+def test_no_unsupported_labelled_claim_passes_the_code_fast_path(claim):
+    facts = build_facts(load_case(claim.case).cv)
+
+    assert not restates(claim.text, claim.facts, facts)
+
+
+def test_a_short_restatement_of_one_fact_passes_the_code_fast_path():
+    assert restates("Develops the Python REST API for 12,000 merchants", ["F3"], FACTS)
+    assert not restates("Develops the Python REST API for 12,000 merchants", ["F3", "F4"], FACTS)
+    assert not restates("Leads the Python REST API team", ["F3"], FACTS)

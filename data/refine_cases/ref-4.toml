@@ -1,0 +1,22 @@
+# Held-out case for refinement v2, written before any v2 run (2026-10-23; unreviewed by the user).
+# A poor fit for the data engineer role (an analyst: queries, a notebook run by hand, slides).
+# Guard: it must stay no_hire, and the summary must not claim pipelines others rely on.
+id = "ref-4"
+label = "poor"
+split = "heldout"
+checklist = "data_logistics"
+# No check passes: 0/14 -> strong_no.
+expected_decision = "strong_no"
+
+cv = """
+Data Analyst, parcel company (2021-present)
+- Passionate about data and storytelling
+- Write SQL queries in Snowflake for the operations team's weekly reports
+- Built a Python notebook that I run each Monday to clean the depot data
+- Present delivery KPIs to managers every month
+
+Marketing Assistant, retailer (2018-2021)
+- Managed social media posts
+"""
+
+[expected]
