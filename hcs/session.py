@@ -12,7 +12,7 @@ from pathlib import Path
 from hcs.cases import Case, load_posting
 from hcs.committee import format_transcript
 from hcs.llm import make_client
-from hcs.refinement import MAX_ROUNDS, Session, run_session
+from hcs.refinement import MAX_ROUNDS, Judge, Session, run_session
 
 APPROVED_DIR = Path("runs") / "approved"
 
@@ -73,7 +73,9 @@ def main() -> None:
         cv=args.cv.read_text(encoding="utf-8"),
         expected={},
     )
-    session = run_session(make_client(), case, date.today().year, posting, args.rounds)
+    session = run_session(
+        make_client(), case, date.today().year, posting, args.rounds, judge=Judge.configured()
+    )
     print(report(session))
 
     if session.final_cv == session.rounds[0].cv:

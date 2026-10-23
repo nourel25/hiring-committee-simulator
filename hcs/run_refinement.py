@@ -10,7 +10,7 @@ from pathlib import Path
 from hcs.cases import CASES_DIR, load_case, load_cases
 from hcs.evaluation import CASE_WIDTH
 from hcs.llm import make_client
-from hcs.refinement import Session, run_session
+from hcs.refinement import Judge, Session, run_session
 
 SESSIONS_PATH = Path("runs") / "sessions.jsonl"
 
@@ -24,6 +24,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("cases", nargs="*", help="case ids (default: every case)")
     parser.add_argument("--refiner", help="the refiner's Ollama model (default: refiner.MODEL)")
+    parser.add_argument(
+        "--local-judge",
+        action="store_true",
+        help="run the grounding judge locally (judge A) instead of config.GROUNDING_JUDGE",
+    )
     parser.add_argument(
         "--dir", type=Path, default=CASES_DIR, help="where the cases are (default: data/cases)"
     )
@@ -69,6 +74,7 @@ def main() -> None:
         else load_cases(args.dir)
     )
     settings = {"refiner_model": args.refiner} if args.refiner else {}
+    settings["judge"] = Judge(client) if args.local_judge else Judge.configured()
     results = []
 
     print(HEADER)

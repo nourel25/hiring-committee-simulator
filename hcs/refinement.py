@@ -27,8 +27,9 @@ from openai import OpenAI
 from hcs.agents import refiner
 from hcs.cases import Case, Posting, load_posting
 from hcs.committee import Checklists, CommitteeRound, run_committee
+from hcs.config import API_MAX_TOKENS, GROUNDING_JUDGE, GROUNDING_JUDGE_RETRIES
 from hcs.grounding import restates, rule_problems
-from hcs.llm import LLMOutputError, get_structured
+from hcs.llm import LLMOutputError, get_structured, make_client
 from hcs.pipeline import judge_claims, run_identity
 from hcs.profile import Fact, build_facts
 from hcs.runlog import RUNS_PATH, RunRecord, append_run
@@ -44,6 +45,22 @@ CARRIED = ("hiring_manager", "tech_lead", "devils_advocate")
 # A fact used as written when its shortened line fails grounding twice: longer ones are paragraphs.
 MAX_VERBATIM_WORDS = 25
 YEAR = re.compile(r"(?:19|20)\d{2}")
+
+
+@dataclass
+class Judge:
+    """Where the grounding judge runs: its own client, because it may be on an API while the
+    committee runs locally."""
+
+    client: OpenAI
+    settings: dict = field(default_factory=dict)
+
+    @classmethod
+    def configured(cls) -> "Judge":
+        settings = {"model": GROUNDING_JUDGE.model, "max_retries": GROUNDING_JUDGE_RETRIES}
+        if GROUNDING_JUDGE.provider != "ollama":
+            settings["max_tokens"] = API_MAX_TOKENS
+        return cls(make_client(GROUNDING_JUDGE.provider), settings)
 
 
 @dataclass
@@ -160,7 +177,7 @@ def with_summary(cv: str, lines: list[str]) -> str:
 
 
 def ground(
-    client: OpenAI,
+    judge: Judge,
     lines: list[SummaryLine],
     facts: list[Fact],
     keywords: list[str],
@@ -181,7 +198,12 @@ def ground(
     if not passed:
         return restated, rejected, None
     record = judge_claims(
-        client, [(line.text, line.facts) for line in passed], facts, case_id, runs_path
+        judge.client,
+        [(line.text, line.facts) for line in passed],
+        facts,
+        case_id,
+        runs_path,
+        **judge.settings,
     )
     if record.status != "ok":
         return (
@@ -264,21 +286,23 @@ def write_summary(
     case_id: str,
     runs_path=RUNS_PATH,
     model: str = refiner.MODEL,
+    judge: Judge | None = None,
 ) -> Draft:
     """Shorten the chosen facts and ground each line; rejected lines go back once with the reasons.
     A chosen fact still without a line after that is used as written when it is short."""
+    judge = judge or Judge(client)
     record, lines = call_refiner(client, chosen, keywords, [], case_id, runs_path, model)
     records = [record]
-    kept, rejected, judge = ground(client, lines, facts, keywords, case_id, runs_path)
-    records += [judge] if judge else []
+    kept, rejected, check = ground(judge, lines, facts, keywords, case_id, runs_path)
+    records += [check] if check else []
     if rejected or not lines:
         feedback = [f'"{item.line.text}": {"; ".join(item.problems)}' for item in rejected]
         redo = [fact for fact in chosen if all(fact.id not in line.facts for line in kept)]
         record, lines = call_refiner(client, redo, keywords, feedback, case_id, runs_path, model)
         records.append(record)
-        more, rejected, judge = ground(client, lines, facts, keywords, case_id, runs_path)
+        more, rejected, check = ground(judge, lines, facts, keywords, case_id, runs_path)
         kept += more
-        records += [judge] if judge else []
+        records += [check] if check else []
     verbatim = []
     for fact in chosen:
         covered = any(fact.id in line.facts for line in kept)
@@ -298,6 +322,7 @@ def run_session(
     max_rounds: int = MAX_ROUNDS,
     runs_path=RUNS_PATH,
     refiner_model: str = refiner.MODEL,
+    judge: Judge | None = None,
 ) -> Session:
     """Committee rounds with refinement in between, until a stop condition fires."""
     posting = posting or load_posting(case.checklist)

@@ -8,7 +8,7 @@ from pydantic import ValidationError
 from hcs.cases import load_case, load_posting
 from hcs.committee import Checklists, CommitteeRound
 from hcs.profile import build_facts
-from hcs.refinement import ground, run_session, triage, with_summary, write_summary
+from hcs.refinement import Judge, ground, run_session, triage, with_summary, write_summary
 from hcs.runlog import read_runs
 from hcs.schemas import SummaryLine, refinement_model_for
 from tests.fakes import FakeClient, make_response
@@ -85,7 +85,9 @@ def test_a_check_no_fact_can_fix_is_a_gap():
 def test_a_line_that_restates_one_short_fact_needs_no_judge(tmp_path):
     line = SummaryLine(facts=["F5"], text="Designed the PostgreSQL schema for prescriptions")
 
-    kept, rejected, judge = ground(FakeClient([]), [line], FACTS, [], "x", tmp_path / "r.jsonl")
+    kept, rejected, judge = ground(
+        Judge(FakeClient([])), [line], FACTS, [], "x", tmp_path / "r.jsonl"
+    )
 
     assert (kept, rejected, judge) == ([line], [], None)
 
@@ -106,7 +108,7 @@ def test_rules_reject_before_the_judge_and_the_judge_rejects_meaning(tmp_path):
     lines = [SummaryLine(**TRUE_LINE), SummaryLine(**PADDED_LINE), SummaryLine(**INFLATED_LINE)]
     client = FakeClient([make_response(judged(True, False))])
 
-    kept, rejected, judge = ground(client, lines, FACTS, ["AWS"], "x", tmp_path / "r.jsonl")
+    kept, rejected, judge = ground(Judge(client), lines, FACTS, ["AWS"], "x", tmp_path / "r.jsonl")
 
     assert [line.text for line in kept] == [TRUE_LINE["text"]]
     assert [(item.line.text, item.problems[0]) for item in rejected] == [
@@ -193,3 +195,15 @@ def test_a_session_refines_until_nothing_fixable_is_left(tmp_path):
     first, second = (round_.committee.records for round_ in session.rounds)
     assert second["tech_lead"] is first["tech_lead"]
     assert second["recruiter"] is not first["recruiter"]
+
+
+def test_the_grounding_judge_uses_its_own_client(tmp_path):
+    committee_client = FakeClient([make_response(summary(TRUE_LINE))])
+    judge_client = FakeClient([make_response(judged(True))])
+    judge = Judge(judge_client, {"model": "api-model", "max_retries": 3})
+
+    draft = write_summary(committee_client, FACTS, [F4], [], "x", tmp_path / "r.jsonl", judge=judge)
+
+    assert [line.text for line in draft.kept] == [TRUE_LINE["text"]]
+    assert len(committee_client.calls) == 1 and len(judge_client.calls) == 1
+    assert read_runs(tmp_path / "r.jsonl")[-1].model == "api-model"

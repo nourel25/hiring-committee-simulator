@@ -25,6 +25,12 @@ JUDGE_B: ModelChoice | None = None
 # Outside the loop, eval set only: bigger and from another family (7/7 on v3, strict schema).
 HELD_OUT_JUDGE = ModelChoice("groq", "openai/gpt-oss-120b")
 
+# The grounding checker's judge layer, in the loop (Step 5.2). Not the refiner's family. On the 12
+# held-out claims qwen2.5:7b got 7/12 (1 lenient); this 27B model on Groq got 12/12 (0 lenient) with
+# the same prompt. Groq has no strict schema for it, so format slips get 3 repair retries.
+GROUNDING_JUDGE = ModelChoice("groq", "qwen/qwen3.8-27b")
+GROUNDING_JUDGE_RETRIES = 3
+
 # The rubric these choices were measured on.
 CHECKLIST = "backend_payments"
 
