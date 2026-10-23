@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from hcs.schemas import Decision, Objection, Review
+from hcs.schemas import ClaimJudgement, Decision, Objection, Review, SummaryLine
 
 RUNS_PATH = Path("runs") / "runs.jsonl"
 
@@ -55,6 +55,11 @@ class RunRecord(BaseModel):
     # The devil's advocate's result instead of a review (None for other reviewers and failed runs)
     objections: list[Objection] | None = None
     ungrounded_objections: list[int] = []
+
+    # The grounding judge's result (None for other agents and failed runs)
+    judgements: list[ClaimJudgement] | None = None
+    # The refiner's summary lines before the grounding check (None for other agents)
+    summary: list[SummaryLine] | None = None
 
 
 def append_run(record: RunRecord, path: Path = RUNS_PATH) -> None:

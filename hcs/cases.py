@@ -138,3 +138,21 @@ def key_problems(case: Case, checklist: Checklist) -> list[str]:
     missing = [f"missing: {item_id}" for item_id in item_ids if item_id not in case.expected]
     unknown = [f"unknown: {key}" for key in case.expected if key not in item_ids]
     return missing + unknown
+
+
+GROUNDING_PATH = DATA_DIR / "grounding" / "claims.toml"
+
+
+class GroundingClaim(BaseModel):
+    """One labelled claim for the grounding judge, citing facts built from a case's CV."""
+
+    case: str
+    split: Literal["dev", "heldout"]
+    text: str
+    facts: list[str]
+    supported: bool
+    note: str | None = None
+
+
+def load_claims(path: Path = GROUNDING_PATH) -> list[GroundingClaim]:
+    return [GroundingClaim.model_validate(claim) for claim in load_toml(path)["claims"]]

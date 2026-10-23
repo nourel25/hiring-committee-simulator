@@ -6,7 +6,7 @@ from pathlib import Path
 
 from openai import OpenAI
 
-from hcs.agents import devils_advocate, hiring_manager, recruiter, tech_lead
+from hcs.agents import devils_advocate, grounding_judge, hiring_manager, recruiter, tech_lead
 from hcs.cases import Case, Checklist, Posting
 from hcs.llm import LLMOutputError, get_structured
 from hcs.policies import (
@@ -17,11 +17,14 @@ from hcs.policies import (
     decide,
     failed_must_haves,
 )
+from hcs.profile import Fact
 from hcs.runlog import RUNS_PATH, RunRecord, append_run
 from hcs.schemas import (
     Check,
+    GroundingJudgement,
     RequirementRatings,
     Review,
+    judgement_model_for,
     ratings_model_for,
     review_model_for,
 )
@@ -311,6 +314,80 @@ def review_devils_advocate(
         raw_reply=result.raw_reply,
         truth_check_changes=changes,
         objections=devils_advocate.pick_objections(ratings, lines),
+    )
+    append_run(record, runs_path)
+    return record
+
+
+def judge_claims(
+    client: OpenAI,
+    claims: list[tuple[str, list[str]]],
+    facts: list[Fact],
+    case_id: str,
+    runs_path: Path = RUNS_PATH,
+    model: str = grounding_judge.MODEL,
+    temperature: float = grounding_judge.TEMPERATURE,
+    seed: int = grounding_judge.SEED,
+    max_tokens: int = grounding_judge.MAX_TOKENS,
+    strict: bool = False,
+) -> RunRecord:
+    """Run the grounding judge on (claim, cited fact ids) pairs. A claim with an unsupported part is
+    never supported, whatever the model's verdict says."""
+    messages = grounding_judge.build_messages(claims, facts)
+    common = run_identity(
+        agent="grounding_judge",
+        prompt_version=grounding_judge.PROMPT_VERSION,
+        case_id=case_id,
+        checklist=None,
+        messages=messages,
+        model=model,
+        temperature=temperature,
+        seed=seed,
+        max_tokens=max_tokens,
+        max_retries=grounding_judge.MAX_RETRIES,
+    )
+    try:
+        result = get_structured(
+            client,
+            messages,
+            response_model=judgement_model_for(grounding_judge.claim_ids(len(claims))),
+            model=model,
+            temperature=temperature,
+            seed=seed,
+            max_tokens=max_tokens,
+            max_retries=grounding_judge.MAX_RETRIES,
+            strict=strict,
+        )
+    except LLMOutputError as error:
+        record = RunRecord(
+            **common,
+            status="error",
+            error=str(error),
+            attempts=error.attempts,
+            raw_reply=error.raw_reply,
+        )
+        append_run(record, runs_path)
+        return record
+
+    judgement = GroundingJudgement.model_validate(result.parsed.model_dump())
+    changed = 0
+    for item in judgement.judgements:
+        if item.unsupported is not None and item.supported:
+            item.supported = False
+            changed += 1
+    # In the order the claims were given, whatever order the model wrote them in.
+    order = grounding_judge.claim_ids(len(claims))
+    ordered = sorted(judgement.judgements, key=lambda item: order.index(item.id))
+    record = RunRecord(
+        **common,
+        status="ok",
+        attempts=result.attempts,
+        seconds=result.seconds,
+        prompt_tokens=result.prompt_tokens,
+        completion_tokens=result.completion_tokens,
+        raw_reply=result.raw_reply,
+        evidence_policy_changes=changed,
+        judgements=ordered,
     )
     append_run(record, runs_path)
     return record

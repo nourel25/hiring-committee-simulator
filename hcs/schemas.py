@@ -214,3 +214,96 @@ class Objection(BaseModel):
     severity: Severity
 
     _evidence_list = field_validator("evidence", mode="before")(quote_list)
+
+
+# The grounding judge (Step 5.2): reads what the rules can't, whether a claim's meaning is supported.
+class ClaimJudgement(BaseModel):
+    """One claim judged against the facts it cites. The unsupported part comes before the verdict."""
+
+    id: str = Field(description="The claim's id, copied exactly from the input, e.g. 'G1'.")
+    unsupported: str | None = Field(
+        max_length=300,
+        description="The words of the claim that the cited facts do not say, or null if none.",
+    )
+    supported: bool = Field(
+        description="True only if the cited facts say everything the claim says."
+    )
+
+    _unsupported_null = field_validator("unsupported", mode="before")(null_if_written_out)
+
+
+class GroundingJudgement(BaseModel):
+    judgements: list[ClaimJudgement] = Field(
+        min_length=1, description="One judgement per claim, in the order given."
+    )
+
+
+def judgement_model_for(ids: list[str]) -> type[GroundingJudgement]:
+    """GroundingJudgement whose ids can only be the given ids, each judged exactly once."""
+    judgement_model = create_model(
+        "ClaimJudgement",
+        __base__=ClaimJudgement,
+        id=(Literal[tuple(ids)], Field(description=ClaimJudgement.model_fields["id"].description)),
+    )
+
+    def every_claim_once(judgement: GroundingJudgement) -> GroundingJudgement:
+        got = [item.id for item in judgement.judgements]
+        if sorted(got) != sorted(ids):
+            raise ValueError(f"judge each of {', '.join(ids)} exactly once; got {', '.join(got)}")
+        return judgement
+
+    return create_model(
+        "GroundingJudgement",
+        __base__=GroundingJudgement,
+        __validators__={"every_claim_once": model_validator(mode="after")(every_claim_once)},
+        judgements=(
+            list[judgement_model],
+            Field(
+                min_length=1, description=GroundingJudgement.model_fields["judgements"].description
+            ),
+        ),
+    )
+
+
+# The refiner (Step 6): a short summary at the top of the CV, each line citing the facts it uses.
+MAX_SUMMARY_LINES = 3
+MAX_SUMMARY_LINE = 160
+
+
+class SummaryLine(BaseModel):
+    """One line of the new summary. The facts come first, so the model picks them before writing."""
+
+    facts: list[str] = Field(min_length=1, description="Ids of the facts this line uses.")
+    text: Annotated[
+        str, Field(max_length=MAX_SUMMARY_LINE, description="The line, in plain words.")
+    ]
+
+
+class Refinement(BaseModel):
+    summary: list[SummaryLine] = Field(
+        min_length=1, max_length=MAX_SUMMARY_LINES, description="One to three summary lines."
+    )
+
+
+def refinement_model_for(fact_ids: list[str]) -> type[Refinement]:
+    """A Refinement whose lines can only cite the given fact ids."""
+    line_model = create_model(
+        "SummaryLine",
+        __base__=SummaryLine,
+        facts=(
+            list[Literal[tuple(fact_ids)]],
+            Field(min_length=1, description=SummaryLine.model_fields["facts"].description),
+        ),
+    )
+    return create_model(
+        "Refinement",
+        __base__=Refinement,
+        summary=(
+            list[line_model],
+            Field(
+                min_length=1,
+                max_length=MAX_SUMMARY_LINES,
+                description=Refinement.model_fields["summary"].description,
+            ),
+        ),
+    )

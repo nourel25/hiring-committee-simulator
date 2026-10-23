@@ -1,0 +1,172 @@
+# Labelled claims for the grounding judge (Step 5.2). Each claim is a line a refiner might write,
+# citing facts (F ids) built by code from a labelled case's CV (hcs/profile.py build_facts).
+# Every claim passes the rules layer (no new numbers or names), so this set measures only what the
+# judge must read: meaning. Unsupported claims inflate ownership, scope or seniority in plain words.
+# Written and keyed before any judge run (2026-10-23); not yet independently reviewed.
+# dev: may be used to change the judge's prompt. heldout: measured once per prompt version.
+
+[[claims]]
+case = "borderline-1"
+split = "dev"
+text = "Python engineer who maintains a public REST API used by 12,000 merchants"
+facts = ["F2"]
+supported = true
+
+[[claims]]
+case = "borderline-1"
+split = "dev"
+text = "Designed the Django database schema for the reports"
+facts = ["F5"]
+supported = false
+note = "adding fields to existing models is not designing the schema"
+
+[[claims]]
+case = "borderline-1"
+split = "dev"
+text = "Releases services to production several times a week through GitLab CI"
+facts = ["F3"]
+supported = true
+note = "the live environment is production"
+
+[[claims]]
+case = "borderline-1"
+split = "dev"
+text = "Led a team of two engineers"
+facts = ["F7"]
+supported = false
+note = "coaching two juniors is not leading a team"
+
+[[claims]]
+case = "borderline-1"
+split = "dev"
+text = "Runs services on Kubernetes and responds to production alerts"
+facts = ["F4", "F6"]
+supported = true
+
+[[claims]]
+case = "borderline-1"
+split = "dev"
+text = "Built the merchant API from scratch"
+facts = ["F2"]
+supported = false
+note = "the fact says develop and maintain, not built from scratch"
+
+[[claims]]
+case = "data-borderline-2"
+split = "dev"
+text = "Designed a star schema for carrier performance"
+facts = ["F3"]
+supported = true
+
+[[claims]]
+case = "data-borderline-2"
+split = "dev"
+text = "Deploys and schedules dbt pipelines in production"
+facts = ["F2", "F4"]
+supported = false
+note = "the platform team deploys and schedules them"
+
+[[claims]]
+case = "data-borderline-2"
+split = "dev"
+text = "Cut warehouse costs by 35% by partitioning large tables"
+facts = ["F6"]
+supported = true
+
+[[claims]]
+case = "data-borderline-2"
+split = "dev"
+text = "Built automated data-quality checks for the sales tables"
+facts = ["F5"]
+supported = false
+note = "fixing rows by hand is not an automated check"
+
+[[claims]]
+case = "poor-2"
+split = "heldout"
+text = "Builds Python tools that engineers use to rotate credentials"
+facts = ["F2"]
+supported = true
+
+[[claims]]
+case = "poor-2"
+split = "heldout"
+text = "Built backend services in Python used by 40 product teams"
+facts = ["F2", "F3"]
+supported = false
+note = "command-line tools are not backend services, and the 40 teams use the Terraform modules"
+
+[[claims]]
+case = "poor-2"
+split = "heldout"
+text = "Manages the on-call engineers and leads incident reviews"
+facts = ["F4"]
+supported = false
+note = "leading a meeting is not managing engineers"
+
+[[claims]]
+case = "poor-2"
+split = "heldout"
+text = "Moved 30 services onto Kubernetes using Helm"
+facts = ["F5"]
+supported = true
+
+[[claims]]
+case = "da-1"
+split = "heldout"
+text = "Owns the deployment and monitoring of the menu and order APIs"
+facts = ["F2", "F4"]
+supported = false
+note = "the release team deploys and monitors them"
+
+[[claims]]
+case = "da-1"
+split = "heldout"
+text = "Designed the PostgreSQL schema for menus, orders and restaurants"
+facts = ["F3"]
+supported = true
+
+[[claims]]
+case = "da-1"
+split = "heldout"
+text = "Made the menu API almost six times faster with Redis caching"
+facts = ["F5"]
+supported = true
+note = "700 ms to 120 ms is 5.8 times faster: arithmetic on a fact is supported"
+
+[[claims]]
+case = "da-1"
+split = "heldout"
+text = "Mentors a junior developer through weekly code reviews"
+facts = ["F6"]
+supported = true
+
+[[claims]]
+case = "present-1"
+split = "heldout"
+text = "Backend developer who builds Python REST APIs serving 30,000 customers a day"
+facts = ["F3", "F4"]
+supported = true
+
+[[claims]]
+case = "present-1"
+split = "heldout"
+text = "Designed a 9-table PostgreSQL schema and leads the database team"
+facts = ["F5"]
+supported = false
+note = "nothing says they lead a team"
+
+[[claims]]
+case = "present-1"
+split = "heldout"
+text = "Deploys their own services to production with GitHub Actions and Kubernetes, and is on call"
+facts = ["F6", "F7"]
+supported = true
+
+[[claims]]
+case = "present-1"
+split = "heldout"
+text = "Passionate engineer who architected the company's payment platform"
+facts = ["F1", "F4"]
+supported = false
+note = "an online pharmacy's order APIs are not a payment platform, and nothing says architected"
