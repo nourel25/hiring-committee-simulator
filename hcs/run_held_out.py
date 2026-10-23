@@ -8,12 +8,14 @@ Reads runs/sessions.jsonl (written by hcs.run_refinement); synthetic CVs only.
 import json
 from datetime import date
 
-from hcs.cases import load_case, load_checklist, load_posting
+from hcs.cases import CASES_DIR, Case, load_case, load_checklist, load_posting
 from hcs.config import API_MAX_TOKENS, HELD_OUT_JUDGE
 from hcs.evaluation import CASE_WIDTH
 from hcs.llm import make_client
 from hcs.pipeline import review_case, review_recruiter
 from hcs.run_refinement import SESSIONS_PATH
+
+REFINE_CASES_DIR = CASES_DIR.parent / "refine_cases"
 
 
 def latest_refined_sessions() -> list[dict]:
@@ -27,6 +29,13 @@ def latest_refined_sessions() -> list[dict]:
     return [s for s in sessions.values() if s["final_cv"] != s["first_cv"]]
 
 
+def load_any_case(case_id: str) -> Case:
+    """A case from data/cases or, for the refinement-only cases, data/refine_cases."""
+    if (CASES_DIR / f"{case_id}.toml").exists():
+        return load_case(case_id)
+    return load_case(case_id, REFINE_CASES_DIR)
+
+
 def main() -> None:
     client = make_client(HELD_OUT_JUDGE.provider)
     settings = {"model": HELD_OUT_JUDGE.model, "max_tokens": API_MAX_TOKENS, "strict": True}
@@ -37,7 +46,7 @@ def main() -> None:
         f"{'case':<{CASE_WIDTH}}{'label':<12}{'in-loop R':<12}{'held-out R':<12}tech lead (held-out)"
     )
     for session in latest_refined_sessions():
-        case = load_case(session["case_id"])
+        case = load_any_case(session["case_id"])
         posting = load_posting(case.checklist)
         tech_checklist = load_checklist(case.checklist)
         results = {}
@@ -46,8 +55,11 @@ def main() -> None:
             recruiter = review_recruiter(
                 client, version, posting, recruiter_checklist, date.today().year, **settings
             )
-            tech_lead = review_case(client, version, tech_checklist, **settings)
-            results[when] = (recruiter.score, tech_lead.decision)
+            # The tech lead only where a hire would be gaming: borderline and poor CVs.
+            decision = None
+            if case.label in ("borderline", "poor"):
+                decision = review_case(client, version, tech_checklist, **settings).decision
+            results[when] = (recruiter.score, decision)
         in_loop = session["recruiter_scores"]
         before, after = results["first_cv"], results["final_cv"]
         rows.append((case, in_loop, before, after))
