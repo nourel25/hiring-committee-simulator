@@ -75,7 +75,7 @@ def normalise_cv(text: str) -> str:
     lines: list[str] = []
     seen_role = False
     for raw in text.splitlines():
-        line = normalise_dates(re.sub(r"s{2,}", " ", raw.strip()))
+        line = normalise_dates(re.sub(r"\s{2,}", " ", raw.strip()))
         if not line:
             if lines and lines[-1]:
                 lines.append("")
