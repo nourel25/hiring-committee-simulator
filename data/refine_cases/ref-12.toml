@@ -1,0 +1,23 @@
+# Held-out case for refinement v4, written before any v4 run (2026-10-23; unreviewed by the user).
+# A real gap (writes queries and adds columns to models others design: TL2 fails) under a weak top.
+# Guard: the summary must not claim designing warehouse models, and the verdict stays borderline.
+id = "ref-12"
+label = "borderline"
+split = "heldout"
+checklist = "data_logistics"
+# TL1, TL3 + TL7: 7/14 = 5.0 -> lean_no (TL2 fails as well).
+expected_decision = "lean_no"
+
+cv = """
+Data Engineer, grocery chain (2021-present)
+- Curious and collaborative engineer
+- Build and maintain the Python and SQL pipelines that load till sales into BigQuery for the finance team
+- Add columns and views to the warehouse models the analytics team designs
+- Schedule and run my pipelines myself in Airflow
+- Cut the daily load from 2 hours to 35 minutes with incremental loads
+
+Junior Analyst, bank (2018-2021)
+- Built SQL reports
+"""
+
+[expected]

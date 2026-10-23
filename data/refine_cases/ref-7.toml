@@ -1,9 +1,9 @@
-# Held-out case for refinement v3, written before any v3 run (2026-10-23; unreviewed by the user).
+# Held-out for refinement v3 (written before the v3 run; unreviewed by the user). Dev from v4 on.
 # A real gap (a release team deploys the services: TL4 fails) under a weak top. Guard: the summary
 # must not claim the candidate deploys, and the verdict must stay borderline.
 id = "ref-7"
 label = "borderline"
-split = "heldout"
+split = "dev"
 checklist = "backend_payments"
 # TL1-TL3 + TL7: 10/16 = 6.3 -> lean_hire by band, capped at lean_no (TL4 fails).
 expected_decision = "lean_no"

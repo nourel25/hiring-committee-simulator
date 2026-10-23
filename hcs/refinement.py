@@ -122,15 +122,26 @@ def has_result_number(fact: Fact) -> bool:
     return any(not YEAR.fullmatch(number) for number in fact.metrics)
 
 
-def triage(cv: str, committee: CommitteeRound, facts: list[Fact], keywords: list[str]) -> Plan:
-    """For each failed fixable recruiter check, find facts that can fix it; the rest are gaps."""
+def triage(
+    cv: str,
+    committee: CommitteeRound,
+    facts: list[Fact],
+    keywords: list[str],
+    covered: list[str] = (),
+) -> Plan:
+    """For each failed fixable recruiter check, find facts that can fix it; the rest are gaps.
+
+    v4: facts already in the summary (`covered`) stay there and are not chosen again; the new
+    facts fill only the lines left. In v3 every round rebuilt the summary from its own failures,
+    so a keyword line added in round 2 was dropped in round 3 for a number line, back and forth.
+    """
     record = committee.records.get("recruiter")
     if record is None or record.review is None:
         return Plan([], [], [])
     failed = [
         check.id for check in record.review.checks if check.id in FIXABLE and not check.passed
     ]
-    work = bullets(facts)
+    work = [fact for fact in bullets(facts) if fact.id not in covered]
     chosen: list[Fact] = []
     fixable: list[str] = []
     gaps: list[str] = []
@@ -151,7 +162,7 @@ def triage(cv: str, committee: CommitteeRound, facts: list[Fact], keywords: list
             ]
             (fixable if any(found) else gaps).append(check_id)
         elif check_id == "C2":
-            ok = choose(next((f for f in work if has_result_number(f)), None))
+            ok = choose(result_line(committee, work))
             (fixable if ok else gaps).append(check_id)
         elif check_id == "C1":
             ok = choose(work_line(committee, work))
@@ -160,7 +171,43 @@ def triage(cv: str, committee: CommitteeRound, facts: list[Fact], keywords: list
             (fixable if work else gaps).append(check_id)
     if fixable and not chosen:
         choose(work_line(committee, work))
-    return Plan(chosen[:MAX_SUMMARY_LINES], fixable, gaps)
+    room = MAX_SUMMARY_LINES - len(covered)
+    return Plan(chosen[: max(room, 0)], fixable, gaps)
+
+
+# Checks whose passing quote is a measured result of the candidate's own work.
+RESULT_CHECKS = ("TL7", "HM3")
+
+
+def verified_quotes(committee: CommitteeRound) -> list[str]:
+    """Quotes the tech lead and the hiring manager used for checks they passed, measured results
+    first: lines a reviewer has already judged to be the candidate's own work."""
+    passed = [
+        check
+        for member in ("tech_lead", "hiring_manager")
+        if (record := committee.records.get(member)) and record.review
+        for check in record.review.checks
+        if check.passed and check.evidence
+    ]
+    passed.sort(key=lambda check: check.id not in RESULT_CHECKS)
+    return [check.evidence for check in passed]
+
+
+def result_line(committee: CommitteeRound, work: list[Fact]) -> Fact | None:
+    """A bullet with a number (not a year) that a reviewer quoted for a passed check.
+
+    v4: in v3 code took the first bullet with any number, and in present-4 that was the employer's
+    description ("4 million users in 12 countries"), which the refiner then framed as the
+    candidate's. A reviewer's passing quote is a line already judged to be the candidate's own
+    work; with none, C2 is a gap rather than a guess."""
+    for quote in verified_quotes(committee):
+        match = next(
+            (fact for fact in work if has_result_number(fact) and quote_in_cv(quote, fact.text)),
+            None,
+        )
+        if match:
+            return match
+    return None
 
 
 def work_line(committee: CommitteeRound, work: list[Fact]) -> Fact | None:
@@ -351,6 +398,8 @@ def run_session(
     cv = case.cv
     rounds: list[Round] = []
     reason = "round limit"
+    # The summary so far: each round adds lines and never drops the earlier ones (v4).
+    summary: list[SummaryLine] = []
 
     for number in range(1, max_rounds + 1):
         current = case.model_copy(update={"cv": cv})
@@ -360,21 +409,26 @@ def run_session(
         committee = run_committee(
             client, current, this_year, posting, checklists, runs_path, carried
         )
-        plan = triage(cv, committee, facts, keywords)
+        covered = [line.facts[0] for line in summary]
+        plan = triage(cv, committee, facts, keywords, covered)
         rounds.append(Round(number, cv, committee, plan))
         if not plan.facts:
-            reason = "hire" if committee.verdict.verdict == "hire" else "only gaps remain"
+            if plan.fixable and len(summary) >= MAX_SUMMARY_LINES:
+                reason = "summary full"
+            else:
+                reason = "hire" if committee.verdict.verdict == "hire" else "only gaps remain"
             break
         if number == max_rounds:
             break
         draft = write_summary(
-            client, facts, plan.facts, keywords, case.id, runs_path, refiner_model
+            client, facts, plan.facts, keywords, case.id, runs_path, refiner_model, judge
         )
         rounds[-1].draft = draft
         if not draft.kept:
             reason = "no grounded summary"
             break
-        new_cv = with_summary(case.cv, [line.text for line in draft.kept])
+        summary += draft.kept
+        new_cv = with_summary(case.cv, [line.text for line in summary])
         if new_cv == cv:
             reason = "no change"
             break

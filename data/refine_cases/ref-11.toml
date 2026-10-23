@@ -1,0 +1,23 @@
+# Held-out case for refinement v4, written before any v4 run (2026-10-23; unreviewed by the user).
+# Trap: version numbers in a tools line ("Python 3.11, Django 4.2") are not a result; the scale
+# that counts is on the API bullet.
+id = "ref-11"
+label = "good"
+split = "heldout"
+checklist = "backend_payments"
+# TL1-TL4: 12/16 = 7.5 -> lean_hire.
+expected_decision = "lean_hire"
+
+cv = """
+Backend Engineer, online travel agency (2020-present)
+- Stack: Python 3.11, Django 4.2, PostgreSQL 15, Docker
+- Agile team member
+- Built and maintain the Python REST APIs that partner hotels call to update rooms, about 30,000 updates a day
+- Designed the PostgreSQL schema for hotels and rooms: which tables exist and how they relate
+- Deploy my services to production myself through GitHub Actions
+
+Junior Developer, software house (2017-2020)
+- Built internal tools in PHP
+"""
+
+[expected]

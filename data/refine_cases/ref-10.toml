@@ -1,0 +1,23 @@
+# Held-out case for refinement v4, written before any v4 run (2026-10-23; unreviewed by the user).
+# Trap for the oscillation: the top misses a keyword (SQL) and a number, and they sit on different
+# bullets, so the summary needs two lines that must both survive the rounds.
+id = "ref-10"
+label = "good"
+split = "heldout"
+checklist = "data_logistics"
+# TL1-TL3 + TL7: 10/14 = 7.1 -> lean_hire.
+expected_decision = "lean_hire"
+
+cv = """
+Data Engineer, home delivery company (2020-present)
+- Member of the central data team
+- Build and maintain the Python pipelines that load parcel scans into Snowflake for the planning team
+- Designed the delivery warehouse models: chose the fact and dimension tables and how they join
+- Schedule and run my pipelines myself in Airflow and fix failed loads
+- Rewrote the slowest SQL transformations and cut the nightly run from 90 to 30 minutes
+
+Data Analyst, retailer (2017-2020)
+- Built Excel reports for store managers
+"""
+
+[expected]

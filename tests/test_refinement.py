@@ -65,7 +65,12 @@ def test_triage_picks_a_fact_for_each_fixable_check():
     cv = "Engineer, shop (2020-present)\n- Built the shop API\n- Wrote Python jobs\n- Cut costs by 30%"
     facts = build_facts(cv)
 
-    plan = triage(cv, recruiter_round("R1", "R3", "C2"), facts, ["Python", "Kafka"])
+    round_ = recruiter_round("R1", "R3", "C2")
+    round_.records["tech_lead"] = record(
+        "tech_lead", checks=[check("TL7", True, "Cut costs by 30%")]
+    )
+
+    plan = triage(cv, round_, facts, ["Python", "Kafka"])
 
     # Python is in a bullet; Kafka is in none, but one found keyword is worth a summary line.
     assert [fact.text for fact in plan.facts] == ["Wrote Python jobs", "Cut costs by 30%"]
@@ -221,3 +226,118 @@ def test_c1_takes_the_line_the_tech_lead_quoted_not_personal_qualities():
     plan = triage(cv, round_, build_facts(cv), [])
 
     assert [fact.text for fact in plan.facts] == ["Built the shop API in Python"]
+
+
+def test_c2_takes_a_numbered_line_a_reviewer_passed_never_the_employers_numbers():
+    cv = (
+        "Engineer, PayCo (2020-present)\n- PayCo serves 4 million users in 12 countries\n"
+        "- Built the payouts API in Python, used by 9,000 merchants\n- Cut payout time from 3 days to 1"
+    )
+    round_ = recruiter_round("C2")
+    round_.records["tech_lead"] = record(
+        "tech_lead",
+        checks=[
+            check("TL1", True, "Built the payouts API in Python, used by 9,000 merchants"),
+            check("TL7", True, "Cut payout time from 3 days to 1"),
+        ],
+    )
+
+    plan = triage(cv, round_, build_facts(cv), [])
+
+    # A measured result (TL7) comes before a scale; the employer's numbers are never chosen.
+    assert [fact.text for fact in plan.facts] == ["Cut payout time from 3 days to 1"]
+
+
+def test_c2_with_no_reviewed_numbered_line_is_a_gap():
+    cv = "Engineer, PayCo (2020-present)\n- PayCo serves 4 million users in 12 countries"
+
+    plan = triage(cv, recruiter_round("C2"), build_facts(cv), [])
+
+    assert (plan.facts, plan.gaps) == ([], ["C2"])
+
+
+def test_facts_already_in_the_summary_stay_and_only_free_lines_are_filled():
+    cv = "Engineer, shop (2020-present)\n- Built APIs in Python\n- Wrote SQL\n- Ran Kafka\n- Used REST"
+    facts = build_facts(cv)
+
+    plan = triage(
+        cv, recruiter_round("R3"), facts, ["Python", "SQL", "Kafka", "REST"], ["F2", "F3"]
+    )
+
+    # F2 and F3 are already summary lines: of the two keywords left, one line is free.
+    assert [fact.id for fact in plan.facts] == ["F4"]
+
+
+def test_a_session_keeps_earlier_summary_lines_and_uses_the_given_judge(tmp_path):
+    committee_client = FakeClient(
+        [
+            *committee(recruiter_passes=False),
+            make_response(summary(TRUE_LINE)),
+            committee(recruiter_passes=True)[0],
+        ]
+    )
+    judge_client = FakeClient([make_response(judged(True))])
+    judge = Judge(judge_client, {"model": "api-model"})
+
+    session = run_session(
+        committee_client, CASE, 2026, POSTING, runs_path=tmp_path / "r.jsonl", judge=judge
+    )
+
+    assert len(judge_client.calls) == 1
+    assert TRUE_LINE["text"] in session.final_cv
+
+
+def recruiter_reply(c1: str | None, c2: str | None) -> object:
+    """The recruiter model's two checks; a check passes with the quote given, fails with None."""
+    checks = [
+        {"id": "C1", "check": "C1", "evidence": c1, "passed": c1 is not None},
+        {"id": "C2", "check": "C2", "evidence": c2, "passed": c2 is not None},
+    ]
+    return make_response(json.dumps({"checks": checks}))
+
+
+def test_each_round_adds_to_the_summary_and_never_drops_earlier_lines(tmp_path):
+    deploy, schema = FACTS[5], FACTS[4]  # F6 (no number) and F5 (9 tables)
+    deploy_line = {
+        "facts": ["F6"],
+        "text": "Deploy services to production with GitHub Actions and Kubernetes",
+    }
+    schema_line = {
+        "facts": ["F5"],
+        "text": "Designed the PostgreSQL schema for prescriptions: 9 tables",
+    }
+    checklists = Checklists.for_posting(CASE.checklist)
+    tech_lead = [
+        {"id": item.id, "check": item.id, "evidence": quote, "passed": True}
+        for item, quote in zip(
+            checklists.tech_lead.items,
+            [deploy.text, F4.text, schema.text, deploy.text, None, None, schema.text, None],
+            strict=True,
+        )
+    ]
+    for item in tech_lead:
+        item["passed"] = item["evidence"] is not None
+    client = FakeClient(
+        [
+            # Round 1: C1 fails. The tech lead's first passing quote (F6) says what the work is.
+            recruiter_reply(None, F4.text),
+            committee(recruiter_passes=False)[1],
+            make_response(json.dumps({"checks": tech_lead})),
+            committee(recruiter_passes=False)[3],
+            make_response(summary(deploy_line)),
+            # Round 2: C2 fails. TL7's quote (F5, 9 tables) is a measured line a reviewer passed.
+            recruiter_reply(deploy_line["text"], None),
+            make_response(summary(schema_line)),
+            # Round 3: the last round only reviews.
+            recruiter_reply(deploy_line["text"], schema_line["text"]),
+        ]
+    )
+
+    session = run_session(client, CASE, 2026, POSTING, runs_path=tmp_path / "r.jsonl")
+
+    lines = session.final_cv.splitlines()
+    assert lines[:3] == ["Backend Developer", deploy_line["text"], schema_line["text"]]
+    assert [[fact.id for fact in round_.plan.facts] for round_ in session.rounds[:2]] == [
+        ["F6"],
+        ["F5"],
+    ]

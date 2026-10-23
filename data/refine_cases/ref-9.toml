@@ -1,0 +1,23 @@
+# Held-out case for refinement v4, written before any v4 run (2026-10-23; unreviewed by the user).
+# Trap: the employer's numbers come first. C2 must be fixed with the candidate's own result, never
+# with "2 million riders in 40 cities".
+id = "ref-9"
+label = "good"
+split = "heldout"
+checklist = "backend_payments"
+# TL1-TL4 + TL7: 13/16 = 8.1 -> strong_hire.
+expected_decision = "strong_hire"
+
+cv = """
+Backend Engineer, RideNow (2021-present)
+- RideNow is a ride-hailing app with 2 million riders in 40 cities
+- Built and maintain the Python REST APIs that pay out drivers every week
+- Designed the PostgreSQL schema for payouts and adjustments: which tables exist and how they relate
+- Deploy my services to production myself with GitLab CI
+- Cut failed driver payouts from 3% to 0.5% by retrying bank transfers
+
+Junior Developer, web agency (2018-2021)
+- Built Django sites for clients
+"""
+
+[expected]
