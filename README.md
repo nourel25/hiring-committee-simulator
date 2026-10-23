@@ -126,6 +126,26 @@ python -m hcs.session my_cv.txt --posting backend_payments   # your own plain-te
 python -m hcs.tracing                             # cost and latency per agent, from the run log
 ```
 
+A browser UI (Streamlit):
+
+```bash
+python -m pip install -r requirements-ui.txt
+streamlit run app.py
+```
+
+It has three pages:
+- **New session.** Paste or upload a CV, or start from a labelled example, and pick a posting.
+  For every round you see:
+  - each member's checks with their quotes, and the devil's advocate's objections;
+  - the chair's verdict, confidence, dissent and ranked objections;
+  - the refiner's kept and rejected lines, with the reasons.
+
+  At the end you get the gaps, a before/after diff, and an editable CV to download.
+- **Past sessions.** The logged refinement runs.
+- **Cost and latency.** Calls, failures, seconds and tokens per agent and model, from the run log.
+
+A checkbox keeps the grounding judge local, so nothing leaves the machine.
+
 The held-out judge needs a Groq key in `.env` (see `.env.example`):
 
 ```bash
@@ -162,4 +182,4 @@ python -m hcs.run_held_out
   - the company researcher (each posting has a hand-written brief);
   - CV parsing from PDF;
   - logging real outcomes;
-  - a UI.
+  - PDF export.
