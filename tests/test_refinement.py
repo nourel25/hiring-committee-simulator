@@ -207,3 +207,17 @@ def test_the_grounding_judge_uses_its_own_client(tmp_path):
     assert [line.text for line in draft.kept] == [TRUE_LINE["text"]]
     assert len(committee_client.calls) == 1 and len(judge_client.calls) == 1
     assert read_runs(tmp_path / "r.jsonl")[-1].model == "api-model"
+
+
+def test_c1_takes_the_line_the_tech_lead_quoted_not_personal_qualities():
+    cv = (
+        "Engineer, shop (2020-present)\n- Hard-working and reliable\n- Built the shop API in Python"
+    )
+    round_ = recruiter_round("C1")
+    round_.records["tech_lead"] = record(
+        "tech_lead", checks=[check("TL1", True, "Built the shop API in Python")]
+    )
+
+    plan = triage(cv, round_, build_facts(cv), [])
+
+    assert [fact.text for fact in plan.facts] == ["Built the shop API in Python"]

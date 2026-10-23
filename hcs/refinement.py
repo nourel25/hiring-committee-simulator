@@ -31,6 +31,7 @@ from hcs.config import API_MAX_TOKENS, GROUNDING_JUDGE, GROUNDING_JUDGE_RETRIES
 from hcs.grounding import restates, rule_problems
 from hcs.llm import LLMOutputError, get_structured, make_client
 from hcs.pipeline import judge_claims, run_identity
+from hcs.policies import quote_in_cv
 from hcs.profile import Fact, build_facts
 from hcs.runlog import RUNS_PATH, RunRecord, append_run
 from hcs.schemas import MAX_SUMMARY_LINES, Refinement, SummaryLine, refinement_model_for
@@ -153,13 +154,30 @@ def triage(cv: str, committee: CommitteeRound, facts: list[Fact], keywords: list
             ok = choose(next((f for f in work if has_result_number(f)), None))
             (fixable if ok else gaps).append(check_id)
         elif check_id == "C1":
-            ok = choose(work[0] if work else None)
+            ok = choose(work_line(committee, work))
             (fixable if ok else gaps).append(check_id)
         else:  # R4: a long line in the top third; a short summary pushes it down
             (fixable if work else gaps).append(check_id)
-    if fixable and not chosen and work:
-        chosen.append(work[0])
+    if fixable and not chosen:
+        choose(work_line(committee, work))
     return Plan(chosen[:MAX_SUMMARY_LINES], fixable, gaps)
+
+
+def work_line(committee: CommitteeRound, work: list[Fact]) -> Fact | None:
+    """The bullet that best says what the candidate's work is: the one the tech lead quoted for the
+    first check it passed. The first bullet can be personal qualities ("Hard-working and reliable
+    developer", ref-1 in the v3 run), so it's only the fallback when the tech lead quoted nothing."""
+    record = committee.records.get("tech_lead")
+    quotes = [
+        check.evidence
+        for check in (record.review.checks if record and record.review else [])
+        if check.passed and check.evidence
+    ]
+    for quote in quotes:
+        match = next((fact for fact in work if quote_in_cv(quote, fact.text)), None)
+        if match:
+            return match
+    return work[0] if work else None
 
 
 def gap_objections(committee: CommitteeRound) -> list[str]:
