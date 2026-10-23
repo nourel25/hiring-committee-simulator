@@ -53,19 +53,21 @@ real people. Small sets give rough signals: at 30 cases, ±16 points.
 | Leniency (hire on a poor CV) | 0/3 | 0 |
 | Grounding judge, qwen2.5:7b local, held-out claims | 7/12, 1 lenient | ≥ 10/12, ≤ 1 lenient: **not met** |
 | Grounding judge, qwen3.8-27b on Groq, same prompt | **12/12**, 0 lenient (with 3 format retries) | met, so it runs in the loop |
-| Refinement: poor CVs still no_hire / borderline turned into hire | 5/5 / 0/13 | all / none |
-| Refinement: good CVs that lost their hire | 0 | none |
-| Refinement: recruiter score rose on refined CVs | 10/17 (59%) | ≥ 70%: **not met** (an oscillation bug, below) |
-| Refinement: kept lines a manual read finds unsupported | 1 of 26 (employer numbers framed as the candidate's) | 0: **not met** |
-| Held-out gap: the API judge's recruiter score rose where the loop's did | 8/10 | ≥ 70% |
+| Refinement v4: poor CVs still no_hire / borderline turned into hire | 5/5 / 0/14 | all / none |
+| Refinement v4: good CVs that lost their hire | 0 | none |
+| Refinement v4: recruiter score rose on refined CVs | **16/21 (76%)**; held-out CVs 3/4 | ≥ 70% |
+| Refinement v4: kept lines a manual read finds unsupported | 0 of 38 | 0 |
+| Held-out gap: the API judge's recruiter score rose where the loop's did | 13/16 | ≥ 70% |
 | Held-out gap: the API tech lead's decision unchanged on refined borderline and poor CVs | 5/6 (one moved strong_no → lean_no, towards its key, not to a hire) | all: **not met** by the letter |
 
-The refinement row took three rounds:
+Refinement took four versions, each with criteria committed before its run:
 - **v1** put the summary above the job title, which hid the title from the title check.
 - **v2** let the 7B refiner choose the facts. It picked titles and vague bullets.
-- **v3** moved fact choice and triage into code. Each round now rebuilds the summary from that
-  round's failures only, so a fix from round 2 can be lost in round 3. The fix (keep earlier lines)
-  is known but was not applied, because v3 was agreed as the last round before it ran.
+- **v3** moved fact choice into code. Each round rebuilt the summary from that round's failures,
+  so fixes were lost between rounds. Code also once chose the employer's numbers ("4 million
+  users") as the candidate's result.
+- **v4** keeps earlier lines, and takes numbers only from lines a reviewer has already passed as
+  the candidate's own work. It met every criterion.
 
 The other members (hiring manager, tech lead, devil's advocate) judge the experience section, which
 the refiner never touches, so refinement cannot move the verdict. That is by design: a rewrite that
@@ -179,7 +181,7 @@ python -m hcs.run_held_out
 
 - The answer keys were written by the same author as the prompts, and most of the later ones have
   not had a second reader.
-- The sets are small: 38 CVs and 34 claims.
+- The sets are small: 42 CVs and 34 claims.
 - Only one model family passed as a judge. The members differ in what they see and check, not in
   model family.
 - Refinement results across runs are not exactly repeatable. Groq doesn't guarantee seeds, and one
