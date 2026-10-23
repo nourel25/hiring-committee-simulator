@@ -112,11 +112,15 @@ def test_a_devils_advocate_objection_joins_the_must_have_it_names():
         recruiter_checklist=RECRUITER,
         hiring_manager=None,
         hiring_manager_checklist=MANAGER,
-        devil=record("devils_advocate", objections=[objection("Schema design", "medium")]),
+        devil=record(
+            "devils_advocate",
+            objections=[objection("Schema design", "high"), objection("Build APIs", "medium")],
+        ),
     )
 
     assert verdict.verdict == "borderline"
     assert verdict.dissent == ["recruiter"]
+    # The medium objection on the API line (which the tech lead passed) is noise and left out.
     first, second = verdict.objections
     assert (first.text, first.severity, first.members) == (
         "m2",

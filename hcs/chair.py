@@ -131,7 +131,10 @@ def rank_objections(
     members raised them."""
     merged = check_objections(tech_lead, "tech_lead", tech_checklist, "gap")
     by_id = {item.check_id: item for item in merged}
-    for objection in (devil.objections or []) if devil else []:
+    # Only "not shown at all" (high) counts: in v3 the devil's advocate rated a met requirement
+    # "partly" (medium) on 15 of 16 gap-free CVs, so a medium is noise (decision closing Step 4.3).
+    highs = [item for item in (devil.objections or []) if item.severity == "high"] if devil else []
+    for objection in highs:
         targets = [
             by_id[check_id]
             for check_id in must_haves_named(objection.requirement, tech_checklist)
