@@ -26,7 +26,12 @@ def judged(*supported: bool) -> str:
     return json.dumps(
         {
             "judgements": [
-                {"id": f"G{n}", "unsupported": None if ok else "leads a team", "supported": ok}
+                {
+                    "id": f"G{n}",
+                    "support": [],
+                    "unsupported": None if ok else "leads a team",
+                    "supported": ok,
+                }
                 for n, ok in enumerate(supported, start=1)
             ]
         }

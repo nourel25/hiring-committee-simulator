@@ -105,8 +105,8 @@ def test_the_judge_sees_each_claim_with_only_its_cited_facts():
 def test_an_unsupported_part_overrules_a_supported_verdict(tmp_path):
     reply = {
         "judgements": [
-            {"id": "G2", "unsupported": None, "supported": True},
-            {"id": "G1", "unsupported": "from scratch", "supported": True},
+            {"id": "G2", "support": [], "unsupported": None, "supported": True},
+            {"id": "G1", "support": [], "unsupported": "from scratch", "supported": True},
         ]
     }
     client = FakeClient([make_response(json.dumps(reply))])
@@ -129,7 +129,18 @@ def test_an_unsupported_part_overrules_a_supported_verdict(tmp_path):
 
 def test_a_judgement_must_cover_every_claim_once():
     model = judgement_model_for(["G1", "G2"])
-    one = {"id": "G1", "unsupported": None, "supported": True}
+    one = {"id": "G1", "support": [], "unsupported": None, "supported": True}
 
     with pytest.raises(ValidationError):
         model.model_validate({"judgements": [one]})
+
+
+def test_the_judge_must_quote_its_support_first():
+    model = judgement_model_for(["G1"])
+
+    assert list(model.model_json_schema()["$defs"]["ClaimJudgement"]["properties"])[:3] == [
+        "id",
+        "support",
+        "unsupported",
+    ]
+    assert "support" in model.model_json_schema()["$defs"]["ClaimJudgement"]["required"]

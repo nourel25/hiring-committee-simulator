@@ -4,6 +4,8 @@
 # judge must read: meaning. Unsupported claims inflate ownership, scope or seniority in plain words.
 # Written and keyed before any judge run (2026-10-23); not yet independently reviewed.
 # dev: may be used to change the judge's prompt. heldout: measured once per prompt version.
+# v1 run (2026-10-23): held-out 7/12 (4 strict, 1 lenient), so its 12 claims became dev and 12 new
+# held-out claims were written before any v2 run.
 
 [[claims]]
 case = "borderline-1"
@@ -83,14 +85,14 @@ note = "fixing rows by hand is not an automated check"
 
 [[claims]]
 case = "poor-2"
-split = "heldout"
+split = "dev"
 text = "Builds Python tools that engineers use to rotate credentials"
 facts = ["F2"]
 supported = true
 
 [[claims]]
 case = "poor-2"
-split = "heldout"
+split = "dev"
 text = "Built backend services in Python used by 40 product teams"
 facts = ["F2", "F3"]
 supported = false
@@ -98,7 +100,7 @@ note = "command-line tools are not backend services, and the 40 teams use the Te
 
 [[claims]]
 case = "poor-2"
-split = "heldout"
+split = "dev"
 text = "Manages the on-call engineers and leads incident reviews"
 facts = ["F4"]
 supported = false
@@ -106,14 +108,14 @@ note = "leading a meeting is not managing engineers"
 
 [[claims]]
 case = "poor-2"
-split = "heldout"
+split = "dev"
 text = "Moved 30 services onto Kubernetes using Helm"
 facts = ["F5"]
 supported = true
 
 [[claims]]
 case = "da-1"
-split = "heldout"
+split = "dev"
 text = "Owns the deployment and monitoring of the menu and order APIs"
 facts = ["F2", "F4"]
 supported = false
@@ -121,14 +123,14 @@ note = "the release team deploys and monitors them"
 
 [[claims]]
 case = "da-1"
-split = "heldout"
+split = "dev"
 text = "Designed the PostgreSQL schema for menus, orders and restaurants"
 facts = ["F3"]
 supported = true
 
 [[claims]]
 case = "da-1"
-split = "heldout"
+split = "dev"
 text = "Made the menu API almost six times faster with Redis caching"
 facts = ["F5"]
 supported = true
@@ -136,21 +138,21 @@ note = "700 ms to 120 ms is 5.8 times faster: arithmetic on a fact is supported"
 
 [[claims]]
 case = "da-1"
-split = "heldout"
+split = "dev"
 text = "Mentors a junior developer through weekly code reviews"
 facts = ["F6"]
 supported = true
 
 [[claims]]
 case = "present-1"
-split = "heldout"
+split = "dev"
 text = "Backend developer who builds Python REST APIs serving 30,000 customers a day"
 facts = ["F3", "F4"]
 supported = true
 
 [[claims]]
 case = "present-1"
-split = "heldout"
+split = "dev"
 text = "Designed a 9-table PostgreSQL schema and leads the database team"
 facts = ["F5"]
 supported = false
@@ -158,15 +160,108 @@ note = "nothing says they lead a team"
 
 [[claims]]
 case = "present-1"
-split = "heldout"
+split = "dev"
 text = "Deploys their own services to production with GitHub Actions and Kubernetes, and is on call"
 facts = ["F6", "F7"]
 supported = true
 
 [[claims]]
 case = "present-1"
-split = "heldout"
+split = "dev"
 text = "Passionate engineer who architected the company's payment platform"
 facts = ["F1", "F4"]
 supported = false
 note = "an online pharmacy's order APIs are not a payment platform, and nothing says architected"
+
+# Held-out for grounding-judge-v2, written and keyed before any v2 run.
+
+[[claims]]
+case = "good-2"
+split = "heldout"
+text = "Builds a Python booking API handling about 2 million requests a day"
+facts = ["F2"]
+supported = true
+
+[[claims]]
+case = "good-2"
+split = "heldout"
+text = "Manages two backend engineers"
+facts = ["F5"]
+supported = true
+note = "a line manager manages"
+
+[[claims]]
+case = "good-2"
+split = "heldout"
+text = "Designed the company's payment system"
+facts = ["F3"]
+supported = false
+note = "a database with a payments table is not a payment system"
+
+[[claims]]
+case = "data-good-1"
+split = "heldout"
+text = "Runs nightly Python and SQL pipelines in Airflow for the finance and operations teams"
+facts = ["F2", "F4"]
+supported = true
+
+[[claims]]
+case = "data-good-1"
+split = "heldout"
+text = "Made the nightly load more than four times faster with incremental models"
+facts = ["F6"]
+supported = true
+note = "3 hours to 40 minutes is 4.5 times faster"
+
+[[claims]]
+case = "data-good-1"
+split = "heldout"
+text = "Trains the operations team in machine learning"
+facts = ["F7"]
+supported = false
+note = "the workshop is about SQL"
+
+[[claims]]
+case = "borderline-3"
+split = "heldout"
+text = "Designs the database for the claims service"
+facts = ["F3"]
+supported = false
+note = "migrations that add requested columns are not designing the database"
+
+[[claims]]
+case = "borderline-3"
+split = "heldout"
+text = "Ships Python claims service releases to production through Jenkins"
+facts = ["F2", "F4"]
+supported = true
+
+[[claims]]
+case = "borderline-3"
+split = "heldout"
+text = "Manages the backend team"
+facts = ["F5"]
+supported = false
+note = "running sprint meetings is not managing a team"
+
+[[claims]]
+case = "fit-2"
+split = "heldout"
+text = "Builds a Python REST API for lending, used by 80,000 borrowers"
+facts = ["F2"]
+supported = true
+
+[[claims]]
+case = "fit-2"
+split = "heldout"
+text = "Built the payment processing platform for loan repayments"
+facts = ["F3"]
+supported = false
+note = "a service that calls Stripe is not a payment processing platform"
+
+[[claims]]
+case = "present-6"
+split = "heldout"
+text = "Designed PostgreSQL schemas and cut API response time from 2 seconds to 300 ms"
+facts = ["F5", "F7"]
+supported = true
