@@ -5,6 +5,10 @@ The panel is a recruiter, a hiring manager, a tech lead and a devil's advocate, 
 A refiner then improves the CV's presentation using only the candidate's own facts. Every rewritten
 line has to pass a grounding check before it reaches the CV.
 
+**[See a recorded session →](https://nourel25.github.io/hiring-committee-simulator/)** It's a static
+replay of one run on an invented CV: every reviewer's checks with their quotes, the chair's verdict,
+and the refiner's kept and rejected lines with the reasons. Nothing runs in your browser.
+
 Most of it runs on a laptop GPU (RTX 3060, 6 GB) through Ollama. Three judges run on an API (Groq):
 the grounding judge and the devil's advocate, which a 27B model does measurably better, and a
 held-out judge used only for evaluation. A checkbox keeps everything on the machine.
@@ -180,6 +184,7 @@ python -m hcs.run_held_out
 | `hcs/refinement.py` | The refinement loop |
 | `hcs/evaluation.py` | Comparing runs with answer keys |
 | `data/postings/`, `data/checklists/`, `data/cases/` | Postings, reviewed checklists, labelled CVs with keys |
+| `hcs/demo.py`, `docs/` | Record one session and build the static replay page (GitHub Pages) |
 | `runs/` | The run log (every call, replayable) and traces; not committed |
 
 ## Limitations
