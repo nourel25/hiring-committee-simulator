@@ -27,9 +27,9 @@ from openai import OpenAI
 from hcs.agents import refiner
 from hcs.cases import Case, Posting, load_posting
 from hcs.committee import Checklists, CommitteeRound, run_committee
-from hcs.config import API_MAX_TOKENS, GROUNDING_JUDGE, GROUNDING_JUDGE_RETRIES
+from hcs.config import Endpoint
 from hcs.grounding import restates, rule_problems
-from hcs.llm import LLMOutputError, get_structured, make_client
+from hcs.llm import LLMOutputError, get_structured
 from hcs.pipeline import judge_claims, run_identity
 from hcs.policies import quote_in_cv
 from hcs.profile import Fact, build_facts
@@ -48,20 +48,9 @@ MAX_VERBATIM_WORDS = 25
 YEAR = re.compile(r"(?:19|20)\d{2}")
 
 
-@dataclass
-class Judge:
-    """Where the grounding judge runs: its own client, because it may be on an API while the
-    committee runs locally."""
-
-    client: OpenAI
-    settings: dict = field(default_factory=dict)
-
-    @classmethod
-    def configured(cls) -> "Judge":
-        settings = {"model": GROUNDING_JUDGE.model, "max_retries": GROUNDING_JUDGE_RETRIES}
-        if GROUNDING_JUDGE.provider != "ollama":
-            settings["max_tokens"] = API_MAX_TOKENS
-        return cls(make_client(GROUNDING_JUDGE.provider), settings)
+# The grounding judge's endpoint (its own client: it may be on an API while the committee runs
+# locally). Judge(client) keeps it on the committee's client.
+Judge = Endpoint
 
 
 @dataclass
@@ -388,6 +377,7 @@ def run_session(
     runs_path=RUNS_PATH,
     refiner_model: str = refiner.MODEL,
     judge: Judge | None = None,
+    devil: Endpoint | None = None,
 ) -> Session:
     """Committee rounds with refinement in between, until a stop condition fires."""
     posting = posting or load_posting(case.checklist)
@@ -407,7 +397,7 @@ def run_session(
             {member: rounds[0].committee.records[member] for member in CARRIED} if rounds else {}
         )
         committee = run_committee(
-            client, current, this_year, posting, checklists, runs_path, carried
+            client, current, this_year, posting, checklists, runs_path, carried, devil
         )
         covered = [line.facts[0] for line in summary]
         plan = triage(cv, committee, facts, keywords, covered)

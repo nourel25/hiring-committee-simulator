@@ -3,9 +3,11 @@
 Change a role's model here, not in the agents. Evidence: the Phase 0 results in the README and the commit history.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-from hcs.llm import Provider
+from openai import OpenAI
+
+from hcs.llm import Provider, make_client
 
 
 @dataclass(frozen=True)
@@ -31,8 +33,43 @@ HELD_OUT_JUDGE = ModelChoice("groq", "openai/gpt-oss-120b")
 GROUNDING_JUDGE = ModelChoice("groq", "qwen/qwen3.8-27b")
 GROUNDING_JUDGE_RETRIES = 3
 
+# The devil's advocate, in the loop (2026-10-24). Compared on 36 cases with the rule in
+# hcs/run_compare_da.py (written before the Google runs): only this model and gemma-4-31b-it found
+# every must-have gap with no false high; gemma had one failed run (a provider 500) and is 5x slower,
+# qwen2.5:7b missed 2 gaps and made a false high, gemini-3.8-flash a false high. Same prompt (v3).
+DEVILS_ADVOCATE = ModelChoice("groq", "qwen/qwen3.8-27b")
+DEVILS_ADVOCATE_RETRIES = 3
+
 # The rubric these choices were measured on.
 CHECKLIST = "backend_payments"
 
 # API reasoning models think before the JSON: up to 1,849 tokens in the v3 run, so keep a wide margin.
 API_MAX_TOKENS = 4000
+
+
+@dataclass
+class Endpoint:
+    """Where one agent's calls go: its own client and the settings that go with it, so an agent can
+    run on an API while the rest of the committee runs locally."""
+
+    client: OpenAI
+    settings: dict = field(default_factory=dict)
+
+
+def endpoint(choice: ModelChoice, retries: int) -> Endpoint:
+    """A client and settings for a configured model: APIs get room for reasoning tokens, and Gemini
+    gets no seed (its endpoint rejects the field)."""
+    settings = {"model": choice.model, "max_retries": retries}
+    if choice.provider != "ollama":
+        settings["max_tokens"] = API_MAX_TOKENS
+    if choice.provider == "gemini":
+        settings["seed"] = None
+    return Endpoint(make_client(choice.provider), settings)
+
+
+def grounding_endpoint() -> Endpoint:
+    return endpoint(GROUNDING_JUDGE, GROUNDING_JUDGE_RETRIES)
+
+
+def devils_advocate_endpoint() -> Endpoint:
+    return endpoint(DEVILS_ADVOCATE, DEVILS_ADVOCATE_RETRIES)

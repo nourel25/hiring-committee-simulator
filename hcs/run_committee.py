@@ -6,6 +6,7 @@ from datetime import date
 from hcs.cases import load_case, load_cases
 from hcs.chair import LABEL_VERDICT
 from hcs.committee import format_transcript, run_committee
+from hcs.config import devils_advocate_endpoint
 from hcs.evaluation import CASE_WIDTH
 from hcs.llm import make_client
 
@@ -19,23 +20,29 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("cases", nargs="*", help="case ids (default: every case)")
     parser.add_argument("--transcript", action="store_true", help="print each meeting in full")
+    parser.add_argument(
+        "--local-devil",
+        action="store_true",
+        help="run the devil's advocate locally (judge A) instead of config.DEVILS_ADVOCATE",
+    )
     return parser.parse_args(argv)
 
 
 def main() -> None:
     args = parse_args()
     client = make_client()
+    devil = None if args.local_devil else devils_advocate_endpoint()
     cases = [load_case(case_id) for case_id in args.cases] if args.cases else load_cases()
     rows = []
 
     print(HEADER)
     for case in cases:
-        round_ = run_committee(client, case, date.today().year)
+        round_ = run_committee(client, case, date.today().year, devil=devil)
         verdict = round_.verdict
         expected = LABEL_VERDICT[case.label]
         tech_lead = round_.records["tech_lead"].decision or "failed"
-        devil = round_.records["devils_advocate"].objections or []
-        highs = sum(1 for objection in devil if objection.severity == "high")
+        objections = round_.records["devils_advocate"].objections or []
+        highs = sum(1 for objection in objections if objection.severity == "high")
         ok = verdict.verdict == expected
         rows.append((case, verdict.verdict, round_))
         print(

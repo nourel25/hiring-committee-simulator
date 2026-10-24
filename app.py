@@ -11,6 +11,7 @@ from datetime import date
 import streamlit as st
 
 from hcs.cases import Case, load_cases, load_posting
+from hcs.config import devils_advocate_endpoint, grounding_endpoint
 from hcs.llm import make_client
 from hcs.parsing import normalise_cv, text_from_upload
 from hcs.refinement import MAX_ROUNDS, Judge, Session, run_session
@@ -97,11 +98,14 @@ def new_session() -> None:
     rounds = st.slider("Round limit", 1, MAX_ROUNDS, MAX_ROUNDS)
     # An uploaded file is probably a real CV, so it stays on this machine unless the user says not.
     local = st.checkbox(
-        "Keep everything on this machine (local grounding judge, weaker: 7/12 on held-out claims)",
+        "Keep everything on this machine (local grounding judge and devil's advocate, weaker)",
         value=uploaded is not None,
     )
     if not local:
-        st.caption("The grounding judge sends each summary line and its facts to Groq.")
+        st.caption(
+            "The devil's advocate sends the CV, and the grounding judge each summary line with its "
+            "facts, to Groq."
+        )
 
     if st.button("Run the committee", type="primary", disabled=not cv.strip()):
         if not ollama_ready():
@@ -116,10 +120,19 @@ def new_session() -> None:
             expected={},
         )
         client = make_client()
-        judge = Judge(client) if local else Judge.configured()
+        # Local: every agent on this machine. Otherwise the grounding judge and the devil's
+        # advocate run on their API models (synthetic CVs only).
+        judge = Judge(client) if local else grounding_endpoint()
+        devil = None if local else devils_advocate_endpoint()
         with st.spinner("The committee is meeting: about a minute per round on a laptop GPU…"):
             st.session_state.session = run_session(
-                client, case, date.today().year, load_posting(posting_name), rounds, judge=judge
+                client,
+                case,
+                date.today().year,
+                load_posting(posting_name),
+                rounds,
+                judge=judge,
+                devil=devil,
             )
 
     session: Session | None = st.session_state.get("session")

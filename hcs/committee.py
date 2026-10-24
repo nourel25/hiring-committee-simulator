@@ -7,6 +7,7 @@ from openai import OpenAI
 
 from hcs.cases import Case, Checklist, Posting, load_checklist, load_posting
 from hcs.chair import ChairVerdict, chair
+from hcs.config import Endpoint
 from hcs.pipeline import (
     review_case,
     review_devils_advocate,
@@ -65,9 +66,11 @@ def run_committee(
     checklists: Checklists | None = None,
     runs_path=RUNS_PATH,
     carried: dict[str, RunRecord] | None = None,
+    devil: Endpoint | None = None,
 ) -> CommitteeRound:
     """Run the four members on one CV (none sees another's output), then the chair. Members in
-    `carried` are not run again: their earlier reviews are reused."""
+    `carried` are not run again: their earlier reviews are reused. `devil` sends the devil's
+    advocate to its own endpoint (an API model); None keeps it on `client`."""
     posting = posting or load_posting(case.checklist)
     checklists = checklists or Checklists.for_posting(case.checklist)
     carried = carried or {}
@@ -79,7 +82,13 @@ def run_committee(
             client, case, posting, checklists.hiring_manager, runs_path
         ),
         "tech_lead": lambda: review_case(client, case, checklists.tech_lead, runs_path),
-        "devils_advocate": lambda: review_devils_advocate(client, case, posting, runs_path),
+        "devils_advocate": lambda: review_devils_advocate(
+            devil.client if devil else client,
+            case,
+            posting,
+            runs_path,
+            **(devil.settings if devil else {}),
+        ),
     }
     start = time.perf_counter()
     records = {

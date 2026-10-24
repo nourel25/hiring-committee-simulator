@@ -11,8 +11,9 @@ from pathlib import Path
 
 from hcs.cases import Case, load_posting
 from hcs.committee import format_transcript
+from hcs.config import devils_advocate_endpoint, grounding_endpoint
 from hcs.llm import make_client
-from hcs.refinement import MAX_ROUNDS, Judge, Session, run_session
+from hcs.refinement import MAX_ROUNDS, Session, run_session
 
 APPROVED_DIR = Path("runs") / "approved"
 
@@ -74,7 +75,13 @@ def main() -> None:
         expected={},
     )
     session = run_session(
-        make_client(), case, date.today().year, posting, args.rounds, judge=Judge.configured()
+        make_client(),
+        case,
+        date.today().year,
+        posting,
+        args.rounds,
+        judge=grounding_endpoint(),
+        devil=devils_advocate_endpoint(),
     )
     print(report(session))
 

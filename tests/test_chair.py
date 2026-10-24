@@ -8,6 +8,7 @@ import pytest
 from hcs.cases import Checklist, load_case, load_cases, load_posting
 from hcs.chair import LABEL_VERDICT, chair, confidence_from, decide_verdict, find_dissent
 from hcs.committee import Checklists, format_transcript, run_committee, weigh
+from hcs.config import Endpoint
 from hcs.runlog import RunRecord
 from hcs.schemas import Check, ChecklistItem, Objection, Review
 from tests.fakes import FakeClient, make_response
@@ -189,3 +190,40 @@ def test_the_committee_runs_four_independent_members_then_the_chair(tmp_path):
     assert round_.records["tech_lead"].decision == "strong_no"
     assert round_.verdict.verdict == "no_hire"
     assert "Chair: no_hire" in format_transcript(round_)
+
+
+def test_the_devils_advocate_can_run_on_its_own_endpoint(tmp_path):
+    case = load_case("good-1")
+    checklists = Checklists.for_posting(case.checklist)
+    ratings = {
+        "ratings": [
+            {"id": f"D{n}", "evidence": [], "reason": "r", "shown": "not"} for n in (1, 2, 3)
+        ]
+    }
+
+    def review(ids):
+        checks = [{"id": i, "check": i, "evidence": None, "passed": False} for i in ids]
+        return make_response(json.dumps({"checks": checks}))
+
+    local = FakeClient(
+        [
+            review(["C1", "C2"]),
+            review(["HM1", "HM2", "HM3", "HM4"]),
+            review([item.id for item in checklists.tech_lead.items]),
+        ]
+    )
+    remote = FakeClient([make_response(json.dumps(ratings))])
+
+    round_ = run_committee(
+        local,
+        case,
+        2026,
+        load_posting(case.checklist),
+        checklists,
+        tmp_path / "runs.jsonl",
+        devil=Endpoint(remote, {"model": "api-model", "seed": None}),
+    )
+
+    assert len(local.calls) == 3 and len(remote.calls) == 1
+    assert round_.records["devils_advocate"].model == "api-model"
+    assert "seed" not in remote.kwargs[0]

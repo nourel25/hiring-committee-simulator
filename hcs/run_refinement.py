@@ -8,6 +8,7 @@ from datetime import date
 from pathlib import Path
 
 from hcs.cases import CASES_DIR, load_case, load_cases
+from hcs.config import devils_advocate_endpoint, grounding_endpoint
 from hcs.evaluation import CASE_WIDTH
 from hcs.llm import make_client
 from hcs.refinement import Judge, Session, run_session
@@ -28,6 +29,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--local-judge",
         action="store_true",
         help="run the grounding judge locally (judge A) instead of config.GROUNDING_JUDGE",
+    )
+    parser.add_argument(
+        "--local-devil",
+        action="store_true",
+        help="run the devil's advocate locally (judge A) instead of config.DEVILS_ADVOCATE",
     )
     parser.add_argument(
         "--dir", type=Path, default=CASES_DIR, help="where the cases are (default: data/cases)"
@@ -74,7 +80,8 @@ def main() -> None:
         else load_cases(args.dir)
     )
     settings = {"refiner_model": args.refiner} if args.refiner else {}
-    settings["judge"] = Judge(client) if args.local_judge else Judge.configured()
+    settings["judge"] = Judge(client) if args.local_judge else grounding_endpoint()
+    settings["devil"] = None if args.local_devil else devils_advocate_endpoint()
     results = []
 
     print(HEADER)
