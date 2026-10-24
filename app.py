@@ -14,7 +14,7 @@ from hcs.cases import Case, load_cases, load_posting
 from hcs.config import devils_advocate_endpoint, grounding_endpoint
 from hcs.export import cv_to_pdf
 from hcs.llm import make_client
-from hcs.parsing import normalise_cv, text_from_upload
+from hcs.parsing import identity_header, split_identity, text_from_upload
 from hcs.refinement import MAX_ROUNDS, Judge, Session, run_session
 from hcs.session import diff
 from hcs.tracing import build, summary
@@ -87,11 +87,13 @@ def new_session() -> None:
     )
     uploaded = st.file_uploader("…or upload your CV", type=["pdf", "docx", "txt"])
     default = ""
+    removed: list[str] = []
     if uploaded is not None:
-        default = normalise_cv(text_from_upload(uploaded.name, uploaded.getvalue()))
+        default, removed = split_identity(text_from_upload(uploaded.name, uploaded.getvalue()))
         st.info(
-            "Check the text below before you run: PDFs lose layout. Contact details and your name "
-            "were removed, so the committee judges the work only. Scanned PDFs have no text to read."
+            "Check the text below before you run: PDFs lose layout. Scanned PDFs have no text to "
+            f"read. {len(removed)} line(s) with your name, contact details or links were removed, "
+            "so the committee judges the work only; they come back on the PDF at the end."
         )
     elif example != "(none)":
         default = examples[example].cv
@@ -129,6 +131,8 @@ def new_session() -> None:
         # advocate run on their API models (synthetic CVs only).
         judge = Judge(client) if local else grounding_endpoint()
         devil = None if local else devils_advocate_endpoint()
+        # Kept beside the session, never in the case: no model reads these lines.
+        st.session_state.identity = identity_header(removed)
         with st.spinner("The committee is meeting: about a minute per round on a laptop GPU…"):
             st.session_state.session = run_session(
                 client,
@@ -159,8 +163,17 @@ def new_session() -> None:
     st.code(diff(session.rounds[0].cv, session.final_cv), language="diff")
     edited = st.text_area("Your CV: edit freely before you save it", session.final_cv, height=260)
     header = st.text_area(
-        "Name and contact lines for the PDF (removed before the review; added back only here)",
-        height=80,
+        "Name and contact details for the PDF",
+        st.session_state.get("identity", ""),
+        height=130,
+        placeholder="Jane Doe\nBerlin, Germany\njane@example.com\n+49 151 2345 6789\n"
+        "linkedin.com/in/janedoe",
+    )
+    st.caption(
+        "Line 1: your full name, set large and centred. Every next line: one contact item, such "
+        "as city, email, phone, LinkedIn or GitHub; they are joined with | under your name. "
+        "Filled in from the lines removed from your upload: check them, and delete project links "
+        "that belong in the CV instead."
     )
     text_column, pdf_column = st.columns(2)
     text_column.download_button("Download as text", edited, file_name="cv.txt")

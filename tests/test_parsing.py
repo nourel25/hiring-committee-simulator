@@ -5,7 +5,13 @@ import io
 import pytest
 from docx import Document
 
-from hcs.parsing import normalise_cv, normalise_dates, text_from_upload
+from hcs.parsing import (
+    identity_header,
+    normalise_cv,
+    normalise_dates,
+    split_identity,
+    text_from_upload,
+)
 from hcs.profile import build_facts
 from hcs.screening import years_of_experience
 
@@ -95,3 +101,21 @@ def test_runs_of_spaces_from_a_pdf_layout_become_one():
     assert normalise_cv("Backend Engineer, PayCo    2021 - Present") == (
         "Backend Engineer, PayCo (2021-present)"
     )
+
+
+def test_the_removed_identity_lines_are_kept_for_the_pdf_header():
+    cv, removed = split_identity(RAW)
+
+    assert cv == normalise_cv(RAW)
+    assert removed == ["Jane Example", "jane@example.com | +44 7700 900123 | linkedin.com/in/jane"]
+
+
+def test_the_header_puts_the_name_first_and_one_contact_item_per_line():
+    removed = ["jane@example.com · +44 7700 900123", "Jane Example", "github.com/jane"]
+
+    assert identity_header(removed).splitlines() == [
+        "Jane Example",
+        "jane@example.com",
+        "+44 7700 900123",
+        "github.com/jane",
+    ]

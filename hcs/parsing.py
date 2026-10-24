@@ -72,7 +72,14 @@ def is_identity(line: str, before_first_role: bool) -> bool:
 
 def normalise_cv(text: str) -> str:
     """Bullets as "- ", date ranges as "(YYYY-YYYY)", wrapped lines joined, identity lines removed."""
+    return split_identity(text)[0]
+
+
+def split_identity(text: str) -> tuple[str, list[str]]:
+    """The normalised CV, and the identity lines removed from it, in order, so the user can put
+    them back on the exported PDF (they never reach a model)."""
     lines: list[str] = []
+    removed: list[str] = []
     seen_role = False
     for raw in text.splitlines():
         line = normalise_dates(re.sub(r"\s{2,}", " ", raw.strip()))
@@ -88,6 +95,7 @@ def normalise_cv(text: str) -> str:
             continue
         # A bare name is only removed as the very first line.
         if not is_role and is_identity(line, before_first_role=not seen_role and not lines):
+            removed.append(line)
             continue
         seen_role = seen_role or is_role
         bullet = BULLET.match(line)
@@ -98,4 +106,12 @@ def normalise_cv(text: str) -> str:
             lines[-1] += " " + line
         else:
             lines.append(line)
-    return "\n".join(lines).strip()
+    return "\n".join(lines).strip(), removed
+
+
+def identity_header(removed: list[str]) -> str:
+    """The removed lines in the PDF header's format: the name first, then one contact item per
+    line ("jane@example.com | +44 7700 900123" becomes two lines)."""
+    items = [item.strip() for line in removed for item in re.split(r"[|•·]", line) if item.strip()]
+    names = [item for item in items if NAME_LINE.match(item)][:1]
+    return "\n".join(names + [item for item in items if item not in names])
