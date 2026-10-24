@@ -40,6 +40,28 @@ def test_every_line_is_a_fact_tied_to_its_role():
     assert format_facts(FACTS[:2]).splitlines()[1].startswith("F2: Software Engineer")
 
 
+def test_skills_projects_and_degrees_are_not_facts_of_the_last_job():
+    cv = "\n".join(
+        [
+            "Software Engineer, shop (2026-present)",
+            "- Built the rights module",
+            "Technologies",
+            "Backend: Flask, REST APIs",
+            "Projects",
+            "Doctors Hub",
+            "Education",
+            "B.Sc. Computer Science, Example University (2021-2025)",
+        ]
+    )
+
+    roles = {fact.text: fact.role for fact in build_facts(cv)}
+
+    assert roles["Built the rights module"] == "Software Engineer, shop (2026-present)"
+    assert roles["Backend: Flask, REST APIs"] is None
+    assert roles["Doctors Hub"] is None
+    assert roles["B.Sc. Computer Science, Example University (2021-2025)"] is None
+
+
 @pytest.mark.parametrize(
     ("text", "numbers"),
     [

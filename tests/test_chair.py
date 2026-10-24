@@ -6,11 +6,19 @@ from datetime import datetime, timezone
 import pytest
 
 from hcs.cases import Checklist, load_case, load_cases, load_posting
-from hcs.chair import LABEL_VERDICT, chair, confidence_from, decide_verdict, find_dissent
+from hcs.chair import (
+    LABEL_VERDICT,
+    YEARS_CHECK,
+    chair,
+    confidence_from,
+    decide_verdict,
+    find_dissent,
+)
 from hcs.committee import Checklists, format_transcript, run_committee, weigh
 from hcs.config import Endpoint
 from hcs.runlog import RunRecord
 from hcs.schemas import Check, ChecklistItem, Objection, Review
+from hcs.screening import screening_checks
 from tests.fakes import FakeClient, make_response
 
 TECH = Checklist(
@@ -86,8 +94,56 @@ def test_the_hire_rule(tech_lead, highs, verdict):
 @pytest.mark.parametrize("case", load_cases(), ids=lambda case: case.id)
 def test_the_rule_on_each_key_gives_the_label(case):
     # With the tech lead exactly as its key says and no false high, the rule gives the case's label:
-    # the labels are about the requirements, which only the tech lead's key encodes.
-    assert decide_verdict(case.expected_decision, 0)[0] == LABEL_VERDICT[case.label]
+    # the labels are about the requirements, which only the tech lead's key encodes. The years
+    # check is code, so its real result is used: it must not move any labelled case.
+    posting = load_posting(case.checklist)
+    years = next(
+        c for c in screening_checks(case.cv, posting.recruiter, 2026) if c.id == YEARS_CHECK
+    )
+    short = None if years.passed else years.evidence
+
+    assert decide_verdict(case.expected_decision, 0, short)[0] == LABEL_VERDICT[case.label]
+
+
+@pytest.mark.parametrize(
+    ("tech_lead", "verdict"),
+    [("strong_hire", "borderline"), ("lean_no", "borderline"), ("strong_no", "no_hire")],
+)
+def test_too_few_years_block_a_hire_but_never_lift_a_no(tech_lead, verdict):
+    decided, reasons = decide_verdict(tech_lead, 0, "0 years from the dated roles")
+
+    assert decided == verdict
+    if tech_lead == "strong_hire":
+        assert "fewer years than the posting asks for" in " ".join(reasons)
+
+
+def test_a_failed_years_check_is_a_high_gap_not_wording_to_fix():
+    recruiter_checklist = Checklist(
+        name="recruiter",
+        posting="any",
+        items=[
+            ChecklistItem(id="R2", text="years", importance="must"),
+            ChecklistItem(id="C1", text="clear", importance="must"),
+        ],
+    )
+    verdict = chair(
+        tech_lead=record(
+            "tech_lead", "strong_hire", 9.0, [check("M1", True, "a"), check("M2", True, "b")]
+        ),
+        tech_checklist=TECH,
+        recruiter=record(
+            "recruiter", "lean_no", 5.0, [check("R2", False, "0 years"), check("C1", False)]
+        ),
+        recruiter_checklist=recruiter_checklist,
+        hiring_manager=None,
+        hiring_manager_checklist=MANAGER,
+        devil=None,
+    )
+
+    assert verdict.verdict == "borderline"
+    by_id = {item.check_id: item for item in verdict.objections}
+    assert (by_id["R2"].severity, by_id["R2"].kind) == ("high", "gap")
+    assert (by_id["C1"].severity, by_id["C1"].kind) == ("medium", "presentation")
 
 
 def test_dissent_is_a_member_on_the_other_side_of_the_verdict():

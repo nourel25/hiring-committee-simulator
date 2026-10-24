@@ -30,9 +30,10 @@ Junior Developer, Agency (2018 - 2021)
 @pytest.mark.parametrize(
     ("line", "expected"),
     [
-        ("Engineer, Shop Jan 2021 – Present", "Engineer, Shop (2021-present)"),
+        ("Engineer, Shop Jan 2021 – Present", "Engineer, Shop (Jan 2021-present)"),
         ("Engineer, Shop (2018 - 2021)", "Engineer, Shop (2018-2021)"),
-        ("Engineer, Shop 03/2019 — current", "Engineer, Shop (2019-present)"),
+        ("Engineer, Shop 03/2019 — current", "Engineer, Shop (Mar 2019-present)"),
+        ("Engineer, Shop March 2023 - Feb 2024", "Engineer, Shop (Mar 2023-Feb 2024)"),
         ("Cut costs by 30% in 2023", "Cut costs by 30% in 2023"),
     ],
 )
@@ -44,14 +45,16 @@ def test_a_pasted_cv_becomes_role_lines_and_bullets_without_identity():
     cv = normalise_cv(RAW)
 
     assert cv.splitlines() == [
-        "Backend Engineer, PayCo (2021-present)",
+        "Backend Engineer, PayCo (Jan 2021-present)",
         "- Built the payouts API in Python, used by 9,000 merchants",
         "- Deploy my services myself",
         "Junior Developer, Agency (2018-2021)",
         "- Built Django sites",
     ]
     assert years_of_experience(cv, 2026) == 8
-    assert [fact.role for fact in build_facts(cv)][1] == "Backend Engineer, PayCo (2021-present)"
+    assert [fact.role for fact in build_facts(cv)][
+        1
+    ] == "Backend Engineer, PayCo (Jan 2021-present)"
 
 
 def test_a_word_file_is_read():
@@ -119,3 +122,44 @@ def test_the_header_puts_the_name_first_and_one_contact_item_per_line():
         "+44 7700 900123",
         "github.com/jane",
     ]
+
+
+def test_a_line_the_pdf_wrapped_is_joined_back_but_short_lines_are_not():
+    raw = "\n".join(
+        [
+            "Python backend engineer with hands-on experience building production software, improving",
+            "database performance and security.",
+            "Backend Engineer, PayCo (2021-present)",
+            "- Cut search time 5x over a scan layer that spans the databases we support, including",
+            "PostgreSQL, MySQL and Oracle.",
+            "- Built the payouts API",
+            "Skills",
+            "Languages:Python, SQL",
+        ]
+    )
+
+    assert normalise_cv(raw).splitlines() == [
+        "Python backend engineer with hands-on experience building production software, improving"
+        " database performance and security.",
+        "Backend Engineer, PayCo (2021-present)",
+        "- Cut search time 5x over a scan layer that spans the databases we support, including"
+        " PostgreSQL, MySQL and Oracle.",
+        "- Built the payouts API",
+        "Skills",
+        "Languages: Python, SQL",
+    ]
+
+
+def test_a_degree_wrapped_over_two_lines_becomes_one_dated_line():
+    raw = "\n".join(
+        [
+            "Education",
+            "B.Sc. Computer Science (AI specialisation), Faculty of Computers and Artificial",
+            "Intelligence, Example University (2021-2025)",
+        ]
+    )
+
+    assert normalise_cv(raw).splitlines()[1] == (
+        "B.Sc. Computer Science (AI specialisation), Faculty of Computers and Artificial"
+        " Intelligence, Example University (2021-2025)"
+    )

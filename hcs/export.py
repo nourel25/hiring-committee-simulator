@@ -66,8 +66,12 @@ def line_kind(line: str, next_line: str = "") -> str:
 def split_role(line: str) -> Role:
     """'Software Engineer—Northwind, Lisbon (2026-present)' -> title, employer, '2026 – Present'."""
     match = PERIOD.search(line)
-    start, end = match.group(1), match.group(2)
-    dates = f"{start} – {'Present' if end.lower() == 'present' else end}"
+    start_month, start, end_month, end = match.groups()
+    begin = f"{start_month.title()} {start}" if start_month else start
+    finish = "Present" if end.lower() == "present" else end
+    if end_month and finish != "Present":
+        finish = f"{end_month.title()} {finish}"
+    dates = f"{begin} – {finish}"
     rest = (line[: match.start()] + line[match.end() :]).strip(" ,—–-")
     title, employer = (EMPLOYER.split(rest, maxsplit=1) + [""])[:2]
     return Role(title.strip(), employer.strip(), dates)

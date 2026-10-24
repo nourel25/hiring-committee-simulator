@@ -9,11 +9,17 @@ from hcs.policies import (
     decide,
     failed_must_haves,
     normalize,
+    quote_in_cv,
     score_to_decision,
 )
 from hcs.schemas import Check, ChecklistItem, Review
 
 CV = "Designed the PostgreSQL schema for the payments service (2022-present)"
+
+
+def test_a_quote_copied_with_its_bullet_marker_matches_the_fact_without_it():
+    assert quote_in_cv("- Cut search time 5x", "Cut search time 5x on a benchmark")
+    assert not quote_in_cv("- ", "Cut search time 5x")
 
 
 # Total weight 3 + 3 + 1 = 7.

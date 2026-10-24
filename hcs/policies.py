@@ -36,8 +36,10 @@ def normalize(text: str) -> str:
 
 
 def quote_in_cv(quote: str, cv_text: str) -> bool:
-    """True if the quote appears in the CV once both are normalised."""
-    return normalize(quote) in normalize(cv_text)
+    """True if the quote appears in the CV once both are normalised. A leading bullet marker is
+    dropped: reviewers copy "- Cut search time…" while facts store "Cut search time…"."""
+    quote = normalize(quote).lstrip("-•* ")
+    return bool(quote) and quote in normalize(cv_text)
 
 
 def apply_truth_check(review: Review, cv_text: str) -> tuple[int, list[str]]:

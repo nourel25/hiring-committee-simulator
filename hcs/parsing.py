@@ -8,8 +8,11 @@ model reads it. Scanned PDFs (images, no text layer) and two-column layouts come
 import io
 import re
 
+from hcs.screening import MONTHS, PERIOD, is_heading
+
 # "Jan 2021 – Present", "2019 - 2021", "03/2018 — current": a date range in any common form.
-MONTH = r"(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+|\d{1,2}/)?"
+# Each side captures a month name or a month number, then the year.
+MONTH = r"(?:(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+|(\d{1,2})/)?"
 DATE_RANGE = re.compile(
     rf"\(?{MONTH}((?:19|20)\d{{2}})\s*(?:-|–|—|to)\s*{MONTH}"
     r"((?:19|20)\d{2}|present|current|now|today)\s*\)?",
@@ -19,7 +22,8 @@ BULLET = re.compile(r"^\s*(?:[•●▪◦‣∙·*]|-(?=\s)|–(?=\s)|\d+[.)](?
 EMAIL = re.compile(r"\S+@\S+\.\w+")
 PHONE = re.compile(r"(?:\+?\d[\d\s().-]{7,}\d)")
 LINK = re.compile(r"(?:https?://|www\.|linkedin\.com|github\.com)\S*", re.IGNORECASE)
-ROLE = re.compile(r"\((?:19|20)\d{2}-(?:(?:19|20)\d{2}|present)\)")
+# A PDF wraps a line near the page width: about 85-120 characters in the CVs seen so far.
+WRAP_WIDTH = 70
 NAME_LINE = re.compile(r"^[A-Z][a-zA-Z'.-]+(?:\s+[A-Z][a-zA-Z'.-]+){1,3}$")
 
 
@@ -47,14 +51,35 @@ def text_from_upload(name: str, data: bytes) -> str:
 
 
 def normalise_dates(line: str) -> str:
-    """Write any date range as "(2021-present)", the form the year and role checks read."""
+    """Write any date range as "(2021-present)", or "(Mar 2021-present)" when it has months: the
+    form the year and role checks read. Months are kept, so 10 months don't count as a year."""
+
+    def month(name: str | None, number: str | None) -> str:
+        if name:
+            return name[:3].title() + " "
+        if number and 1 <= int(number) <= 12:
+            return MONTHS[int(number) - 1].title() + " "
+        return ""
 
     def replace(match: re.Match) -> str:
-        end = match.group(2).casefold()
-        end = "present" if end in {"present", "current", "now", "today"} else end
-        return f"({match.group(1)}-{end})"
+        start_name, start_number, start, end_name, end_number, end = match.groups()
+        end = end.casefold()
+        if end in {"present", "current", "now", "today"}:
+            return f"({month(start_name, start_number)}{start}-present)"
+        return f"({month(start_name, start_number)}{start}-{month(end_name, end_number)}{end})"
 
     return DATE_RANGE.sub(replace, line)
+
+
+def joins_previous(line: str, previous: str) -> bool:
+    """A line the PDF's layout wrapped off the end of the previous one. Wrapping happens near the
+    full width, so the previous line is long and doesn't end a sentence; headings, dated role lines
+    and "Label: values" lines are never continued."""
+    if not previous or previous.endswith((".", ":", ";", "!", "?")) or len(previous) < WRAP_WIDTH:
+        return False
+    if is_heading(previous) or PERIOD.search(previous) or BULLET.match(line) or is_heading(line):
+        return False
+    return not re.match(r"[A-Z][\w &/+-]{0,30}:", line)
 
 
 def looks_like_phone(line: str) -> bool:
@@ -83,12 +108,14 @@ def split_identity(text: str) -> tuple[str, list[str]]:
     seen_role = False
     for raw in text.splitlines():
         line = normalise_dates(re.sub(r"\s{2,}", " ", raw.strip()))
+        # "Languages:Python" -> "Languages: Python" (not "10:30", not a link: links are removed).
+        line = re.sub(r"(?<=[A-Za-z]):(?=[A-Za-z])", ": ", line)
         if not line:
             if lines and lines[-1]:
                 lines.append("")
             continue
-        is_role = bool(ROLE.search(line))
-        if ROLE.fullmatch(line) and lines and lines[-1] and not lines[-1].startswith("- "):
+        is_role = bool(PERIOD.search(line))
+        if PERIOD.fullmatch(line) and lines and lines[-1] and not lines[-1].startswith("- "):
             # Dates on their own line under the title: put them on the title's line.
             lines[-1] += " " + line
             seen_role = True
@@ -103,6 +130,8 @@ def split_identity(text: str) -> tuple[str, list[str]]:
             lines.append("- " + line[bullet.end() :])
         elif lines and lines[-1].startswith("- ") and (line[0].islower() or line[0].isdigit()):
             # A bullet wrapped onto the next line by the PDF's layout.
+            lines[-1] += " " + line
+        elif lines and joins_previous(line, lines[-1]):
             lines[-1] += " " + line
         else:
             lines.append(line)

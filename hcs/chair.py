@@ -24,6 +24,9 @@ Kind = Literal["presentation", "gap"]
 HIRE_SIDE: set[Decision] = {"lean_hire", "strong_hire"}
 SEVERITY_RANK = {"high": 0, "medium": 1, "low": 2}
 MAX_OBJECTIONS = 5
+# The recruiter's years check (code, from dated jobs). Unlike its other checks it is a fact no
+# rewording can fix: first seen on a real CV with under a year for a 3+ year role (2026-10-24).
+YEARS_CHECK = "R2"
 
 
 @dataclass
@@ -51,21 +54,38 @@ class ChairVerdict:
     reasons: list[str]
 
 
-def decide_verdict(tech_lead: Decision | None, devil_highs: int) -> tuple[Verdict, list[str]]:
-    """The hire rule: the tech lead's decision, with a high devil's-advocate objection blocking hire.
-    A failed tech-lead run gives no evidence of fit, so the case can't be a hire."""
+def decide_verdict(
+    tech_lead: Decision | None, devil_highs: int, years_short: str | None = None
+) -> tuple[Verdict, list[str]]:
+    """The hire rule: the tech lead's decision, with a high devil's-advocate objection or too few
+    years (`years_short`: what the years check found) blocking hire. A failed tech-lead run gives
+    no evidence of fit, so the case can't be a hire."""
     if tech_lead is None:
         return "borderline", ["the tech lead's review failed"]
     if tech_lead == "strong_no":
         return "no_hire", ["the tech lead found the requirements clearly not met"]
-    if tech_lead in HIRE_SIDE and devil_highs == 0:
+    if tech_lead in HIRE_SIDE and devil_highs == 0 and years_short is None:
         return "hire", [f"the tech lead's decision is {tech_lead}"]
     if tech_lead in HIRE_SIDE:
-        return "borderline", [
-            f"the tech lead's decision is {tech_lead}, but the devil's advocate found "
-            f"{devil_highs} requirement(s) not shown at all"
-        ]
+        reasons = [f"the tech lead's decision is {tech_lead}, but"]
+        if devil_highs:
+            reasons.append(
+                f"the devil's advocate found {devil_highs} requirement(s) not shown at all"
+            )
+        if years_short is not None:
+            reasons.append(f"the CV has fewer years than the posting asks for ({years_short})")
+        return "borderline", reasons
     return "borderline", ["a must-have requirement is not shown (the tech lead's gate)"]
+
+
+def years_shortfall(recruiter: RunRecord | None) -> str | None:
+    """What the years check found when it failed ("1 years from the dated roles"), else None."""
+    if recruiter is None or recruiter.review is None:
+        return None
+    for check in recruiter.review.checks:
+        if check.id == YEARS_CHECK and not check.passed:
+            return check.evidence or "no dated jobs"
+    return None
 
 
 def side(decision: Decision | None) -> str | None:
@@ -104,14 +124,14 @@ def check_objections(
         if check.passed or check.id not in importance:
             continue
         if importance[check.id] == "must":
-            severity = "high" if kind == "gap" else "medium"
+            severity = "high" if kind == "gap" or check.id == YEARS_CHECK else "medium"
         else:
             severity = "low"
         objections.append(
             ChairObjection(
                 text=check.check,
                 severity=severity,
-                kind=kind,
+                kind="gap" if check.id == YEARS_CHECK else kind,
                 members=[member],
                 evidence=[check.evidence] if check.evidence else [],
                 check_id=check.id,
@@ -179,7 +199,9 @@ def chair(
         else 0
     )
 
-    verdict, reasons = decide_verdict(decisions["tech_lead"], devil_highs)
+    verdict, reasons = decide_verdict(
+        decisions["tech_lead"], devil_highs, years_shortfall(recruiter)
+    )
     dissent = find_dissent(verdict, decisions)
     others = [
         *check_objections(recruiter, "recruiter", recruiter_checklist, "presentation"),

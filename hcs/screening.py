@@ -14,8 +14,43 @@ from hcs.schemas import Check
 # A line longer than this is a paragraph, not a bullet a recruiter can read at a glance. The longest
 # bullet in the 14 labelled CVs is about 130 characters; a paragraph is several hundred.
 MAX_LINE = 200
-# "(2021-present)" or "(2018 – 2021)": the dated roles in a CV.
-PERIOD = re.compile(r"\((\d{4})\s*[-–]\s*(\d{4}|present)\)", re.IGNORECASE)
+# "(2021-present)", "(2018 – 2021)" or, from an uploaded CV, "(Mar 2026-present)": dated lines.
+PERIOD = re.compile(
+    r"\((?:([a-z]{3}) )?(\d{4})\s*[-–]\s*(?:([a-z]{3}) )?(\d{4}|present)\)", re.IGNORECASE
+)
+MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+# A section heading: a short line of words only ("Work Experience", "Skills & Tools") with a word
+# CVs use for sections, so a bullet such as "Built Django sites" or a headline is never one.
+HEADING = re.compile(r"[A-Za-z][A-Za-z&/]*(?: [A-Za-z&/]+){0,3}")
+SECTION_WORDS = re.compile(
+    r"\b(?:experience|employment|work|career|history|education|academic|skills?|technolog\w*"
+    r"|technical|projects?|certificat\w*|courses?|training|summary|profile|about|languages?"
+    r"|awards?|publications?|volunteer\w*|interests|achievements|qualifications?|tools)\b",
+    re.IGNORECASE,
+)
+EDUCATION = re.compile(r"educat|academic|certific|qualification|course|training", re.IGNORECASE)
+# A dated line that is a degree, for CVs without an Education heading.
+DEGREE = re.compile(
+    r"\b(?:universit\w*|faculty|college|b\.?sc|bachelor\w*|master\w*|m\.?sc|ph\.?d|diploma)\b",
+    re.IGNORECASE,
+)
+
+
+def is_heading(line: str) -> bool:
+    line = line.strip()
+    return bool(HEADING.fullmatch(line) and SECTION_WORDS.search(line))
+
+
+def role_lines(cv: str) -> list[str]:
+    """The dated lines that are jobs: not degrees, not lines under an Education-like heading.
+    The 30 labelled CVs have no headings and no dated degrees; uploaded CVs have both."""
+    roles, in_education = [], False
+    for line in (line.strip() for line in cv.splitlines()):
+        if is_heading(line):
+            in_education = bool(EDUCATION.search(line))
+        elif PERIOD.search(line) and not in_education and not DEGREE.search(line):
+            roles.append(line)
+    return roles
 
 
 def top_third(cv: str) -> str:
@@ -33,25 +68,38 @@ def recruiter_view(cv: str) -> str:
     return "\n".join(line for line in top_third(cv).splitlines() if not PERIOD.search(line))
 
 
-def periods(cv: str, this_year: int) -> list[tuple[int, int]]:
-    """Every dated role as (start, end) years; 'present' is this year; a reversed range is skipped."""
+def month_index(month: str, year: int, default: int) -> int:
+    """Months since year 0; a missing month is `default` (1 = January)."""
+    number = MONTHS.index(month.casefold()[:3]) + 1 if month else default
+    return year * 12 + number - 1
+
+
+def periods(cv: str, this_year: int, this_month: int = 12) -> list[tuple[int, int]]:
+    """Every job as (start, end) in months. A year without a month runs from January, so
+    "(2018-2021)" is 36 months; 'present' is this_month of this year (default December: the year
+    counts in full, as before months were read). A reversed range is skipped."""
     found = []
-    for start, end in PERIOD.findall(cv):
-        end_year = this_year if end.casefold() == "present" else int(end)
-        if int(start) <= end_year:
-            found.append((int(start), end_year))
+    for line in role_lines(cv):
+        start_month, start, end_month, end = PERIOD.search(line).groups()
+        first = month_index(start_month, int(start), 1)
+        if end.casefold() == "present":
+            last = month_index("", this_year, this_month)
+        else:
+            last = month_index(end_month, int(end), 1)
+        if first <= last:
+            found.append((first, last))
     return found
 
 
-def years_of_experience(cv: str, this_year: int) -> int:
-    """Years covered by the dated roles, counting overlapping roles once."""
+def years_of_experience(cv: str, this_year: int, this_month: int = 12) -> int:
+    """Whole years covered by the jobs, counting overlapping jobs once."""
     merged: list[list[int]] = []
-    for start, end in sorted(periods(cv, this_year)):
+    for start, end in sorted(periods(cv, this_year, this_month)):
         if merged and start <= merged[-1][1]:
             merged[-1][1] = max(merged[-1][1], end)
         else:
             merged.append([start, end])
-    return sum(end - start for start, end in merged)
+    return sum(end - start for start, end in merged) // 12
 
 
 def keywords_found(text: str, keywords: list[str]) -> list[str]:

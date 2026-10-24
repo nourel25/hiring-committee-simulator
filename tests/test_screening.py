@@ -7,6 +7,7 @@ from hcs.screening import (
     current_title,
     keywords_found,
     recruiter_view,
+    role_lines,
     screening_checks,
     top_third,
     years_of_experience,
@@ -47,6 +48,40 @@ def test_the_recruiter_view_drops_dated_role_lines_but_keeps_other_numbers():
 )
 def test_years_count_overlapping_roles_once(cv, years):
     assert years_of_experience(cv, THIS_YEAR) == years
+
+
+@pytest.mark.parametrize(
+    "cv, years",
+    [
+        ("Engineer (Mar 2026-present)", 0),
+        ("A (Dec 2024-Jan 2026)", 1),
+        ("A (Mar 2023-Feb 2024)", 0),
+        ("A (Jan 2020-Jun 2023)\nB (Mar 2023-present)", 6),
+    ],
+    ids=["months this year", "13 months", "11 months", "overlap with months"],
+)
+def test_months_are_counted_when_the_cv_gives_them(cv, years):
+    assert years_of_experience(cv, THIS_YEAR) == years
+
+
+def test_a_degree_is_not_work_experience():
+    cv = "\n".join(
+        [
+            "Software Engineer, Northwind (Mar 2026-present)",
+            "- Built the rights module",
+            "Education",
+            "B.Sc. Computer Science, Example University (2021-2025)",
+        ]
+    )
+
+    assert years_of_experience(cv, THIS_YEAR) == 0
+    assert role_lines(cv) == ["Software Engineer, Northwind (Mar 2026-present)"]
+
+
+def test_a_dated_degree_without_an_education_heading_is_not_work_either():
+    cv = "Engineer, shop (2024-present)\nB.Sc. Physics, Example University (2019-2023)"
+
+    assert role_lines(cv) == ["Engineer, shop (2024-present)"]
 
 
 def test_keywords_match_whole_words_and_ignore_case():

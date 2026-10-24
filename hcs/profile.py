@@ -10,7 +10,7 @@ import re
 
 from pydantic import BaseModel, Field
 
-from hcs.screening import PERIOD
+from hcs.screening import is_heading, role_lines
 
 # "12,000", "1.5", "300", "40%": thousands separators are dropped so "12,000" and "12000" match.
 NUMBER = re.compile(r"\d+(?:[.,]\d+)*")
@@ -37,14 +37,19 @@ def numbers_in(text: str) -> list[str]:
 
 
 def build_facts(cv: str) -> list[Fact]:
-    """One fact per non-blank CV line, bullets stripped, in CV order."""
+    """One fact per non-blank CV line, bullets stripped, in CV order. A section heading ends the
+    role above it, so skills, projects and education are not facts "of" the last job; a dated
+    degree is not a role."""
     facts = []
     role = None
+    jobs = set(role_lines(cv))
     for line in (line.strip() for line in cv.splitlines()):
         if not line:
             continue
         text = line.lstrip("-•* ").strip()
-        if PERIOD.search(text):
+        if is_heading(text):
+            role = None
+        elif text in jobs or line in jobs:
             role = text
         facts.append(Fact(id=f"F{len(facts) + 1}", text=text, role=role, metrics=numbers_in(text)))
     return facts
