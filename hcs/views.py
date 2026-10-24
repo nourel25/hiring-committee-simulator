@@ -1,6 +1,7 @@
 """What the UI shows, as plain data: tables of checks, objections and sessions. No Streamlit here,
 so every view can be tested without a browser; app.py only lays these out."""
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -47,6 +48,11 @@ def known_invented(cv: str, example: Case | None, uploaded: bool) -> bool:
     example may be a real person's CV, which must stay on this machine unless the user says so
     twice. A real CV reached Groq on 2026-10-24 under the old "ticked on upload" default."""
     return example is not None and not uploaded and cv.strip() == example.cv.strip()
+
+
+def privacy_key(cv: str, file_name: str) -> str:
+    """A short fingerprint of the CV, so the privacy boxes are new widgets for every new CV."""
+    return hashlib.sha256(f"{file_name}\n{cv.strip()}".encode()).hexdigest()[:12]
 
 
 def postings() -> dict[str, str]:

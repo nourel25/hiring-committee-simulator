@@ -14,6 +14,7 @@ from hcs.views import (
     member_summary,
     objection_rows,
     postings,
+    privacy_key,
     session_rows,
 )
 from tests.test_chair import check, objection, record
@@ -117,3 +118,9 @@ def test_only_an_unedited_example_counts_as_invented():
     assert not known_invented(example.cv + "\n- Added a line", example, uploaded=False)
     assert not known_invented(example.cv, example, uploaded=True)
     assert not known_invented("Engineer, shop (2020-present)", None, uploaded=False)
+
+
+def test_a_new_cv_or_file_gets_new_privacy_boxes_and_the_same_cv_keeps_them():
+    assert privacy_key("CV text", "cv.pdf") == privacy_key("CV text\n", "cv.pdf")
+    assert privacy_key("CV text", "cv.pdf") != privacy_key("CV text edited", "cv.pdf")
+    assert privacy_key("CV text", "cv.pdf") != privacy_key("CV text", "other.pdf")

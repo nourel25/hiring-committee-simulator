@@ -35,6 +35,7 @@ from hcs.views import (
     member_summary,
     objection_rows,
     postings,
+    privacy_key,
     session_members,
     session_rows,
 )
@@ -116,11 +117,16 @@ def new_session() -> None:
     rounds = st.slider("Round limit", 1, MAX_ROUNDS, MAX_ROUNDS)
     picked = examples[example] if example != "(none)" else None
     synthetic = known_invented(cv, picked, uploaded is not None)
+    # The boxes are keyed by the CV itself. Streamlit keeps a box's state in the open page, even
+    # across a server restart, so an unticked box from an earlier CV sent a real CV to Groq twice
+    # on 2026-10-24. A new CV now always gets fresh boxes with their defaults.
+    fingerprint = privacy_key(cv, uploaded.name if uploaded else "")
     local = st.checkbox(
         "Keep everything on this machine (local grounding judge and devil's advocate, weaker)",
         value=not synthetic,
+        key=f"local-{fingerprint}",
     )
-    consent = True
+    consent = synthetic
     if not local:
         st.caption(
             "The devil's advocate sends the CV, and the grounding judge each summary line with its "
@@ -128,9 +134,19 @@ def new_session() -> None:
         )
         if not synthetic:
             st.warning("This isn't an unedited example CV, so it may be a real person's.")
-            consent = st.checkbox("Send it to Groq anyway: it is invented, or I accept that")
+            consent = st.checkbox(
+                "Send it to Groq anyway: it is invented, or I accept that",
+                key=f"consent-{fingerprint}",
+            )
+    sends = not local and consent
+    if sends:
+        st.error("This run sends the CV to Groq (devil's advocate and grounding judge).")
+    else:
+        st.success("This run stays on this machine: no model call leaves it.")
 
-    if st.button("Run the committee", type="primary", disabled=not cv.strip() or not consent):
+    if st.button(
+        "Run the committee", type="primary", disabled=not cv.strip() or (not local and not consent)
+    ):
         if not ollama_ready():
             st.error("Ollama isn't reachable on localhost:11434. Start it with `ollama serve`.")
             return
@@ -143,10 +159,10 @@ def new_session() -> None:
             expected={},
         )
         client = make_client()
-        # Local: every agent on this machine. Otherwise the grounding judge and the devil's
-        # advocate run on their API models (synthetic CVs only).
-        judge = Judge(client) if local else grounding_endpoint()
-        devil = None if local else devils_advocate_endpoint()
+        # The API only with both answers: the box unticked and the CV known invented or sent with
+        # the user's explicit consent. Anything else runs locally, whatever the button allowed.
+        judge = grounding_endpoint() if sends else Judge(client)
+        devil = devils_advocate_endpoint() if sends else None
         # Kept beside the session, never in the case: no model reads these lines.
         st.session_state.identity = identity_header(removed, links)
         st.session_state.links = links
