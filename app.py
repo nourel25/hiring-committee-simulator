@@ -20,6 +20,7 @@ from hcs.tracing import build, summary
 from hcs.views import (
     chair_rows,
     check_rows,
+    examples_for,
     load_sessions,
     member_summary,
     objection_rows,
@@ -78,8 +79,11 @@ def new_session() -> None:
     with st.expander("The posting"):
         st.text(load_posting(posting_name).text)
 
-    examples = {case.id: case for case in load_cases() if case.checklist == posting_name}
-    example = st.selectbox("Start from a labelled example CV (synthetic)", ["(none)", *examples])
+    examples = examples_for(posting_name, load_cases(), date.today().year)
+    example = st.selectbox(
+        "Try an example CV (invented for testing; the label is the verdict we expect)",
+        ["(none)", *examples],
+    )
     uploaded = st.file_uploader("…or upload your CV", type=["pdf", "docx", "txt"])
     default = ""
     if uploaded is not None:
@@ -112,7 +116,7 @@ def new_session() -> None:
             st.error("Ollama isn't reachable on localhost:11434. Start it with `ollama serve`.")
             return
         case = Case(
-            id=example if example != "(none)" else "my-cv",
+            id=examples[example].id if example != "(none)" else "my-cv",
             label="borderline",  # unknown for a new CV; only the evaluation reads labels
             checklist=posting_name,
             expected_decision="lean_no",

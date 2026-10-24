@@ -2,10 +2,13 @@
 
 import json
 
+from hcs.cases import load_case, load_cases
 from hcs.chair import ChairObjection, ChairVerdict
 from hcs.views import (
     chair_rows,
     check_rows,
+    example_name,
+    examples_for,
     load_sessions,
     member_summary,
     objection_rows,
@@ -83,3 +86,24 @@ def test_logged_sessions_become_table_rows(tmp_path):
         }
     ]
     assert load_sessions(tmp_path / "missing.jsonl") == []
+
+
+def test_an_example_is_named_by_its_fit_its_latest_role_and_its_years():
+    assert example_name(load_case("good-1"), 2026) == (
+        "Strong fit: Backend Developer, fintech startup, 5 years"
+    )
+
+
+def test_an_example_opening_with_a_summary_is_named_by_its_first_dated_role():
+    assert example_name(load_case("present-1"), 2026) == (
+        "Strong fit: Backend Developer, online pharmacy, 7 years"
+    )
+
+
+def test_examples_list_one_name_per_case_of_the_posting_strong_fits_first():
+    cases = load_cases()
+    examples = examples_for("backend_payments", cases, 2026)
+
+    assert len(examples) == sum(1 for case in cases if case.checklist == "backend_payments")
+    labels = [case.label for case in examples.values()]
+    assert labels == sorted(labels, key=["good", "borderline", "poor"].index)

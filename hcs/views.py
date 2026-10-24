@@ -4,12 +4,13 @@ so every view can be tested without a browser; app.py only lays these out."""
 import json
 from pathlib import Path
 
-from hcs.cases import POSTINGS_DIR, load_posting
+from hcs.cases import POSTINGS_DIR, Case, load_posting
 from hcs.chair import ChairVerdict
 from hcs.committee import MEMBERS
 from hcs.refinement import Session
 from hcs.run_refinement import SESSIONS_PATH
 from hcs.runlog import RunRecord
+from hcs.screening import PERIOD, years_of_experience
 
 TITLES = {
     "recruiter": "Recruiter",
@@ -17,6 +18,28 @@ TITLES = {
     "tech_lead": "Tech lead",
     "devils_advocate": "Devil's advocate",
 }
+
+
+# The labels in plain words, in the order the picker lists them.
+FIT = {"good": "Strong fit", "borderline": "Borderline", "poor": "Weak fit"}
+
+
+def example_name(case: Case, this_year: int) -> str:
+    """A labelled CV as a user reads it: 'Strong fit: Backend Developer, fintech startup, 5 years'.
+
+    The role comes from the first dated line, since some CVs open with a summary instead."""
+    role = next((line for line in case.cv.splitlines() if PERIOD.search(line)), case.id)
+    role = PERIOD.sub("", role).strip(" ,")
+    return f"{FIT[case.label]}: {role}, {years_of_experience(case.cv, this_year)} years"
+
+
+def examples_for(posting: str, cases: list[Case], this_year: int) -> dict[str, Case]:
+    """The posting's labelled CVs by their readable names, strong fits first."""
+    ordered = sorted(
+        (case for case in cases if case.checklist == posting),
+        key=lambda c: list(FIT).index(c.label),
+    )
+    return {example_name(case, this_year): case for case in ordered}
 
 
 def postings() -> dict[str, str]:
