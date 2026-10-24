@@ -35,7 +35,14 @@ from hcs.policies import quote_in_cv
 from hcs.profile import Fact, build_facts
 from hcs.runlog import RUNS_PATH, RunRecord, append_run
 from hcs.schemas import MAX_SUMMARY_LINES, Refinement, SummaryLine, refinement_model_for
-from hcs.screening import PERIOD, current_title, keywords_found, top_third
+from hcs.screening import (
+    PERIOD,
+    current_title,
+    is_heading,
+    keywords_found,
+    role_lines,
+    top_third,
+)
 
 MAX_ROUNDS = 3
 # The recruiter's checks a summary can fix by rewording real facts. R1 (title) and R2 (years) are
@@ -222,12 +229,20 @@ def gap_objections(committee: CommitteeRound) -> list[str]:
 
 
 def with_summary(cv: str, lines: list[str]) -> str:
-    """The CV with the lines above its first dated role replaced by a headline (the current job title,
-    so the recruiter's title check still reads it first) and the new summary."""
+    """The CV with its top replaced by a headline (the current job title, so the recruiter's title
+    check still reads it first) and the new summary. The top is what sits above the first dated
+    line or the first section heading, so no section is ever dropped: an uploaded CV's "About Me",
+    "Experience" or an Education section placed before the jobs stays whole. The labelled CVs
+    have no headings, so for them the top is everything above the first role, as before."""
     body = [line for line in cv.strip().splitlines()]
-    first_role = next((index for index, line in enumerate(body) if PERIOD.search(line)), 0)
-    headline = current_title(body[first_role])
-    return "\n".join([headline, *lines, "", *body[first_role:]])
+    jobs = role_lines(cv)
+    first_job = body.index(jobs[0]) if jobs and jobs[0] in body else 0
+    headline = current_title(body[first_job])
+    top_end = next(
+        (index for index, line in enumerate(body) if PERIOD.search(line) or is_heading(line)),
+        len(body),
+    )
+    return "\n".join([headline, *lines, "", *body[top_end:]])
 
 
 def ground(

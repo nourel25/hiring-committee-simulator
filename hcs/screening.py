@@ -115,7 +115,8 @@ def keywords_found(text: str, keywords: list[str]) -> list[str]:
 def current_title(cv: str) -> str:
     """The first non-blank line up to its first comma or bracket: the most recent job title."""
     first = next((line.strip() for line in cv.splitlines() if line.strip()), "")
-    return re.split(r"[,(]", first, maxsplit=1)[0].strip()
+    # Uploaded CVs also separate title and employer with a dash or a bar: "Engineer—Northwind".
+    return re.split(r"[,(—–|]| - ", first, maxsplit=1)[0].strip()
 
 
 def screening_checks(cv: str, screen: RecruiterScreen, this_year: int) -> list[Check]:

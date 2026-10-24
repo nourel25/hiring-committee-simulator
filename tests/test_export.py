@@ -5,7 +5,56 @@ from io import BytesIO
 import pytest
 from pypdf import PdfReader
 
-from hcs.export import Role, cv_to_pdf, find_font, line_kind, safe_markdown, split_role
+from hcs.export import (
+    Role,
+    contact_address,
+    cv_to_pdf,
+    find_font,
+    line_kind,
+    safe_markdown,
+    split_role,
+)
+
+
+def uris_of(pdf: bytes) -> list[str]:
+    return [
+        annotation.get_object()["/A"]["/URI"]
+        for page in PdfReader(BytesIO(pdf)).pages
+        for annotation in page.get("/Annots") or []
+    ]
+
+
+@pytest.mark.parametrize(
+    ("item", "address"),
+    [
+        ("jane@example.com", "mailto:jane@example.com"),
+        ("+20 106 076 3399", "tel:+201060763399"),
+        ("linkedin.com/in/jane", "https://linkedin.com/in/jane"),
+        ("https://github.com/jane", "https://github.com/jane"),
+        ("Lisbon, Portugal", None),
+    ],
+)
+def test_contact_items_link_to_what_they_are(item, address):
+    assert contact_address(item) == address
+
+
+def test_the_contact_line_and_the_cv_labels_are_clickable_in_the_pdf():
+    cv = "Projects\nVideo QA /github\n- Stack: FastAPI\nDoctors Hub /github\n- Stack: Django"
+    links = [
+        ("/github", "https://github.com/jane/video-qa"),
+        ("/github", "https://github.com/jane/doctors-hub"),
+    ]
+
+    pdf = cv_to_pdf(cv, "Jane Doe\njane@example.com\nlinkedin.com/in/jane", fonts=[], links=links)
+
+    assert uris_of(pdf) == [
+        "mailto:jane@example.com",
+        "https://linkedin.com/in/jane",
+        "https://github.com/jane/video-qa",
+        "https://github.com/jane/doctors-hub",
+    ]
+    assert "Video QA /github" in text_of(pdf)
+
 
 CV = """Backend Engineer, shop (2020-present)
 - Cut checkout latency 5.2× (1.8s → 0.35s)

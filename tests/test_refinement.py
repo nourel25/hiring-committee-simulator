@@ -61,6 +61,26 @@ def test_the_summary_goes_under_a_headline_with_the_current_title():
     assert "Passionate" not in cv
 
 
+def test_the_summary_never_drops_a_section_of_an_uploaded_cv():
+    cv = "\n".join(
+        [
+            "Software Engineer",
+            "About Me",
+            "Backend engineer who builds compliance software.",
+            "Education",
+            "B.Sc. Computer Science, Example University (2021-2025)",
+            "Experience",
+            "Software Engineer—Northwind, Lisbon (Mar 2026-present)",
+            "- Built the rights module",
+        ]
+    )
+
+    lines = with_summary(cv, ["Cut search time 5x"]).splitlines()
+
+    assert lines[:3] == ["Software Engineer", "Cut search time 5x", ""]
+    assert lines[3:] == cv.splitlines()[1:]
+
+
 def test_triage_picks_a_fact_for_each_fixable_check():
     cv = "Engineer, shop (2020-present)\n- Built the shop API\n- Wrote Python jobs\n- Cut costs by 30%"
     facts = build_facts(cv)

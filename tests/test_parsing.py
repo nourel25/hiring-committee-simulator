@@ -4,9 +4,13 @@ import io
 
 import pytest
 from docx import Document
+from fpdf import FPDF
 
 from hcs.parsing import (
+    Link,
+    body_links,
     identity_header,
+    links_from_pdf,
     normalise_cv,
     normalise_dates,
     split_identity,
@@ -163,3 +167,75 @@ def test_a_degree_wrapped_over_two_lines_becomes_one_dated_line():
         "B.Sc. Computer Science (AI specialisation), Faculty of Computers and Artificial"
         " Intelligence, Example University (2021-2025)"
     )
+
+
+def test_only_the_name_is_removed_not_the_headline_or_an_about_me_heading():
+    raw = "\n".join(
+        [
+            "Jane Example",
+            "Software Engineer",
+            "Lisbon |jane@example.com | LinkedIn | GitHub",
+            "About Me",
+            "Backend engineer who builds compliance software.",
+            "Experience",
+            "Software Engineer, Northwind (2026-present)",
+        ]
+    )
+
+    cv, removed = split_identity(raw)
+
+    assert removed == ["Jane Example", "Lisbon |jane@example.com | LinkedIn | GitHub"]
+    assert cv.splitlines()[:3] == ["Software Engineer", "About Me", cv.splitlines()[2]]
+
+
+def pdf_with_links() -> bytes:
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("helvetica", size=11)
+    pdf.cell(40, 8, "LinkedIn", link="https://www.linkedin.com/in/jane/")
+    pdf.cell(40, 8, "GitHub", link="https://github.com/jane", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, "Doctors Hub /github", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(30, 8, "/github", link="https://github.com/jane/doctors-hub")
+    return bytes(pdf.output())
+
+
+def test_links_are_read_from_a_pdf_with_the_text_they_sit_on():
+    links = links_from_pdf(pdf_with_links())
+
+    assert [link.uri for link in links] == [
+        "https://www.linkedin.com/in/jane/",
+        "https://github.com/jane",
+        "https://github.com/jane/doctors-hub",
+    ]
+    assert links[0].text == "LinkedIn"
+
+
+def test_a_contact_item_that_was_a_link_becomes_its_address():
+    links = [
+        Link("mailto:jane@example.com", "jane@example.com"),
+        Link("https://www.linkedin.com/in/jane/", "LinkedIn"),
+        Link("https://github.com/jane", "GitHub"),
+    ]
+
+    header = identity_header(["Jane Example", "jane@example.com | LinkedIn | GitHub"], links)
+
+    assert header.splitlines() == [
+        "Jane Example",
+        "jane@example.com",
+        "linkedin.com/in/jane",
+        "github.com/jane",
+    ]
+
+
+def test_repository_links_go_to_the_cv_labels_in_order_and_contact_links_stay_out():
+    cv = "Video QA /github\n- Stack: FastAPI\nDoctors Hub /github\n- Stack: Django"
+    links = [
+        Link("https://github.com/jane", "GitHub"),
+        Link("https://github.com/jane/video-qa", ""),
+        Link("https://github.com/jane/doctors-hub", ""),
+    ]
+
+    assert body_links(cv, links, header="github.com/jane") == [
+        ("/github", "https://github.com/jane/video-qa"),
+        ("/github", "https://github.com/jane/doctors-hub"),
+    ]

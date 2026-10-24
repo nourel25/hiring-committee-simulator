@@ -82,13 +82,55 @@ def safe_markdown(text: str) -> str:
     return text.replace("**", "*").replace("__", "_").replace("--", "–")
 
 
+def contact_address(item: str) -> str | None:
+    """Where a contact item should link: an email, a phone number or a web address."""
+    if re.fullmatch(r"\S+@\S+\.\w+", item):
+        return f"mailto:{item}"
+    digits = re.sub(r"[^\d+]", "", item)
+    if re.fullmatch(r"\+?[\d\s().-]+", item) and sum(c.isdigit() for c in digits) >= 9:
+        return f"tel:{digits}"
+    if re.match(r"(?:https?://)?(?:www\.)?[\w-]+\.[a-z]{2,}(?:/\S*)?$", item):
+        return item if item.startswith("http") else f"https://{item}"
+    return None
+
+
+def link(text: str, address: str) -> str:
+    """A markdown link fpdf2 draws as clickable text; the text is escaped, the address is not."""
+    return f"[{safe_markdown(text).replace('[', '(').replace(']', ')')}]({address})"
+
+
 def contact_line(lines: list[str]) -> str:
-    return "  |  ".join(lines)
+    """The contact items joined under the name, each one clickable when it is an address."""
+    parts = []
+    for item in lines:
+        address = contact_address(item)
+        parts.append(link(item, address) if address else safe_markdown(item))
+    return "  |  ".join(parts)
 
 
-def cv_to_pdf(cv: str, header: str = "", fonts: list[tuple[Path, ...]] = FONTS) -> bytes:
+def with_links(text: str, pending: list[tuple[str, str]]) -> tuple[str, bool]:
+    """The line as markdown with the first pending link whose text it contains made clickable;
+    that link is used up, so two "/github" labels get the two repositories in order."""
+    for index, (anchor, address) in enumerate(pending):
+        if anchor in text:
+            before, _, after = text.partition(anchor)
+            del pending[index]
+            rest, _ = with_links(after, pending)
+            return safe_markdown(before) + link(anchor, address) + rest, True
+    return safe_markdown(text), False
+
+
+def cv_to_pdf(
+    cv: str,
+    header: str = "",
+    fonts: list[tuple[Path, ...]] = FONTS,
+    links: list[tuple[str, str]] = (),
+) -> bytes:
     """The CV as an A4 PDF. `header` is the name, then contact lines: parsing removed them from
-    the CV, so the user adds them back here, on this machine only. `fonts=[]` forces Helvetica."""
+    the CV, so the user adds them back here, on this machine only. `links` are (text, address)
+    pairs from the uploaded file, made clickable where that text appears. `fonts=[]` forces
+    Helvetica."""
+    pending = list(links)
     font = find_font(fonts)
     pdf = FPDF(format="A4")
     pdf.set_margins(16, 14, 16)
@@ -153,7 +195,19 @@ def cv_to_pdf(cv: str, header: str = "", fonts: list[tuple[Path, ...]] = FONTS) 
         pdf.set_xy(pdf.l_margin + 1, top)
         pdf.cell(HANG, LINE, "•" if font else "-")
         pdf.set_xy(pdf.l_margin + 1 + HANG, top)
-        pdf.multi_cell(pdf.epw - 1 - HANG, LINE, clean(text), new_x="LMARGIN", new_y="NEXT")
+        marked, linked = with_links(text, pending)
+        pdf.multi_cell(
+            pdf.epw - 1 - HANG,
+            LINE,
+            clean(marked if linked else text),
+            new_x="LMARGIN",
+            new_y="NEXT",
+            markdown=linked,
+        )
+
+    def linked_paragraph(text: str) -> None:
+        marked, linked = with_links(text, pending)
+        paragraph(marked if linked else text, markdown=linked)
 
     pdf.add_page()
     header_lines = [line.strip() for line in header.splitlines() if line.strip()]
@@ -169,6 +223,7 @@ def cv_to_pdf(cv: str, header: str = "", fonts: list[tuple[Path, ...]] = FONTS) 
                 align="C",
                 new_x="LMARGIN",
                 new_y="NEXT",
+                markdown=True,
             )
         pdf.ln(3)
 
@@ -191,8 +246,8 @@ def cv_to_pdf(cv: str, header: str = "", fonts: list[tuple[Path, ...]] = FONTS) 
         elif kind == "entry":
             pdf.ln(1)
             use("B")
-            paragraph(line)
+            linked_paragraph(line)
         else:
             use()
-            paragraph(line)
+            linked_paragraph(line)
     return bytes(pdf.output())

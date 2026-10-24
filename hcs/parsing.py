@@ -7,6 +7,7 @@ model reads it. Scanned PDFs (images, no text layer) and two-column layouts come
 
 import io
 import re
+from dataclasses import dataclass
 
 from hcs.screening import MONTHS, PERIOD, is_heading
 
@@ -38,6 +39,68 @@ def text_from_docx(data: bytes) -> str:
     from docx import Document
 
     return "\n".join(paragraph.text for paragraph in Document(io.BytesIO(data)).paragraphs)
+
+
+@dataclass
+class Link:
+    """A hyperlink in the uploaded file: its target and, when it can be read, the text it sits on."""
+
+    uri: str
+    text: str = ""
+
+
+def links_from_pdf(data: bytes) -> list[Link]:
+    """Every URI link annotation, in page order, with the text drawn inside its rectangle. PDFs
+    keep links apart from the text, so text extraction alone loses them."""
+    from pypdf import PdfReader
+
+    found = []
+    for page in PdfReader(io.BytesIO(data)).pages:
+        fragments: list[tuple[float, float, str]] = []
+
+        def collect(text, cm, tm, font, size, fragments=fragments):
+            if text.strip():
+                x = tm[4] * cm[0] + tm[5] * cm[2] + cm[4]
+                y = tm[4] * cm[1] + tm[5] * cm[3] + cm[5]
+                fragments.append((x, y, text.strip()))
+
+        page.extract_text(visitor_text=collect)
+        annotations = [annotation.get_object() for annotation in page.get("/Annots") or []]
+        for annotation in annotations:
+            action = annotation.get("/A")
+            if not action or "/URI" not in action:
+                continue
+            x0, y0, x1, y1 = (float(value) for value in annotation["/Rect"])
+            inside = [
+                text for x, y, text in fragments if x0 - 2 <= x <= x1 + 2 and y0 - 3 <= y <= y1 + 3
+            ]
+            found.append(Link(str(action["/URI"]), " ".join(inside)))
+    return found
+
+
+def links_from_docx(data: bytes) -> list[Link]:
+    from docx import Document
+
+    return [
+        Link(link.address, link.text)
+        for paragraph in Document(io.BytesIO(data)).paragraphs
+        for link in paragraph.hyperlinks
+        if link.address
+    ]
+
+
+def links_from_upload(name: str, data: bytes) -> list[Link]:
+    suffix = name.rsplit(".", 1)[-1].casefold()
+    if suffix == "pdf":
+        return links_from_pdf(data)
+    if suffix == "docx":
+        return links_from_docx(data)
+    return []
+
+
+def short_url(uri: str) -> str:
+    """'https://www.linkedin.com/in/jane/' -> 'linkedin.com/in/jane': what a CV shows."""
+    return re.sub(r"^(?:https?://)?(?:www\.)?", "", uri).rstrip("/")
 
 
 def text_from_upload(name: str, data: bytes) -> str:
@@ -89,10 +152,11 @@ def looks_like_phone(line: str) -> bool:
 
 
 def is_identity(line: str, before_first_role: bool) -> bool:
-    """Contact details, links, and a bare name above the first role: removed for fair review."""
+    """Contact details, links, and a bare name above the first role: removed for fair review.
+    A section heading ("About Me") is never a name."""
     if EMAIL.search(line) or LINK.search(line) or looks_like_phone(line):
         return True
-    return before_first_role and bool(NAME_LINE.match(line.strip()))
+    return before_first_role and bool(NAME_LINE.match(line.strip())) and not is_heading(line)
 
 
 def normalise_cv(text: str) -> str:
@@ -106,6 +170,7 @@ def split_identity(text: str) -> tuple[str, list[str]]:
     lines: list[str] = []
     removed: list[str] = []
     seen_role = False
+    name_removed = False
     for raw in text.splitlines():
         line = normalise_dates(re.sub(r"\s{2,}", " ", raw.strip()))
         # "Languages:Python" -> "Languages: Python" (not "10:30", not a link: links are removed).
@@ -120,8 +185,11 @@ def split_identity(text: str) -> tuple[str, list[str]]:
             lines[-1] += " " + line
             seen_role = True
             continue
-        # A bare name is only removed as the very first line.
-        if not is_role and is_identity(line, before_first_role=not seen_role and not lines):
+        # Only one bare name is removed, and only before any kept line: a headline under the name
+        # ("Software Engineer") looks like a name too, and the recruiter's title check reads it.
+        before_first_role = not seen_role and not lines and not name_removed
+        if not is_role and is_identity(line, before_first_role):
+            name_removed = name_removed or bool(NAME_LINE.match(line))
             removed.append(line)
             continue
         seen_role = seen_role or is_role
@@ -138,9 +206,47 @@ def split_identity(text: str) -> tuple[str, list[str]]:
     return "\n".join(lines).strip(), removed
 
 
-def identity_header(removed: list[str]) -> str:
+def identity_header(removed: list[str], links: list[Link] = ()) -> str:
     """The removed lines in the PDF header's format: the name first, then one contact item per
-    line ("jane@example.com | +44 7700 900123" becomes two lines)."""
+    line ("jane@example.com | +44 7700 900123" becomes two lines). An item that was only the text
+    of a link ("LinkedIn", "GitHub") becomes the link's address, so it works on the new PDF."""
     items = [item.strip() for line in removed for item in re.split(r"[|•·]", line) if item.strip()]
+    for index, item in enumerate(items):
+        word = item.casefold().replace(" ", "")
+        match = next(
+            (
+                link
+                for link in links
+                if not link.uri.startswith(("mailto:", "tel:"))
+                and (link.text.casefold().replace(" ", "") == word or word in link.uri.casefold())
+            ),
+            None,
+        )
+        if match and not LINK.search(item):
+            items[index] = short_url(match.uri)
     names = [item for item in items if NAME_LINE.match(item)][:1]
     return "\n".join(names + [item for item in items if item not in names])
+
+
+def body_links(cv: str, links: list[Link], header: str) -> list[tuple[str, str]]:
+    """Links that belong in the CV body, as (text it sits on, address), in CV order: a project's
+    "/github" or a certificate line. Contact links are the header's; a repository link whose text
+    couldn't be read is paired, in order, with the CV's "/github" or "GitHub" labels."""
+    header_text = header.casefold()
+    placed: list[tuple[str, str]] = []
+    labels = [
+        match.group()
+        for match in re.finditer(r"/github\b|\bGitHub\b(?! Actions)", cv, re.IGNORECASE)
+    ]
+    for link in links:
+        if (
+            link.uri.startswith(("mailto:", "tel:"))
+            or short_url(link.uri).casefold() in header_text
+        ):
+            continue
+        text = link.text.strip()
+        if len(text) >= 3 and text in cv:
+            placed.append((text, link.uri))
+        elif re.search(r"github\.com/[^/]+/[^/]+", link.uri) and labels:
+            placed.append((labels.pop(0), link.uri))
+    return placed

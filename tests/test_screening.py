@@ -95,6 +95,8 @@ def test_keywords_match_whole_words_and_ignore_case():
         ("Backend Engineer, insurance platform (2021-present)", "Backend Engineer"),
         ("Data Engineer (2020-present)", "Data Engineer"),
         ("\n\n  Data Analyst, logistics company (2020-present)", "Data Analyst"),
+        ("Software Engineer—Northwind, Lisbon (2026-present)", "Software Engineer"),
+        ("Data Engineer | Acme (2020-present)", "Data Engineer"),
     ],
 )
 def test_the_current_title_is_the_first_line_before_a_comma_or_bracket(first_line, title):

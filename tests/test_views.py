@@ -9,6 +9,7 @@ from hcs.views import (
     check_rows,
     example_name,
     examples_for,
+    known_invented,
     load_sessions,
     member_summary,
     objection_rows,
@@ -107,3 +108,12 @@ def test_examples_list_one_name_per_case_of_the_posting_strong_fits_first():
     assert len(examples) == sum(1 for case in cases if case.checklist == "backend_payments")
     labels = [case.label for case in examples.values()]
     assert labels == sorted(labels, key=["good", "borderline", "poor"].index)
+
+
+def test_only_an_unedited_example_counts_as_invented():
+    example = load_case("good-1")
+
+    assert known_invented(example.cv, example, uploaded=False)
+    assert not known_invented(example.cv + "\n- Added a line", example, uploaded=False)
+    assert not known_invented(example.cv, example, uploaded=True)
+    assert not known_invented("Engineer, shop (2020-present)", None, uploaded=False)

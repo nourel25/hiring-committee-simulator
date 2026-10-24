@@ -42,6 +42,13 @@ def examples_for(posting: str, cases: list[Case], this_year: int) -> dict[str, C
     return {example_name(case, this_year): case for case in ordered}
 
 
+def known_invented(cv: str, example: Case | None, uploaded: bool) -> bool:
+    """Only an unedited example CV is known to be invented. An upload, pasted text or an edited
+    example may be a real person's CV, which must stay on this machine unless the user says so
+    twice. A real CV reached Groq on 2026-10-24 under the old "ticked on upload" default."""
+    return example is not None and not uploaded and cv.strip() == example.cv.strip()
+
+
 def postings() -> dict[str, str]:
     """Every posting file as name -> job title, for the picker."""
     return {

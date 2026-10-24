@@ -14,7 +14,15 @@ from hcs.cases import Case, load_cases, load_posting
 from hcs.config import devils_advocate_endpoint, grounding_endpoint
 from hcs.export import cv_to_pdf
 from hcs.llm import make_client
-from hcs.parsing import identity_header, split_identity, text_from_upload
+from hcs.parsing import (
+    Link,
+    body_links,
+    identity_header,
+    links_from_upload,
+    short_url,
+    split_identity,
+    text_from_upload,
+)
 from hcs.refinement import MAX_ROUNDS, Judge, Session, run_session
 from hcs.session import diff
 from hcs.tracing import build, summary
@@ -22,6 +30,7 @@ from hcs.views import (
     chair_rows,
     check_rows,
     examples_for,
+    known_invented,
     load_sessions,
     member_summary,
     objection_rows,
@@ -88,8 +97,10 @@ def new_session() -> None:
     uploaded = st.file_uploader("…or upload your CV", type=["pdf", "docx", "txt"])
     default = ""
     removed: list[str] = []
+    links: list[Link] = []
     if uploaded is not None:
         default, removed = split_identity(text_from_upload(uploaded.name, uploaded.getvalue()))
+        links = links_from_upload(uploaded.name, uploaded.getvalue())
         st.info(
             "Check the text below before you run: PDFs lose layout. Scanned PDFs have no text to "
             f"read. {len(removed)} line(s) with your name, contact details or links were removed, "
@@ -103,23 +114,28 @@ def new_session() -> None:
         height=260,
     )
     rounds = st.slider("Round limit", 1, MAX_ROUNDS, MAX_ROUNDS)
-    # An uploaded file is probably a real CV, so it stays on this machine unless the user says not.
+    picked = examples[example] if example != "(none)" else None
+    synthetic = known_invented(cv, picked, uploaded is not None)
     local = st.checkbox(
         "Keep everything on this machine (local grounding judge and devil's advocate, weaker)",
-        value=uploaded is not None,
+        value=not synthetic,
     )
+    consent = True
     if not local:
         st.caption(
             "The devil's advocate sends the CV, and the grounding judge each summary line with its "
             "facts, to Groq."
         )
+        if not synthetic:
+            st.warning("This isn't an unedited example CV, so it may be a real person's.")
+            consent = st.checkbox("Send it to Groq anyway: it is invented, or I accept that")
 
-    if st.button("Run the committee", type="primary", disabled=not cv.strip()):
+    if st.button("Run the committee", type="primary", disabled=not cv.strip() or not consent):
         if not ollama_ready():
             st.error("Ollama isn't reachable on localhost:11434. Start it with `ollama serve`.")
             return
         case = Case(
-            id=examples[example].id if example != "(none)" else "my-cv",
+            id=picked.id if picked and uploaded is None else "my-cv",
             label="borderline",  # unknown for a new CV; only the evaluation reads labels
             checklist=posting_name,
             expected_decision="lean_no",
@@ -132,7 +148,8 @@ def new_session() -> None:
         judge = Judge(client) if local else grounding_endpoint()
         devil = None if local else devils_advocate_endpoint()
         # Kept beside the session, never in the case: no model reads these lines.
-        st.session_state.identity = identity_header(removed)
+        st.session_state.identity = identity_header(removed, links)
+        st.session_state.links = links
         with st.spinner("The committee is meeting: about a minute per round on a laptop GPU…"):
             st.session_state.session = run_session(
                 client,
@@ -171,14 +188,23 @@ def new_session() -> None:
     )
     st.caption(
         "Line 1: your full name, set large and centred. Every next line: one contact item, such "
-        "as city, email, phone, LinkedIn or GitHub; they are joined with | under your name. "
-        "Filled in from the lines removed from your upload: check them, and delete project links "
-        "that belong in the CV instead."
+        "as city, email, phone, or a web address like linkedin.com/in/you; they are joined with | "
+        "under your name, and emails, phone numbers and addresses become clickable. Filled in "
+        "from what was removed from your upload, with link targets read from the file: check them."
     )
+    placed = body_links(edited, st.session_state.get("links", []), header)
+    if placed:
+        st.caption(
+            "Links kept from your file: "
+            + "; ".join(f"{text} → {short_url(address)}" for text, address in placed)
+        )
     text_column, pdf_column = st.columns(2)
     text_column.download_button("Download as text", edited, file_name="cv.txt")
     pdf_column.download_button(
-        "Download as PDF", cv_to_pdf(edited, header), file_name="cv.pdf", mime="application/pdf"
+        "Download as PDF",
+        cv_to_pdf(edited, header, links=placed),
+        file_name="cv.pdf",
+        mime="application/pdf",
     )
     st.caption("Nothing is sent anywhere: you review and apply yourself.")
 
