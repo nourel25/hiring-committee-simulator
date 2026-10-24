@@ -16,7 +16,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--model", help="the devil's advocate's model (default: judge A)")
     parser.add_argument(
         "--provider",
-        choices=["ollama", "groq"],
+        choices=["ollama", "groq", "gemini"],
         default="ollama",
         help="where the model runs (groq: a larger max_tokens for reasoning models)",
     )
@@ -33,6 +33,8 @@ def main() -> None:
     settings = {"model": args.model} if args.model else {}
     if args.provider != "ollama":
         settings["max_tokens"] = API_MAX_TOKENS
+    if args.provider == "gemini":
+        settings["seed"] = None  # Gemini's endpoint rejects the field
     if args.retries is not None:
         settings["max_retries"] = args.retries
     reports = []

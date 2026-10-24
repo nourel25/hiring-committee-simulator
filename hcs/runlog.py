@@ -25,7 +25,8 @@ class RunRecord(BaseModel):
     prompt_version: str
     model: str
     temperature: float
-    seed: int
+    # None where the provider takes no seed (Gemini).
+    seed: int | None
     max_tokens: int
     max_retries: int
 

@@ -132,3 +132,30 @@ def test_forbid_extra_keys_leaves_the_original_schema_unchanged():
 def test_an_unknown_provider_is_rejected():
     with pytest.raises(ValueError):
         make_client("openrouter")
+
+
+def test_no_seed_is_sent_when_the_provider_takes_none():
+    client = FakeClient([make_response(VALID)])
+
+    get_structured(
+        client,
+        MESSAGES,
+        response_model=Review,
+        model="m",
+        temperature=0,
+        seed=None,
+        max_tokens=10,
+    )
+
+    assert "seed" not in client.kwargs[0]
+    assert client.kwargs[0]["temperature"] == 0
+
+
+def test_a_seed_is_sent_when_given():
+    client = FakeClient([make_response(VALID)])
+
+    get_structured(
+        client, MESSAGES, response_model=Review, model="m", temperature=0, seed=7, max_tokens=10
+    )
+
+    assert client.kwargs[0]["seed"] == 7

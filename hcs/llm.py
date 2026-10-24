@@ -16,8 +16,10 @@ from pydantic import BaseModel, ValidationError
 OLLAMA_HOST = "http://localhost:11434"
 OLLAMA_BASE_URL = f"{OLLAMA_HOST}/v1"
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
+# Google AI Studio's OpenAI-compatible endpoint (Gemini models; free tier, synthetic CVs only).
+GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 
-Provider = Literal["ollama", "groq"]
+Provider = Literal["ollama", "groq", "gemini"]
 
 REPAIR_PROMPT = (
     "Your previous reply did not match the required JSON schema.\n"
@@ -48,12 +50,15 @@ class CallResult:
 
 
 def make_client(provider: Provider = "ollama") -> OpenAI:
-    """Create a client for the local Ollama server, or for Groq (key from GROQ_API_KEY or .env)."""
+    """Create a client for the local Ollama server, Groq or Gemini (keys from the environment or .env)."""
     if provider == "ollama":
         return OpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama")
     if provider == "groq":
         load_dotenv()
         return OpenAI(base_url=GROQ_BASE_URL, api_key=os.environ["GROQ_API_KEY"], max_retries=5)
+    if provider == "gemini":
+        load_dotenv()
+        return OpenAI(base_url=GEMINI_BASE_URL, api_key=os.environ["GEMINI_API_KEY"], max_retries=5)
     raise ValueError(f"Unknown provider: {provider!r}")
 
 
@@ -72,13 +77,14 @@ def call_model(
     response_model: type[BaseModel],
     model: str,
     temperature: float,
-    seed: int,
+    seed: int | None,
     max_tokens: int,
     strict: bool = False,
 ) -> tuple[ChatCompletion, float]:
     """Send one request constrained to response_model's schema; return the response and seconds taken.
 
     strict=True asks the provider to enforce the schema while writing (Ollama always does).
+    seed=None leaves the seed out: Gemini's endpoint rejects the field.
     """
     schema = response_model.model_json_schema()
     json_schema = {"name": response_model.__name__, "schema": schema}
@@ -90,9 +96,9 @@ def call_model(
         model=model,
         messages=messages,
         temperature=temperature,
-        seed=seed,
         max_tokens=max_tokens,
         response_format={"type": "json_schema", "json_schema": json_schema},
+        **({"seed": seed} if seed is not None else {}),
     )
     return response, time.perf_counter() - start
 
@@ -103,7 +109,7 @@ def get_structured(
     response_model: type[BaseModel],
     model: str,
     temperature: float,
-    seed: int,
+    seed: int | None,
     max_tokens: int,
     max_retries: int = 1,
     strict: bool = False,
