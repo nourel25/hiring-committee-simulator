@@ -1,12 +1,13 @@
 # Hiring Committee Simulator
 
-A panel of local LLM agents reviews a CV against a real job posting the way a hiring team would.
+A panel of LLM agents reviews a CV against a real job posting the way a hiring team would.
 The panel is a recruiter, a hiring manager, a tech lead and a devil's advocate, and a chair decides.
 A refiner then improves the CV's presentation using only the candidate's own facts. Every rewritten
 line has to pass a grounding check before it reaches the CV.
 
-It runs entirely on a laptop GPU (RTX 3060, 6 GB) through Ollama. The one exception is a held-out
-judge on an API (Groq), used only for evaluation.
+Most of it runs on a laptop GPU (RTX 3060, 6 GB) through Ollama. Three judges run on an API (Groq):
+the grounding judge and the devil's advocate, which a 27B model does measurably better, and a
+held-out judge used only for evaluation. A checkbox keeps everything on the machine.
 
 The interesting part is not the agents but how they were measured. Every prompt and checklist
 change was tested on labelled CVs. The answer keys and success criteria were committed **before**
@@ -49,7 +50,9 @@ real people. Small sets give rough signals: at 30 cases, ±16 points.
 |---|---|---|
 | Tech lead (qwen2.5:7b), decisions on 30 CVs | 28/30 (11/11 on the cases it was tuned on, 17/19 on the rest) | no regression |
 | Second judge family (llama3.1:8b) | 14/19 on unseen CVs | ≥ 17/19 — **not met**, judge B open |
-| Committee verdict vs labels | **29/30**, 0 failed calls, 63 s per session | ≥ 23/30 |
+| Committee verdict vs labels, all local | **29/30**, 0 failed calls, 63 s per session | ≥ 23/30 |
+| Devil's advocate, four models over 36 cases (rule: 0 failed, every gap found, 0 false highs, then most explained mediums) | qwen3.8-27b on Groq the only eligible model: 16/16 gaps, 0 false highs, 26/36 mediums explained (qwen2.5:7b local: 14/16 gaps, 1 false high) | an eligible model, else it stays local |
+| Committee with the devil's advocate on Groq | 29/30 (a different miss: one false high, not repeated at temperature 0), 0/120 failed calls, 59 s per session | ≥ 29/30, 0 poor hired, ≤ 1 failed: met, so it runs in the loop |
 | Leniency (hire on a poor CV) | 0/3 | 0 |
 | Grounding judge, qwen2.5:7b local, held-out claims | 7/12, 1 lenient | ≥ 10/12, ≤ 1 lenient: **not met** |
 | Grounding judge, qwen3.8-27b on Groq, same prompt | **12/12**, 0 lenient (with 3 format retries) | met, so it runs in the loop |
@@ -94,8 +97,9 @@ review, so the held-out judge moved to `openai/gpt-oss-120b` on Groq.
 - **The strict–lenient swing.** Rewording the 7B grounding judge to stop it rejecting true
   paraphrases made it accept inflated claims (lenient errors 1 → 3 of 12). Wording that only moves
   errors from side to side points at the model's limit. The same prompt on a 27B model fixed it.
-- **Measure, then move only what needs it.** Only the grounding judge went to an API. The
-  refiner's problems were design problems, which a bigger model wouldn't have fixed.
+- **Measure, then move only what needs it.** Only the grounding judge and the devil's advocate went
+  to an API, each after a pre-registered comparison. The refiner's problems were design problems,
+  which a bigger model wouldn't have fixed, and a bigger job analyst made every line a must-have.
 - **Check that a metric can fail.** One devil's-advocate metric was met by almost every CV, good
   ones included, so it measured nothing.
 
@@ -108,8 +112,9 @@ You need Python 3.12 and [Ollama](https://ollama.com). Pull the models first:
 - `qwen2.5:7b` for the judges;
 - `mistral:7b` for the refiner.
 
-The grounding judge and the held-out judge run on Groq: put a key in `.env` (see `.env.example`).
-Only synthetic CVs go there.
+The grounding judge, the devil's advocate and the held-out judge run on Groq: put a key in `.env`
+(see `.env.example`). Only synthetic CVs go there. The `--local-devil` and `--local-judge` flags keep a
+run on the machine.
 
 ```bash
 python -m venv .venv && .venv/Scripts/activate      # Windows; source .venv/bin/activate elsewhere
@@ -153,8 +158,8 @@ It has three pages:
 - **Past sessions.** The logged refinement runs.
 - **Cost and latency.** Calls, failures, seconds and tokens per agent and model, from the run log.
 
-A checkbox keeps the grounding judge local, so nothing leaves the machine. It is ticked for you
-when you upload a file.
+A checkbox keeps the grounding judge and the devil's advocate local, so nothing leaves the machine.
+It is ticked for you when you upload a file.
 
 The held-out judge needs a Groq key in `.env` (see `.env.example`):
 
