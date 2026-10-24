@@ -1,8 +1,11 @@
 """Tests for hcs.llm.get_structured using a fake client. No model calls."""
 
 import copy
+from types import SimpleNamespace
 
+import httpx2
 import pytest
+from openai import InternalServerError
 from pydantic import ValidationError
 
 from hcs.llm import (
@@ -159,3 +162,33 @@ def test_a_seed_is_sent_when_given():
     )
 
     assert client.kwargs[0]["seed"] == 7
+
+
+class ErrorClient:
+    """A client whose provider answers every request with a server error."""
+
+    def __init__(self, status: int):
+        request = httpx2.Request("POST", "https://provider.example/v1/chat/completions")
+        self.error = InternalServerError(
+            "busy", response=httpx2.Response(status, request=request), body=None
+        )
+        self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
+
+    def create(self, **kwargs):
+        raise self.error
+
+
+def test_a_provider_error_becomes_a_failed_run_not_a_crash():
+    with pytest.raises(LLMOutputError) as caught:
+        get_structured(
+            ErrorClient(503),
+            MESSAGES,
+            response_model=Review,
+            model="m",
+            temperature=0,
+            seed=None,
+            max_tokens=10,
+        )
+
+    assert "API error 503" in str(caught.value)
+    assert caught.value.attempts == 1

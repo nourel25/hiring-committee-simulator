@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import APIStatusError, OpenAI
 from openai.types.chat import ChatCompletion
 from pydantic import BaseModel, ValidationError
 
@@ -122,16 +122,24 @@ def get_structured(
     completion_tokens = 0
 
     for attempt in range(1, total_attempts + 1):
-        response, seconds = call_model(
-            client,
-            conversation,
-            response_model,
-            model=model,
-            temperature=temperature,
-            seed=seed,
-            max_tokens=max_tokens,
-            strict=strict,
-        )
+        try:
+            response, seconds = call_model(
+                client,
+                conversation,
+                response_model,
+                model=model,
+                temperature=temperature,
+                seed=seed,
+                max_tokens=max_tokens,
+                strict=strict,
+            )
+        except APIStatusError as error:
+            # The provider answered with an error (503 "high demand", 500) after the client's own
+            # retries: a failed run to log, not a crash that loses the rest of a batch. A refused
+            # connection (Ollama not running) still crashes, loudly.
+            raise LLMOutputError(
+                f"API error {error.status_code}: {error.message}", attempts=attempt, raw_reply=""
+            ) from error
         total_seconds += seconds
         prompt_tokens += response.usage.prompt_tokens
         completion_tokens += response.usage.completion_tokens
