@@ -257,6 +257,15 @@ def must_haves_named(requirement: str | None, checklist: Checklist) -> list[str]
     ]
 
 
+def checks_named(requirement: str | None, checklist: Checklist) -> list[str]:
+    """Ids of every check, must or nice, whose posting lines the quoted requirement matches."""
+    return [
+        item.id
+        for item in checklist.items
+        if any(evidence_matches(requirement, source) for source in item.sources)
+    ]
+
+
 @dataclass
 class ObjectionReport:
     """How one devil's-advocate run compares with the tech lead's key for the same CV."""
@@ -272,6 +281,10 @@ class ObjectionReport:
     false_alarms: int
     ungrounded: int
     seconds: float | None
+    # Medium objections ("partly shown") on a line where the key fails at least one check drawn from
+    # it (must or nice): a real partial finding. The rest are unexplained (follow-up to Step 4.3f).
+    mediums_explained: int = 0
+    mediums_unexplained: int = 0
 
 
 def compare_objections(case: Case, record: RunRecord, checklist: Checklist) -> ObjectionReport:
@@ -290,6 +303,14 @@ def compare_objections(case: Case, record: RunRecord, checklist: Checklist) -> O
         if position not in record.ungrounded_objections
     ]
     named = [must_haves_named(objection.requirement, checklist) for objection in objections]
+    mediums = [objection for objection in objections if objection.severity == "medium"]
+
+    def explained(objection) -> bool:
+        ids = checks_named(objection.requirement, checklist)
+        return any(
+            not case.expected[check_id].passed for check_id in ids if check_id in case.expected
+        )
+
     named_by_highs = [
         ids
         for ids, objection in zip(named, objections, strict=True)
@@ -305,6 +326,8 @@ def compare_objections(case: Case, record: RunRecord, checklist: Checklist) -> O
         false_alarms=sum(1 for ids in named_by_highs if ids and not set(ids) & set(gaps)),
         ungrounded=len(record.ungrounded_objections),
         seconds=record.seconds,
+        mediums_explained=sum(1 for item in mediums if explained(item)),
+        mediums_unexplained=sum(1 for item in mediums if not explained(item)),
     )
 
 

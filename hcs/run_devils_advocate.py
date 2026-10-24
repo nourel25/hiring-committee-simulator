@@ -2,8 +2,9 @@
 tech lead's key knows. Prints every objection, because there is no score to summarise them."""
 
 import argparse
+from pathlib import Path
 
-from hcs.cases import load_cases, load_checklist, load_posting
+from hcs.cases import CASES_DIR, load_cases, load_checklist, load_posting
 from hcs.config import API_MAX_TOKENS
 from hcs.evaluation import OBJECTION_HEADER, compare_objections, format_objection_row
 from hcs.llm import make_client
@@ -20,6 +21,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="where the model runs (groq: a larger max_tokens for reasoning models)",
     )
     parser.add_argument("--retries", type=int, help="repair retries per call (default: 1)")
+    parser.add_argument(
+        "--dir", type=Path, default=CASES_DIR, help="where the cases are (default: data/cases)"
+    )
     return parser.parse_args(argv)
 
 
@@ -35,7 +39,7 @@ def main() -> None:
     downgraded = 0
 
     print(OBJECTION_HEADER)
-    for case in load_cases():
+    for case in load_cases(args.dir):
         record = review_devils_advocate(client, case, load_posting(case.checklist), **settings)
         report = compare_objections(case, record, load_checklist(case.checklist))
         reports.append(report)
@@ -69,6 +73,9 @@ def main() -> None:
         f"Cases without a gap that got any objection: "
         f"{sum(1 for report in without_gaps if report.severities)}/{len(without_gaps)}"
     )
+    explained = sum(report.mediums_explained for report in reports)
+    mediums = explained + sum(report.mediums_unexplained for report in reports)
+    print(f"Medium objections explained by a part the key fails: {explained}/{mediums}")
     print(f"Model time: {sum(report.seconds or 0 for report in reports):.0f}s")
 
 

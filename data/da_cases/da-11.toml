@@ -1,0 +1,49 @@
+# Held-out case for the devil's advocate follow-up, written and keyed before any run (2026-10-24;
+# unreviewed). Data engineer with every requirement fully shown, all three parts of the ownership
+# line included: no objection expected.
+id = "da-11"
+label = "good"
+split = "heldout"
+checklist = "data_logistics"
+# TL1-TL3 (9) + TL4, TL5 (2) = 11/14 = 7.9 -> lean_hire.
+expected_decision = "lean_hire"
+
+cv = """
+Data Engineer, logistics company (2021-present)
+- Build and maintain the Python and SQL pipelines that load shipment events into Snowflake for the operations team
+- Designed the warehouse models for shipments: chose the fact and dimension tables and how they join
+- Schedule and run my pipelines myself in Airflow, with dbt tests on nulls and freshness that stop a bad load
+- Part of the data team's on-call rota
+
+Data Analyst, retailer (2018-2021)
+- Built SQL reports for store managers
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Build and maintain the Python and SQL pipelines that load shipment events into Snowflake for the operations team"
+
+[expected.TL2]
+passed = true
+evidence = "Designed the warehouse models for shipments: chose the fact and dimension tables and how they join"
+
+[expected.TL3]
+passed = true
+evidence = "Schedule and run my pipelines myself in Airflow, with dbt tests on nulls and freshness that stop a bad load"
+
+[expected.TL4]
+passed = true
+evidence = "Schedule and run my pipelines myself in Airflow, with dbt tests on nulls and freshness that stop a bad load"
+
+[expected.TL5]
+passed = true
+evidence = "Part of the data team's on-call rota"
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+passed = false
+
+[expected.TL8]
+passed = false

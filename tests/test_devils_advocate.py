@@ -250,3 +250,26 @@ def test_a_high_objection_on_a_must_have_the_cv_meets_is_a_false_alarm(tmp_path)
 
     # No failed must-have, so there is no gap to find; the schema objection is a false alarm.
     assert (report.gaps, report.hit, report.false_alarms) == ([], None, 1)
+
+
+def test_a_medium_is_explained_only_when_the_key_fails_a_part_of_its_line(tmp_path):
+    # N1 (on-call) shares nothing with the schema line here, so give it that line as a source.
+    checklist = CHECKLIST.model_copy(
+        update={
+            "items": [
+                *CHECKLIST.items[:2],
+                ChecklistItem(id="N1", text="on-call", importance="nice", sources=["On-call"]),
+            ]
+        }
+    )
+    on_call_partly = rating("D3", "Wrote SQL queries", "partly")
+    schema_partly = rating("D2", "Wrote SQL queries", "partly")
+    client = FakeClient([make_response(reply(PYTHON_SHOWN, schema_partly, on_call_partly))])
+    case = make_case(True)  # M2 (schema) met, N1 (on-call) failed
+
+    report = compare_objections(
+        case, review_devils_advocate(client, case, POSTING, tmp_path / "r.jsonl"), checklist
+    )
+
+    # The on-call medium names a part the key fails; the schema medium names only a met must-have.
+    assert (report.mediums_explained, report.mediums_unexplained) == (1, 1)

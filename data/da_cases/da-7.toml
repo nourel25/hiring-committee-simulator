@@ -1,0 +1,49 @@
+# Held-out case for the devil's advocate follow-up (bigger model), written and keyed before
+# any run (2026-10-24; unreviewed by the user). Every requirement fully shown, including all three
+# parts of the ownership line: no objection is expected.
+id = "da-7"
+label = "good"
+split = "heldout"
+checklist = "backend_payments"
+# TL1-TL4 (12) + TL5 (1) = 13/16 = 8.1 -> strong_hire.
+expected_decision = "strong_hire"
+
+cv = """
+Backend Engineer, payments startup (2020-present)
+- Built and maintain the Python REST APIs that merchants call to refund card payments, used in production
+- Designed the PostgreSQL schema for refunds and disputes: which tables exist and how they relate
+- Deploy my services to production myself with GitHub Actions
+- Watch our Grafana alerts and join the on-call rotation every fourth week
+
+Junior Developer, digital agency (2017-2020)
+- Built Django sites for clients
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Built and maintain the Python REST APIs that merchants call to refund card payments, used in production"
+
+[expected.TL2]
+passed = true
+evidence = "Built and maintain the Python REST APIs that merchants call to refund card payments, used in production"
+
+[expected.TL3]
+passed = true
+evidence = "Designed the PostgreSQL schema for refunds and disputes: which tables exist and how they relate"
+
+[expected.TL4]
+passed = true
+evidence = "Deploy my services to production myself with GitHub Actions"
+
+[expected.TL5]
+passed = true
+evidence = "Watch our Grafana alerts and join the on-call rotation every fourth week"
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+passed = false
+
+[expected.TL8]
+passed = false

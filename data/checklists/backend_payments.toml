@@ -43,6 +43,9 @@ sources = ["Comfortable owning services in production: deployment, monitoring an
 id = "TL5"
 text = "Has monitored production services or taken part in an on-call rotation"
 importance = "nice"
+# The second part of the ownership line (Step 4.3f follow-up): a medium objection on that line is
+# explained when the CV shows deployment but not monitoring or on-call. Code only.
+sources = ["Comfortable owning services in production: deployment, monitoring and on-call"]
 
 [[items]]
 id = "TL6"

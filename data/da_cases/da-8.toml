@@ -1,0 +1,49 @@
+# Held-out case for the devil's advocate follow-up, written and keyed before any run (2026-10-24;
+# unreviewed). All must-haves met, but the ownership line is only partly shown: deployment without
+# monitoring or on-call (TL5 fails). Expected: at most a medium on the ownership line, explained.
+id = "da-8"
+label = "good"
+split = "heldout"
+checklist = "backend_payments"
+# TL1-TL4 (12) + TL7 (1) = 13/16 = 8.1 -> strong_hire.
+expected_decision = "strong_hire"
+
+cv = """
+Backend Engineer, e-commerce marketplace (2021-present)
+- Built and maintain the Python REST APIs that sellers use to manage their orders in production
+- Designed the PostgreSQL schema for orders and sellers: which tables exist and how they relate
+- Deploy my services to production myself with GitLab CI
+- Cut the order page's load time from 2 seconds to 400 ms with caching
+
+Junior Developer, bank (2018-2021)
+- Built internal tools in Java
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Built and maintain the Python REST APIs that sellers use to manage their orders in production"
+
+[expected.TL2]
+passed = true
+evidence = "Built and maintain the Python REST APIs that sellers use to manage their orders in production"
+
+[expected.TL3]
+passed = true
+evidence = "Designed the PostgreSQL schema for orders and sellers: which tables exist and how they relate"
+
+[expected.TL4]
+passed = true
+evidence = "Deploy my services to production myself with GitLab CI"
+
+[expected.TL5]
+passed = false
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+passed = true
+evidence = "Cut the order page's load time from 2 seconds to 400 ms with caching"
+
+[expected.TL8]
+passed = false

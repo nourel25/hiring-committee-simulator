@@ -1,0 +1,48 @@
+# Held-out case for the devil's advocate follow-up, written and keyed before any run (2026-10-24;
+# unreviewed). Trap on the negation inside "including schema design, not just writing queries": the
+# candidate designed the schema AND writes queries. Every line fully shown: no objection expected.
+id = "da-10"
+label = "good"
+split = "heldout"
+checklist = "backend_payments"
+# TL1-TL4 (12) + TL5 (1) = 13/16 = 8.1 -> strong_hire.
+expected_decision = "strong_hire"
+
+cv = """
+Backend Engineer, food delivery app (2021-present)
+- Built and maintain the Python REST APIs that courier phones call to update deliveries, in production
+- Designed the PostgreSQL schema for deliveries and couriers, and write the SQL queries behind our reports
+- Deploy my services to production myself, monitor them in Datadog and join the on-call rotation
+
+Junior Developer, startup (2018-2021)
+- Built Flask apps
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Built and maintain the Python REST APIs that courier phones call to update deliveries, in production"
+
+[expected.TL2]
+passed = true
+evidence = "Built and maintain the Python REST APIs that courier phones call to update deliveries, in production"
+
+[expected.TL3]
+passed = true
+evidence = "Designed the PostgreSQL schema for deliveries and couriers, and write the SQL queries behind our reports"
+
+[expected.TL4]
+passed = true
+evidence = "Deploy my services to production myself, monitor them in Datadog and join the on-call rotation"
+
+[expected.TL5]
+passed = true
+evidence = "Deploy my services to production myself, monitor them in Datadog and join the on-call rotation"
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+passed = false
+
+[expected.TL8]
+passed = false

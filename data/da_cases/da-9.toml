@@ -1,0 +1,47 @@
+# Held-out case for the devil's advocate follow-up, written and keyed before any run (2026-10-24;
+# unreviewed). Trap like da-6 in a new form: SOAP web services, not REST (TL2 fails).
+id = "da-9"
+label = "borderline"
+split = "heldout"
+checklist = "backend_payments"
+# TL1, TL3, TL4 (9) + TL5 (1) = 10/16 = 6.3 -> lean_hire by band, capped at lean_no (TL2 fails).
+expected_decision = "lean_no"
+
+cv = """
+Backend Engineer, insurance company (2020-present)
+- Built and maintain the Python SOAP web services that partner brokers call to issue policies
+- Designed the PostgreSQL schema for policies and brokers: which tables exist and how they relate
+- Deploy my services to production myself with Jenkins and join the on-call rotation
+
+Junior Developer, web agency (2017-2020)
+- Built PHP sites for clients
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Built and maintain the Python SOAP web services that partner brokers call to issue policies"
+
+[expected.TL2]
+# Trap: SOAP web services are not REST APIs.
+passed = false
+
+[expected.TL3]
+passed = true
+evidence = "Designed the PostgreSQL schema for policies and brokers: which tables exist and how they relate"
+
+[expected.TL4]
+passed = true
+evidence = "Deploy my services to production myself with Jenkins and join the on-call rotation"
+
+[expected.TL5]
+passed = true
+evidence = "Deploy my services to production myself with Jenkins and join the on-call rotation"
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+passed = false
+
+[expected.TL8]
+passed = false

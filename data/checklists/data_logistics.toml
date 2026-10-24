@@ -40,11 +40,15 @@ sources = ["Own your pipelines in production: scheduling, data-quality checks an
 id = "TL4"
 text = "Has added automated data-quality checks to pipelines, such as tests on row counts, nulls or freshness; fixing bad data by hand after someone reports it does not count"
 importance = "nice"
+# Part of the ownership line, for explaining medium objections (code only).
+sources = ["Own your pipelines in production: scheduling, data-quality checks and the on-call rota"]
 
 [[items]]
 id = "TL5"
 text = "Has taken part in an on-call rota for data pipelines or other production systems"
 importance = "nice"
+# Part of the ownership line, for explaining medium objections (code only).
+sources = ["Own your pipelines in production: scheduling, data-quality checks and the on-call rota"]
 
 [[items]]
 id = "TL6"

@@ -4,6 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from hcs.cases import (
+    CASES_DIR,
     key_problems,
     load_case,
     load_cases,
@@ -96,7 +97,9 @@ def test_saving_never_overwrites_a_file_that_may_hold_edits(tmp_path):
     assert (tmp_path / "tiny.toml").read_text(encoding="utf-8") == "# edited by hand\n"
 
 
-@pytest.mark.parametrize("case", load_cases(), ids=lambda case: case.id)
+@pytest.mark.parametrize(
+    "case", load_cases() + load_cases(CASES_DIR.parent / "da_cases"), ids=lambda case: case.id
+)
 def test_real_answer_key_is_consistent(case):
     checklist = load_checklist(case.checklist)
     review = Review(

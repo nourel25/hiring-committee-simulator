@@ -1,0 +1,48 @@
+# Held-out case for the devil's advocate follow-up, written and keyed before any run (2026-10-24;
+# unreviewed). A real gap on the ownership line: the platform team schedules and runs the pipelines
+# (TL3 fails), while the quality checks are the candidate's (TL4 passes). Expected: a hit on that line.
+id = "da-12"
+label = "borderline"
+split = "heldout"
+checklist = "data_logistics"
+# TL1, TL2 (6) + TL4 (1) = 7/14 = 5.0 -> lean_no (TL3 fails as well).
+expected_decision = "lean_no"
+
+cv = """
+Data Engineer, parcel company (2020-present)
+- Build and maintain the Python and SQL pipelines that load parcel scans into BigQuery for the planning team
+- Designed the warehouse models for parcels: chose the fact and dimension tables and how they join
+- Hand my pipelines to the platform team, who schedule and run them in production
+- Added dbt tests on row counts that stop a bad load
+
+Data Analyst, airline (2017-2020)
+- Built Excel reports for route planners
+"""
+
+[expected.TL1]
+passed = true
+evidence = "Build and maintain the Python and SQL pipelines that load parcel scans into BigQuery for the planning team"
+
+[expected.TL2]
+passed = true
+evidence = "Designed the warehouse models for parcels: chose the fact and dimension tables and how they join"
+
+[expected.TL3]
+# Trap: someone else schedules and runs the pipelines.
+passed = false
+
+[expected.TL4]
+passed = true
+evidence = "Added dbt tests on row counts that stop a bad load"
+
+[expected.TL5]
+passed = false
+
+[expected.TL6]
+passed = false
+
+[expected.TL7]
+passed = false
+
+[expected.TL8]
+passed = false
