@@ -193,7 +193,14 @@ python -m hcs.run_held_out
   local committee verdict changed between two runs at temperature 0.
 - The refiner only writes a summary at the top of the CV. Real CVs need more, but a whole-CV rewrite
   gives a 7B model room to invent.
+- Every labelled CV is invented and has one claim per line. The first real CVs showed shapes the
+  set doesn't cover yet: compound bullets, skills blocks, dated degrees and an existing summary.
+  Parsing and year counting were fixed for them; the tech lead's REST check still reads them too
+  literally.
 - These parts of the design are not built yet:
   - the company researcher (each posting has a hand-written brief);
-  - logging real outcomes;
-  - PDF export.
+  - logging real outcomes.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
