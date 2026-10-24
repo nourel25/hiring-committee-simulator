@@ -261,6 +261,7 @@ def review_devils_advocate(
     seed: int = devils_advocate.SEED,
     max_tokens: int = devils_advocate.MAX_TOKENS,
     strict: bool = False,
+    max_retries: int = devils_advocate.MAX_RETRIES,
 ) -> RunRecord:
     """Run the devil's advocate on one case: the model rates every requirement line, the rating
     policy checks its quotes, and code picks the objections. No checklist, score or decision."""
@@ -276,7 +277,7 @@ def review_devils_advocate(
         temperature=temperature,
         seed=seed,
         max_tokens=max_tokens,
-        max_retries=devils_advocate.MAX_RETRIES,
+        max_retries=max_retries,
     )
 
     try:
@@ -288,7 +289,7 @@ def review_devils_advocate(
             temperature=temperature,
             seed=seed,
             max_tokens=max_tokens,
-            max_retries=devils_advocate.MAX_RETRIES,
+            max_retries=max_retries,
             strict=strict,
         )
     except LLMOutputError as error:
