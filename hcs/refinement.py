@@ -106,6 +106,8 @@ class Session:
     stop_reason: str
     final_cv: str
     gaps: list[str]
+    # Grounded summary lines the user may add themselves, when the CV has its own summary section.
+    suggestions: list[str] = field(default_factory=list)
 
 
 def bullets(facts: list[Fact]) -> list[Fact]:
@@ -226,6 +228,20 @@ def work_line(committee: CommitteeRound, work: list[Fact]) -> Fact | None:
 def gap_objections(committee: CommitteeRound) -> list[str]:
     """Objections the refiner must not reword away: everything the chair ranked as a gap."""
     return [item.text for item in committee.verdict.objections if item.kind == "gap"]
+
+
+SUMMARY_HEADING = re.compile(r"\b(?:about|summary|profile|objective)\b", re.IGNORECASE)
+
+
+def own_summary(cv: str) -> bool:
+    """The CV has its own summary section ("About Me", "Profile") above its first job."""
+    jobs = set(role_lines(cv))
+    for line in (line.strip() for line in cv.splitlines()):
+        if line in jobs:
+            return False
+        if is_heading(line) and SUMMARY_HEADING.search(line):
+            return True
+    return False
 
 
 def with_summary(cv: str, lines: list[str]) -> str:
@@ -433,6 +449,11 @@ def run_session(
             reason = "no grounded summary"
             break
         summary += draft.kept
+        if own_summary(case.cv):
+            # The candidate's own summary stays theirs: the lines are offered, not inserted. A
+            # second summary block above "About Me" said the same thing twice (first real CV).
+            reason = "the CV has its own summary: the lines are suggestions"
+            break
         new_cv = with_summary(case.cv, [line.text for line in summary])
         if new_cv == cv:
             reason = "no change"
@@ -445,4 +466,5 @@ def run_session(
         stop_reason=reason,
         final_cv=cv,
         gaps=gap_objections(rounds[-1].committee),
+        suggestions=[line.text for line in summary] if own_summary(case.cv) else [],
     )

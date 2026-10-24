@@ -10,7 +10,7 @@ from pathlib import Path
 
 from fpdf import FPDF
 
-from hcs.screening import PERIOD
+from hcs.screening import PERIOD, is_heading
 
 # A Unicode font from the system (regular, bold, italic), so symbols such as × and → survive;
 # the first complete set found wins.
@@ -24,7 +24,6 @@ FONTS = [
 ]
 # Without one, the built-in Helvetica only knows Latin-1, so common symbols get plain stand-ins.
 ASCII = {"→": "->", "×": "x", "—": "-", "–": "-", "•": "-", "‘": "'", "’": "'", "“": '"', "”": '"'}
-HEADING = re.compile(r"[A-Z][A-Za-z&]*( [A-Z&][A-Za-z&]*){0,2}")
 SKILL = re.compile(r"([A-Z][\w &/+-]{0,30}?)\s*:\s*(\S.*)")
 EMPLOYER = re.compile(r"\s*(?:—|–| - |, )\s*")
 
@@ -54,7 +53,8 @@ def line_kind(line: str, next_line: str = "") -> str:
         return "role"
     if line.startswith("- "):
         return "bullet"
-    if HEADING.fullmatch(line):
+    # A section word is needed, so a headline such as "Software Engineer" is not a section.
+    if is_heading(line):
         return "heading"
     if SKILL.fullmatch(line):
         return "skill"

@@ -5,10 +5,18 @@ import json
 import pytest
 from pydantic import ValidationError
 
-from hcs.cases import load_case, load_posting
+from hcs.cases import load_case, load_cases, load_posting
 from hcs.committee import Checklists, CommitteeRound
 from hcs.profile import build_facts
-from hcs.refinement import Judge, ground, run_session, triage, with_summary, write_summary
+from hcs.refinement import (
+    Judge,
+    ground,
+    own_summary,
+    run_session,
+    triage,
+    with_summary,
+    write_summary,
+)
 from hcs.runlog import read_runs
 from hcs.schemas import SummaryLine, refinement_model_for
 from tests.fakes import FakeClient, make_response
@@ -59,6 +67,17 @@ def test_the_summary_goes_under_a_headline_with_the_current_title():
         "Backend Developer, online pharmacy (2021-present)",
     ]
     assert "Passionate" not in cv
+
+
+def test_a_cv_with_its_own_summary_section_is_known_and_the_labelled_ones_are_not():
+    own = (
+        "Software Engineer\nAbout Me\nBackend engineer.\nEngineer, shop (2024-present)\n- Built it"
+    )
+    later = "Engineer, shop (2024-present)\n- Built it\nProfile\nNot above the jobs"
+
+    assert own_summary(own)
+    assert not own_summary(later)
+    assert not any(own_summary(case.cv) for case in load_cases())
 
 
 def test_the_summary_never_drops_a_section_of_an_uploaded_cv():
@@ -305,6 +324,23 @@ def test_a_session_keeps_earlier_summary_lines_and_uses_the_given_judge(tmp_path
 
     assert len(judge_client.calls) == 1
     assert TRUE_LINE["text"] in session.final_cv
+
+
+def test_a_cv_with_its_own_summary_gets_suggestions_and_is_left_unchanged(tmp_path):
+    # "About Me" replaces the first line, so the fact ids (F4 = the REST bullet) stay the same.
+    own = CASE.model_copy(update={"cv": "About Me\n" + CASE.cv.split("\n", 1)[1]})
+    committee_client = FakeClient(
+        [*committee(recruiter_passes=False), make_response(summary(TRUE_LINE))]
+    )
+    judge = Judge(FakeClient([make_response(judged(True))]), {"model": "api-model"})
+
+    session = run_session(
+        committee_client, own, 2026, POSTING, runs_path=tmp_path / "r.jsonl", judge=judge
+    )
+
+    assert session.final_cv == own.cv
+    assert session.suggestions == [TRUE_LINE["text"]]
+    assert session.stop_reason.startswith("the CV has its own summary")
 
 
 def recruiter_reply(c1: str | None, c2: str | None) -> object:

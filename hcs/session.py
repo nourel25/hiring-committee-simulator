@@ -58,6 +58,9 @@ def report(session: Session) -> str:
     parts.append(f"Stopped: {session.stop_reason}")
     parts.append("\nGaps (not reworded; only new experience closes them):")
     parts += [f"  - {gap}" for gap in session.gaps] or ["  none"]
+    if session.suggestions:
+        parts.append("\nSuggested summary lines (your CV has its own summary; nothing was added):")
+        parts += [f"  - {line}" for line in session.suggestions]
     parts.append("\nBefore / after:")
     parts.append(diff(session.rounds[0].cv, session.final_cv))
     return "\n".join(parts)

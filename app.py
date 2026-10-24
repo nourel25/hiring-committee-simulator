@@ -192,6 +192,15 @@ def new_session() -> None:
     for gap in session.gaps or ["none"]:
         st.write(f"- {gap}")
 
+    if session.suggestions:
+        st.subheader("Suggested summary lines")
+        st.caption(
+            "Your CV has its own summary, so nothing was added to it. Each line below passed the "
+            "grounding check against your own facts: copy any you like into your summary."
+        )
+        for line in session.suggestions:
+            st.write(f"- {line}")
+
     st.subheader("Before / after")
     st.code(diff(session.rounds[0].cv, session.final_cv), language="diff")
     edited = st.text_area("Your CV: edit freely before you save it", session.final_cv, height=260)
