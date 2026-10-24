@@ -12,6 +12,7 @@ import streamlit as st
 
 from hcs.cases import Case, load_cases, load_posting
 from hcs.config import devils_advocate_endpoint, grounding_endpoint
+from hcs.export import cv_to_pdf
 from hcs.llm import make_client
 from hcs.parsing import normalise_cv, text_from_upload
 from hcs.refinement import MAX_ROUNDS, Judge, Session, run_session
@@ -157,7 +158,15 @@ def new_session() -> None:
     st.subheader("Before / after")
     st.code(diff(session.rounds[0].cv, session.final_cv), language="diff")
     edited = st.text_area("Your CV: edit freely before you save it", session.final_cv, height=260)
-    st.download_button("Download the CV", edited, file_name="cv.txt")
+    header = st.text_area(
+        "Name and contact lines for the PDF (removed before the review; added back only here)",
+        height=80,
+    )
+    text_column, pdf_column = st.columns(2)
+    text_column.download_button("Download as text", edited, file_name="cv.txt")
+    pdf_column.download_button(
+        "Download as PDF", cv_to_pdf(edited, header), file_name="cv.pdf", mime="application/pdf"
+    )
     st.caption("Nothing is sent anywhere: you review and apply yourself.")
 
 
