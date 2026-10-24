@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hiring Committee Replay</title>
+<meta name="description" content="A recorded session of the Hiring Committee Simulator: four LLM reviewers, a chair written in code, and a grounded refiner, on an invented CV.">
+<style>
+:root {
+  --bg: #f7f6f2; --panel: #ffffff; --ink: #1c1b19; --muted: #6b6860; --line: #e3e0d8;
+  --accent: #1f3f6e; --accent-soft: #e6edf7; --ok: #1d6b3a; --ok-soft: #e3f2e8;
+  --bad: #9b2c22; --bad-soft: #f8e6e3; --warn: #8a5a00; --warn-soft: #f8eed9;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15161a; --panel: #1d1f24; --ink: #ecebe6; --muted: #a09d94; --line: #2e3138;
+    --accent: #8fb3ea; --accent-soft: #1f2a3b; --ok: #6fcf8e; --ok-soft: #1a2d22;
+    --bad: #f08a7e; --bad-soft: #3a2220; --warn: #e8b85a; --warn-soft: #362c18;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--sans); }
+main { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; }
+a { color: var(--accent); }
+h1 { font-size: 28px; line-height: 1.2; margin: 0 0 8px; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 40px 0 12px; display: flex; gap: 10px; align-items: baseline; }
+h2 .step { font: 600 12px var(--mono); color: var(--accent); background: var(--accent-soft);
+  padding: 2px 8px; border-radius: 99px; }
+h3 { font-size: 15px; margin: 0; }
+.lede { color: var(--muted); max-width: 70ch; margin: 0 0 6px; }
+.meta { font-size: 13px; color: var(--muted); }
+.flow { display: flex; flex-wrap: wrap; gap: 6px; margin: 20px 0 4px; font-size: 13px; }
+.flow a { text-decoration: none; color: var(--ink); background: var(--panel);
+  border: 1px solid var(--line); padding: 5px 10px; border-radius: 6px; }
+.flow span { color: var(--muted); align-self: center; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 16px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.card-head { display: flex; justify-content: space-between; gap: 8px; align-items: center;
+  margin-bottom: 10px; flex-wrap: wrap; }
+.model { font: 12px var(--mono); color: var(--muted); }
+.chip { font: 600 12px var(--mono); padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+.chip.hire, .chip.strong_hire, .chip.lean_hire { background: var(--ok-soft); color: var(--ok); }
+.chip.no_hire, .chip.strong_no { background: var(--bad-soft); color: var(--bad); }
+.chip.borderline, .chip.lean_no { background: var(--warn-soft); color: var(--warn); }
+.chip.high { background: var(--bad-soft); color: var(--bad); }
+.chip.medium { background: var(--warn-soft); color: var(--warn); }
+.chip.low { background: var(--accent-soft); color: var(--accent); }
+ul.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+ul.checks li { display: grid; grid-template-columns: 22px 1fr; gap: 4px; font-size: 13.5px; }
+.mark { font-weight: 700; }
+.mark.yes { color: var(--ok); } .mark.no { color: var(--bad); }
+.cid { font: 600 11px var(--mono); color: var(--muted); margin-right: 4px; }
+q, .quote { display: block; quotes: none; font: 12.5px/1.45 var(--mono); color: var(--muted);
+  border-left: 2px solid var(--line); padding: 2px 0 2px 8px; margin-top: 3px;
+  overflow-wrap: anywhere; }
+pre { margin: 0; font: 12.5px/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+details summary { cursor: pointer; color: var(--accent); font-size: 14px; }
+.tabs { display: flex; gap: 6px; margin: 0 0 12px; flex-wrap: wrap; }
+.tabs button { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 6px;
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--accent); color: var(--bg);
+  border-color: var(--accent); }
+.verdict { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.verdict .chip { font-size: 15px; padding: 4px 12px; }
+ol.objections { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 6px; font-size: 13.5px; }
+.who { color: var(--muted); font-size: 12px; }
+.line { padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; font-size: 14px; }
+.line.kept { background: var(--ok-soft); }
+.line.rejected { background: var(--bad-soft); }
+.line .facts { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+.diff .add { color: var(--ok); } .diff .del { color: var(--bad); }
+.note { font-size: 13px; color: var(--muted); margin-top: 8px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 700px) { .two { grid-template-columns: 1fr; } h1 { font-size: 23px; } }
+footer { margin-top: 48px; font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Hiring Committee Simulator: a recorded session</h1>
+  <p class="lede">Four reviewers read one CV against a real job posting, each with its own checklist.
+    A chair written in code decides. A refiner then rewrites only the top of the CV, from the
+    candidate's own facts, and every line it writes must pass a grounding check.</p>
+  <p class="meta" id="meta"></p>
+  <nav class="flow" aria-label="Steps">
+    <a href="#input">1 · Posting and CV</a><span>→</span>
+    <a href="#committee">2 · Committee</a><span>→</span>
+    <a href="#chair">3 · Chair</a><span>→</span>
+    <a href="#refine">4 · Refinement</a><span>→</span>
+    <a href="#result">5 · Result</a>
+  </nav>
+
+  <h2 id="input"><span class="step">1</span>The posting and the CV</h2>
+  <div class="two">
+    <div class="panel"><h3 id="posting-title"></h3>
+      <details><summary>Read the posting</summary><pre id="posting"></pre></details>
+      <p class="note">Each reviewer's checklist was written from this posting and reviewed by hand.</p>
+    </div>
+    <div class="panel"><h3>The CV (invented)</h3><pre id="cv"></pre></div>
+  </div>
+
+  <h2 id="committee"><span class="step">2</span>The committee: four independent reviews</h2>
+  <p class="lede">No reviewer sees another's output. Models judge each check with a quote; code
+    checks the quote is really in the CV, then scores and decides.</p>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div class="grid" id="members"></div>
+
+  <h2 id="chair"><span class="step">3</span>The chair (code, not a model)</h2>
+  <div class="panel" id="chair-panel"></div>
+
+  <h2 id="refine"><span class="step">4</span>Refinement: rewrite the top, invent nothing</h2>
+  <div id="refinement"></div>
+
+  <h2 id="result"><span class="step">5</span>Result</h2>
+  <div class="two">
+    <div class="panel"><h3>Before / after</h3><pre class="diff" id="diff"></pre></div>
+    <div class="panel"><h3>Gaps</h3>
+      <p class="note">Not reworded: only new experience closes these.</p>
+      <ul id="gaps"></ul>
+      <p class="note" id="stop"></p>
+    </div>
+  </div>
+
+  <footer>
+    Code, evaluation and every pre-registered criterion:
+    <a href="https://github.com/nourel25/hiring-committee-simulator">github.com/nourel25/hiring-committee-simulator</a>.
+    This page replays a saved session; nothing runs in your browser.
+  </footer>
+</main>
+<script>
+const DATA = /*SESSION*/null;
+const $ = (id) => document.getElementById(id);
+const el = (tag, attrs = {}, ...kids) => {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") node.className = v; else node.setAttribute(k, v);
+  }
+  for (const kid of kids.flat()) if (kid != null) node.append(kid);
+  return node;
+};
+const words = (s) => (s || "").replaceAll("_", " ");
+const facts = Object.fromEntries(DATA.facts.map((f) => [f.id, f.text]));
+
+$("meta").textContent = `Invented CV "${DATA.case.id}" (expected: ${words(DATA.case.expected)}). ` +
+  `Recorded ${DATA.recorded}. Local qwen2.5:7b reviewers, mistral:7b refiner; ` +
+  `devil's advocate and grounding judge on qwen3.8-27b (Groq).`;
+$("posting-title").textContent = DATA.posting.title;
+$("posting").textContent = DATA.posting.text;
+$("cv").textContent = DATA.rounds[0].cv;
+
+function memberCard(view) {
+  const head = el("div", { class: "card-head" },
+    el("div", {}, el("h3", {}, view.title), el("div", { class: "model" }, view.model)),
+    view.decision ? el("span", { class: `chip ${view.decision}` },
+      `${words(view.decision)}${view.score != null ? " · " + view.score : ""}`) : null);
+  const body = [];
+  if (view.checks) {
+    body.push(el("ul", { class: "checks" }, view.checks.map((c) => el("li", {},
+      el("span", { class: `mark ${c.passed ? "yes" : "no"}` }, c.passed ? "✓" : "✗"),
+      el("div", {}, el("span", { class: "cid" }, c.id), c.check,
+        c.evidence && c.evidence !== "null" ? el("q", {}, c.evidence) : null)))));
+  }
+  if (view.objections) {
+    body.push(view.objections.length
+      ? el("ul", { class: "checks" }, view.objections.map((o) => el("li", {},
+          el("span", {}, ""),
+          el("div", {}, el("span", { class: `chip ${o.severity}` }, o.severity), " ",
+            o.requirement, el("div", { class: "who" }, o.reason)))))
+      : el("p", { class: "note" }, "No objection: every requirement line is shown."));
+  }
+  return el("div", { class: "panel" }, head, body);
+}
+
+function chairPanel(chair) {
+  return [
+    el("div", { class: "verdict" },
+      el("span", { class: `chip ${chair.verdict}` }, words(chair.verdict)),
+      el("span", { class: "meta" }, `confidence ${chair.confidence}`)),
+    el("div", {}, chair.reasons.join(" ")),
+    chair.dissent.length ? el("p", { class: "note" }, `Dissent: ${chair.dissent.map(words).join(", ")}`) : null,
+    chair.objections.length ? el("ol", { class: "objections" }, chair.objections.map((o) =>
+      el("li", {}, el("span", { class: `chip ${o.severity}` }, `${o.severity} · ${o.kind}`), " ",
+        o.text, el("div", { class: "who" }, o.members.join(", "))))) : null,
+    el("p", { class: "note" }, "The rule: the tech lead's decision, blocked by a devil's-advocate " +
+      "objection that a requirement is not shown at all. The recruiter and the hiring manager " +
+      "change the confidence and add objections."),
+  ];
+}
+
+function showRound(index) {
+  const round = DATA.rounds[index];
+  [...$("tabs").children].forEach((b, i) => b.setAttribute("aria-selected", String(i === index)));
+  $("members").replaceChildren(...Object.values(round.members).map(memberCard));
+  $("chair-panel").replaceChildren(...chairPanel(round.chair));
+}
+DATA.rounds.forEach((round, i) => $("tabs").append(el("button",
+  { role: "tab", type: "button" }, `Round ${round.number}${i ? " (after refinement)" : ""}`)));
+[...$("tabs").children].forEach((b, i) => b.addEventListener("click", () => showRound(i)));
+showRound(0);
+
+const refinement = $("refinement");
+DATA.rounds.filter((r) => r.draft).forEach((round) => {
+  const plan = round.plan;
+  const named = Object.fromEntries((round.members.recruiter?.checks || []).map((c) => [c.id, c.check]));
+  refinement.append(el("div", { class: "panel", style: "margin-bottom:12px" },
+    el("h3", {}, `After round ${round.number}`),
+    el("p", { class: "note" }, "Recruiter checks a summary can fix: ",
+      plan.fixable.length ? el("ul", {}, plan.fixable.map((id) =>
+        el("li", {}, el("span", { class: "cid" }, id), named[id] || id))) : "none",
+      `Code chose the facts to use: ${plan.facts.map((id) => `${id} ("${facts[id]}")`).join(", ")}.`),
+    round.draft.kept.map((line) => el("div", { class: "line kept" }, "✓ ", line.text,
+      el("div", { class: "facts" }, line.facts.map((id) => `${id}: ${facts[id]}`).join(" · ")))),
+    round.draft.rejected.map((item) => el("div", { class: "line rejected" }, "✗ ", item.line.text,
+      el("div", { class: "facts" }, `Rejected: ${item.problems.join("; ")}`))),
+    el("p", { class: "note" }, "Each line cites the facts it rests on. Code rules check numbers, " +
+      "names and keywords against those facts; a separate model judges the meaning.")));
+});
+if (!refinement.children.length) {
+  refinement.append(el("p", { class: "note" }, "Nothing to refine: no presentation check a summary could fix."));
+}
+
+$("diff").replaceChildren(...DATA.diff.split("\n").map((line) => el("span",
+  { class: line.startsWith("+") && !line.startsWith("+++") ? "add" :
+            line.startsWith("-") && !line.startsWith("---") ? "del" : "" }, line + "\n")));
+$("gaps").replaceChildren(...(DATA.gaps.length ? DATA.gaps : ["none"]).map((g) => el("li", {}, g)));
+$("stop").textContent = `Stopped: ${DATA.stop_reason}.`;
+</script>
+</body>
+</html>

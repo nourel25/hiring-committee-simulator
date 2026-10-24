@@ -1,0 +1,752 @@
+{
+  "case": {
+    "id": "ref-10",
+    "label": "good",
+    "expected": "lean_hire"
+  },
+  "posting": {
+    "title": "Data Engineer, Logistics Analytics (mid-level)",
+    "text": "Requirements\n- 3+ years of Python and SQL\n- Built and maintained batch data pipelines that other teams rely on\n- Hands-on with a cloud data warehouse (Snowflake or BigQuery), including designing data models for analytics\n- Own your pipelines in production: scheduling, data-quality checks and the on-call rota\n- Strong stakeholder management\n\nNice to have\n- Airflow or Dagster\n- Streaming data with Kafka\n- A track record of cutting pipeline cost or runtime\n- Logistics or supply-chain experience\n- Mentoring analysts on SQL"
+  },
+  "facts": [
+    {
+      "id": "F1",
+      "text": "Data Engineer, home delivery company (2020-present)"
+    },
+    {
+      "id": "F2",
+      "text": "Member of the central data team"
+    },
+    {
+      "id": "F3",
+      "text": "Build and maintain the Python pipelines that load parcel scans into Snowflake for the planning team"
+    },
+    {
+      "id": "F4",
+      "text": "Designed the delivery warehouse models: chose the fact and dimension tables and how they join"
+    },
+    {
+      "id": "F5",
+      "text": "Schedule and run my pipelines myself in Airflow and fix failed loads"
+    },
+    {
+      "id": "F6",
+      "text": "Rewrote the slowest SQL transformations and cut the nightly run from 90 to 30 minutes"
+    },
+    {
+      "id": "F7",
+      "text": "Data Analyst, retailer (2017-2020)"
+    },
+    {
+      "id": "F8",
+      "text": "Built Excel reports for store managers"
+    }
+  ],
+  "rounds": [
+    {
+      "number": 1,
+      "cv": "Data Engineer, home delivery company (2020-present)\n- Member of the central data team\n- Build and maintain the Python pipelines that load parcel scans into Snowflake for the planning team\n- Designed the delivery warehouse models: chose the fact and dimension tables and how they join\n- Schedule and run my pipelines myself in Airflow and fix failed loads\n- Rewrote the slowest SQL transformations and cut the nightly run from 90 to 30 minutes\n\nData Analyst, retailer (2017-2020)\n- Built Excel reports for store managers",
+      "members": {
+        "recruiter": {
+          "title": "Recruiter",
+          "model": "qwen2.5:7b",
+          "status": "ok",
+          "decision": "strong_hire",
+          "score": 8.3,
+          "seconds": 12.8,
+          "checks": [
+            {
+              "id": "R1",
+              "check": "The current job title matches the role",
+              "passed": true,
+              "evidence": "Data Engineer"
+            },
+            {
+              "id": "R2",
+              "check": "Has at least 3 years of experience in dated roles",
+              "passed": true,
+              "evidence": "9 years from the dated roles"
+            },
+            {
+              "id": "R3",
+              "check": "Names the posting's must-have tools in the top third of the CV",
+              "passed": false,
+              "evidence": "found: Python; missing: SQL"
+            },
+            {
+              "id": "R4",
+              "check": "The top third is short lines that can each be read at a glance",
+              "passed": true,
+              "evidence": "longest line: 101 characters (limit 200)"
+            },
+            {
+              "id": "C1",
+              "check": "The top of the CV says what kind of work the candidate does, such as what they build or run; personal qualities or general phrases such as 'digital transformation' do not count",
+              "passed": true,
+              "evidence": "Build and maintain the Python pipelines that load parcel scans into Snowflake for the planning team"
+            },
+            {
+              "id": "C2",
+              "check": "At least one bullet states a result or a scale of the candidate's work with a number, such as users, requests, money or time saved; numbers that describe the company as a whole and duties without numbers do not count",
+              "passed": false,
+              "evidence": null
+            }
+          ]
+        },
+        "hiring_manager": {
+          "title": "Hiring manager",
+          "model": "qwen2.5:7b",
+          "status": "ok",
+          "decision": "lean_hire",
+          "score": 7.5,
+          "seconds": 21.4,
+          "checks": [
+            {
+              "id": "HM1",
+              "check": "Has worked on data pipelines that load a warehouse which business teams, such as operations or finance, use to plan their work, judged by the main job of the system they built or ran; the same industry, the same tools, or a product that only calls such a system do not count",
+              "passed": true,
+              "evidence": "Build and maintain the Python pipelines that load parcel scans into Snowflake for the planning team"
+            },
+            {
+              "id": "HM2",
+              "check": "Has worked towards predicting delivery delays or a lower warehouse bill, at this or another company; other improvements, however good, do not count",
+              "passed": false,
+              "evidence": "null"
+            },
+            {
+              "id": "HM3",
+              "check": "Has shown the effect of their own work with a before-and-after or a number, such as faster responses, lower costs or fewer failures; numbers that only show size or scale do not count",
+              "passed": true,
+              "evidence": "Rewrote the slowest SQL transformations and cut the nightly run from 90 to 30 minutes"
+            },
+            {
+              "id": "HM4",
+              "check": "Has kept their own work running in production, such as deploying it, scheduling it, being on call or fixing it when it fails; handing it to another team to deploy or run does not count",
+              "passed": true,
+              "evidence": "Schedule and run my pipelines myself in Airflow and fix failed loads"
+            }
+          ]
+        },
+        "tech_lead": {
+          "title": "Tech lead",
+          "model": "qwen2.5:7b",
+          "status": "ok",
+          "decision": "lean_hire",
+          "score": 7.1,
+          "seconds": 33.8,
+          "checks": [
+            {
+              "id": "TL1",
+              "check": "Has built and maintained batch data pipelines in Python or SQL that other teams rely on, as part of their job; one-off scripts, notebooks and reports that only the author uses do not count",
+              "passed": true,
+              "evidence": "Build and maintain the Python pipelines that load parcel scans into Snowflake for the planning team"
+            },
+            {
+              "id": "TL2",
+              "check": "Has designed data models for analytics in a data warehouse, deciding which tables exist and how they relate; querying existing models or adding columns to them does not count",
+              "passed": true,
+              "evidence": "Designed the delivery warehouse models: chose the fact and dimension tables and how they join"
+            },
+            {
+              "id": "TL3",
+              "check": "Has run their own pipelines in production on a scheduler; building pipelines that someone else deploys and runs does not count",
+              "passed": true,
+              "evidence": "Schedule and run my pipelines myself in Airflow and fix failed loads"
+            },
+            {
+              "id": "TL4",
+              "check": "Has added automated data-quality checks to pipelines, such as tests on row counts, nulls or freshness; fixing bad data by hand after someone reports it does not count",
+              "passed": false,
+              "evidence": "null"
+            },
+            {
+              "id": "TL5",
+              "check": "Has taken part in an on-call rota for data pipelines or other production systems",
+              "passed": false,
+              "evidence": "null"
+            },
+            {
+              "id": "TL6",
+              "check": "Has built a streaming pipeline that processes events continuously; batch jobs that read from a message queue on a schedule do not count",
+              "passed": false,
+              "evidence": "null"
+            },
+            {
+              "id": "TL7",
+              "check": "Has measurably reduced a pipeline's cost or runtime; an improvement without a number or a before-and-after does not count",
+              "passed": true,
+              "evidence": "Rewrote the slowest SQL transformations and cut the nightly run from 90 to 30 minutes"
+            },
+            {
+              "id": "TL8",
+              "check": "Has coached other people on SQL or data practices, such as reviews, workshops or onboarding; answering occasional questions does not count",
+              "passed": false,
+              "evidence": "null"
+            }
+          ]
+        },
+        "devils_advocate": {
+          "title": "Devil's advocate",
+          "model": "qwen/qwen3.8-27b",
+          "status": "ok",
+          "decision": null,
+          "score": null,
+          "seconds": 0.8,
+          "objections": [
+            {
+              "requirement": "Own your pipelines in production: scheduling, data-quality checks and the on-call rota",
+              "severity": "medium",
+              "reason": "The CV shows ownership of scheduling and fixing failures, but lacks explicit mention of data-quality checks or participation in an on-call rota.",
+              "evidence": [
+                "Schedule and run my pipelines myself in Airflow and fix failed loads"
+              ]
+            }
+          ]
+        }
+      },
+      "chair": {
+        "verdict": "hire",
+        "confidence": "high",
+        "reasons": [
+          "the tech lead's decision is lean_hire"
+        ],
+        "dissent": [],
+        "objections": [
+          {
+            "text": "Has added automated data-quality checks to pipelines, such as tests on row counts, nulls or freshness; fixing bad data by hand after someone reports it does not count",
+            "severity": "low",
+            "kind": "gap",
+            "members": [
+              "Tech lead"
+            ]
+          },
+          {
+            "text": "Has taken part in an on-call rota for data pipelines or other production systems",
+            "severity": "low",
+            "kind": "gap",
+            "members": [
+              "Tech lead"
+            ]
+          },
+          {
+            "text": "Has built a streaming pipeline that processes events continuously; batch jobs that read from a message queue on a schedule do not count",
+            "severity": "low",
+            "kind": "gap",
+            "members": [
+              "Tech lead"
+            ]
+          },
+          {
+            "text": "Has coached other people on SQL or data practices, such as reviews, workshops or onboarding; answering occasional questions does not count",
+            "severity": "low",
+            "kind": "gap",
+            "members": [
+              "Tech lead"
+            ]
+          },
+          {
+            "text": "Names the posting's must-have tools in the top third of the CV",
+            "severity": "low",
+            "kind": "presentation",
+            "members": [
+              "Recruiter"
+            ]
+          }
+        ]
+      },
+      "plan": {
+        "facts": [
+          "F6"
+        ],
+        "fixable": [
+          "R3",
+          "C2"
+        ],
+        "gaps": []
+      },
+      "draft": {
+        "kept": [
+          {
+            "facts": [
+              "F6"
+            ],
+            "text": "Rewrote the slowest SQL transformations and cut the nightly run from 90 to 30 minutes"
+          }
+        ],
+        "rejected": [
+          {
+            "line": {
+              "facts": [
+                "F6"
+              ],
+              "text": "Reduced SQL transformation runtime by 67%, using unspecified tools"
+            },
+            "problems": [
+              "number 67 is not in the cited facts"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "number": 2,
+      "cv": "Data Engineer\nRewrote the slowest SQL transformations and cut the nightly run from 90 to 30 minutes\n\nData Engineer, home delivery company (2020-present)\n- Member of the central data team\n- Build and maintain the Python pipelines that load parcel scans into Snowflake for the planning team\n- Designed the delivery warehouse models: chose the fact and dimension tables and how they join\n- Schedule and run my pipelines myself in Airflow and fix failed loads\n- Rewrote the slowest SQL transformations and cut the nightly run from 90 to 30 minutes\n\nData Analyst, retailer (2017-2020)\n- Built Excel reports for store managers",
+      "members": {
+        "recruiter": {
+          "title": "Recruiter",
+          "model": "qwen2.5:7b",
+          "status": "ok",
+          "decision": "strong_hire",
+          "score": 9.2,
+          "seconds": 18.9,
+          "checks": [
+            {
+              "id": "R1",
+              "check": "The current job title matches the role",
+              "passed": true,
+              "evidence": "Data Engineer"
+            },
+            {
+              "id": "R2",
+              "check": "Has at least 3 years of experience in dated roles",
+              "passed": true,
+              "evidence": "9 years from the dated roles"
+            },
+            {
+              "id": "R3",
+              "check": "Names the posting's must-have tools in the top third of the CV",
+              "passed": false,
+              "evidence": "found: SQL; missing: Python"
+            },
+            {
+              "id": "R4",
+              "check": "The top third is short lines that can each be read at a glance",
+              "passed": true,
+              "evidence": "longest line: 85 characters (limit 200)"
+            },
+            {
+              "id": "C1",
+              "check": "The top of the CV says what kind of work the candidate does, such as what they build or run; personal qualities or general phrases such as 'digital transformation' do not count",
+              "passed": true,
+              "evidence": "Data Engineer"
+            },
+            {
+              "id": "C2",
+              "check": "At least one bullet states a result or a scale of the candidate's work with a number, such as users, requests, money or time saved; numbers that describe the company as a whole and duties without numbers do not count",
+              "passed": true,
+              "evidence": "cut the nightly run from 90 to 30 minutes"
+            }
+          ]
+        },
+        "hiring_manager": {
+          "title": "Hiring manager",
+          "model": "qwen2.5:7b",
+          "status": "ok",
+          "decision": "lean_hire",
+          "score": 7.5,
+          "seconds": 21.4,
+          "checks": [
+            {
+              "id": "HM1",
+              "check": "Has worked on data pipelines that load a warehouse which business teams, such as operations or finance, use to plan their work, judged by the main job of the system they built or ran; the same industry, the same tools, or a product that only calls such a system do not count",
+              "passed": true,
+              "evidence": "Build and maintain the Python pipelines that load parcel scans into Snowflake for the planning team"
+            },
+            {
+              "id": "HM2",
+              "check": "Has worked towards predicting delivery delays or a lower warehouse bill, at this or another company; other improvements, however good, do not count",
+              "passed": false,
+              "evidence": "null"
+            },
+            {
+              "id": "HM3",
+              "check": "Has shown the effect of their own work with a before-and-after or a number, such as faster responses, lower costs or fewer failures; numbers that only show size or scale do not count",
+              "passed": true,
+              "evidence": "Rewrote the slowest SQL transformations and cut the nightly run from 90 to 30 minutes"
+            },
+            {
+              "id": "HM4",
+              "check": "Has kept their own work running in production, such as deploying it, scheduling it, being on call or fixing it when it fails; handing it to another team to deploy or run does not count",
+              "passed": true,
+              "evidence": "Schedule and run my pipelines myself in Airflow and fix failed loads"
+            }
+          ]
+        },
+        "tech_lead": {
+          "title": "Tech lead",
+          "model": "qwen2.5:7b",
+          "status": "ok",
+          "decision": "lean_hire",
+          "score": 7.1,
+          "seconds": 33.8,
+          "checks": [
+            {
+              "id": "TL1",
+              "check": "Has built and maintained batch data pipelines in Python or SQL that other teams rely on, as part of their job; one-off scripts, notebooks and reports that only the author uses do not count",
+              "passed": true,
+              "evidence": "Build and maintain the Python pipelines that load parcel scans into Snowflake for the planning team"
+            },
+            {
+              "id": "TL2",
+              "check": "Has designed data models for analytics in a data warehouse, deciding which tables exist and how they relate; querying existing models or adding columns to them does not count",
+              "passed": true,
+              "evidence": "Designed the delivery warehouse models: chose the fact and dimension tables and how they join"
+            },
+            {
+              "id": "TL3",
+              "check": "Has run their own pipelines in production on a scheduler; building pipelines that someone else deploys and runs does not count",
+              "passed": true,
+              "evidence": "Schedule and run my pipelines myself in Airflow and fix failed loads"
+            },
+            {
+              "id": "TL4",
+              "check": "Has added automated data-quality checks to pipelines, such as tests on row counts, nulls or freshness; fixing bad data by hand after someone reports it does not count",
+              "passed": false,
+              "evidence": "null"
+            },
+            {
+              "id": "TL5",
+              "check": "Has taken part in an on-call rota for data pipelines or other production systems",
+              "passed": false,
+              "evidence": "null"
+            },
+            {
+              "id": "TL6",
+              "check": "Has built a streaming pipeline that processes events continuously; batch jobs that read from a message queue on a schedule do not count",
+              "passed": false,
+              "evidence": "null"
+            },
+            {
+              "id": "TL7",
+              "check": "Has measurably reduced a pipeline's cost or runtime; an improvement without a number or a before-and-after does not count",
+              "passed": true,
+              "evidence": "Rewrote the slowest SQL transformations and cut the nightly run from 90 to 30 minutes"
+            },
+            {
+              "id": "TL8",
+              "check": "Has coached other people on SQL or data practices, such as reviews, workshops or onboarding; answering occasional questions does not count",
+              "passed": false,
+              "evidence": "null"
+            }
+          ]
+        },
+        "devils_advocate": {
+          "title": "Devil's advocate",
+          "model": "qwen/qwen3.8-27b",
+          "status": "ok",
+          "decision": null,
+          "score": null,
+          "seconds": 0.8,
+          "objections": [
+            {
+              "requirement": "Own your pipelines in production: scheduling, data-quality checks and the on-call rota",
+              "severity": "medium",
+              "reason": "The CV shows ownership of scheduling and fixing failures, but lacks explicit mention of data-quality checks or participation in an on-call rota.",
+              "evidence": [
+                "Schedule and run my pipelines myself in Airflow and fix failed loads"
+              ]
+            }
+          ]
+        }
+      },
+      "chair": {
+        "verdict": "hire",
+        "confidence": "high",
+        "reasons": [
+          "the tech lead's decision is lean_hire"
+        ],
+        "dissent": [],
+        "objections": [
+          {
+            "text": "Has added automated data-quality checks to pipelines, such as tests on row counts, nulls or freshness; fixing bad data by hand after someone reports it does not count",
+            "severity": "low",
+            "kind": "gap",
+            "members": [
+              "Tech lead"
+            ]
+          },
+          {
+            "text": "Has taken part in an on-call rota for data pipelines or other production systems",
+            "severity": "low",
+            "kind": "gap",
+            "members": [
+              "Tech lead"
+            ]
+          },
+          {
+            "text": "Has built a streaming pipeline that processes events continuously; batch jobs that read from a message queue on a schedule do not count",
+            "severity": "low",
+            "kind": "gap",
+            "members": [
+              "Tech lead"
+            ]
+          },
+          {
+            "text": "Has coached other people on SQL or data practices, such as reviews, workshops or onboarding; answering occasional questions does not count",
+            "severity": "low",
+            "kind": "gap",
+            "members": [
+              "Tech lead"
+            ]
+          },
+          {
+            "text": "Names the posting's must-have tools in the top third of the CV",
+            "severity": "low",
+            "kind": "presentation",
+            "members": [
+              "Recruiter"
+            ]
+          }
+        ]
+      },
+      "plan": {
+        "facts": [
+          "F3"
+        ],
+        "fixable": [
+          "R3"
+        ],
+        "gaps": []
+      },
+      "draft": {
+        "kept": [
+          {
+            "facts": [
+              "F3"
+            ],
+            "text": "Built, maintains Python pipelines for Snowflake parcel scan loading"
+          }
+        ],
+        "rejected": []
+      }
+    },
+    {
+      "number": 3,
+      "cv": "Data Engineer\nRewrote the slowest SQL transformations and cut the nightly run from 90 to 30 minutes\nBuilt, maintains Python pipelines for Snowflake parcel scan loading\n\nData Engineer, home delivery company (2020-present)\n- Member of the central data team\n- Build and maintain the Python pipelines that load parcel scans into Snowflake for the planning team\n- Designed the delivery warehouse models: chose the fact and dimension tables and how they join\n- Schedule and run my pipelines myself in Airflow and fix failed loads\n- Rewrote the slowest SQL transformations and cut the nightly run from 90 to 30 minutes\n\nData Analyst, retailer (2017-2020)\n- Built Excel reports for store managers",
+      "members": {
+        "recruiter": {
+          "title": "Recruiter",
+          "model": "qwen2.5:7b",
+          "status": "ok",
+          "decision": "strong_hire",
+          "score": 10.0,
+          "seconds": 19.6,
+          "checks": [
+            {
+              "id": "R1",
+              "check": "The current job title matches the role",
+              "passed": true,
+              "evidence": "Data Engineer"
+            },
+            {
+              "id": "R2",
+              "check": "Has at least 3 years of experience in dated roles",
+              "passed": true,
+              "evidence": "9 years from the dated roles"
+            },
+            {
+              "id": "R3",
+              "check": "Names the posting's must-have tools in the top third of the CV",
+              "passed": true,
+              "evidence": "found: Python, SQL; missing: none"
+            },
+            {
+              "id": "R4",
+              "check": "The top third is short lines that can each be read at a glance",
+              "passed": true,
+              "evidence": "longest line: 85 characters (limit 200)"
+            },
+            {
+              "id": "C1",
+              "check": "The top of the CV says what kind of work the candidate does, such as what they build or run; personal qualities or general phrases such as 'digital transformation' do not count",
+              "passed": true,
+              "evidence": "Built, maintains Python pipelines for Snowflake parcel scan loading"
+            },
+            {
+              "id": "C2",
+              "check": "At least one bullet states a result or a scale of the candidate's work with a number, such as users, requests, money or time saved; numbers that describe the company as a whole and duties without numbers do not count",
+              "passed": true,
+              "evidence": "cut the nightly run from 90 to 30 minutes"
+            }
+          ]
+        },
+        "hiring_manager": {
+          "title": "Hiring manager",
+          "model": "qwen2.5:7b",
+          "status": "ok",
+          "decision": "lean_hire",
+          "score": 7.5,
+          "seconds": 21.4,
+          "checks": [
+            {
+              "id": "HM1",
+              "check": "Has worked on data pipelines that load a warehouse which business teams, such as operations or finance, use to plan their work, judged by the main job of the system they built or ran; the same industry, the same tools, or a product that only calls such a system do not count",
+              "passed": true,
+              "evidence": "Build and maintain the Python pipelines that load parcel scans into Snowflake for the planning team"
+            },
+            {
+              "id": "HM2",
+              "check": "Has worked towards predicting delivery delays or a lower warehouse bill, at this or another company; other improvements, however good, do not count",
+              "passed": false,
+              "evidence": "null"
+            },
+            {
+              "id": "HM3",
+              "check": "Has shown the effect of their own work with a before-and-after or a number, such as faster responses, lower costs or fewer failures; numbers that only show size or scale do not count",
+              "passed": true,
+              "evidence": "Rewrote the slowest SQL transformations and cut the nightly run from 90 to 30 minutes"
+            },
+            {
+              "id": "HM4",
+              "check": "Has kept their own work running in production, such as deploying it, scheduling it, being on call or fixing it when it fails; handing it to another team to deploy or run does not count",
+              "passed": true,
+              "evidence": "Schedule and run my pipelines myself in Airflow and fix failed loads"
+            }
+          ]
+        },
+        "tech_lead": {
+          "title": "Tech lead",
+          "model": "qwen2.5:7b",
+          "status": "ok",
+          "decision": "lean_hire",
+          "score": 7.1,
+          "seconds": 33.8,
+          "checks": [
+            {
+              "id": "TL1",
+              "check": "Has built and maintained batch data pipelines in Python or SQL that other teams rely on, as part of their job; one-off scripts, notebooks and reports that only the author uses do not count",
+              "passed": true,
+              "evidence": "Build and maintain the Python pipelines that load parcel scans into Snowflake for the planning team"
+            },
+            {
+              "id": "TL2",
+              "check": "Has designed data models for analytics in a data warehouse, deciding which tables exist and how they relate; querying existing models or adding columns to them does not count",
+              "passed": true,
+              "evidence": "Designed the delivery warehouse models: chose the fact and dimension tables and how they join"
+            },
+            {
+              "id": "TL3",
+              "check": "Has run their own pipelines in production on a scheduler; building pipelines that someone else deploys and runs does not count",
+              "passed": true,
+              "evidence": "Schedule and run my pipelines myself in Airflow and fix failed loads"
+            },
+            {
+              "id": "TL4",
+              "check": "Has added automated data-quality checks to pipelines, such as tests on row counts, nulls or freshness; fixing bad data by hand after someone reports it does not count",
+              "passed": false,
+              "evidence": "null"
+            },
+            {
+              "id": "TL5",
+              "check": "Has taken part in an on-call rota for data pipelines or other production systems",
+              "passed": false,
+              "evidence": "null"
+            },
+            {
+              "id": "TL6",
+              "check": "Has built a streaming pipeline that processes events continuously; batch jobs that read from a message queue on a schedule do not count",
+              "passed": false,
+              "evidence": "null"
+            },
+            {
+              "id": "TL7",
+              "check": "Has measurably reduced a pipeline's cost or runtime; an improvement without a number or a before-and-after does not count",
+              "passed": true,
+              "evidence": "Rewrote the slowest SQL transformations and cut the nightly run from 90 to 30 minutes"
+            },
+            {
+              "id": "TL8",
+              "check": "Has coached other people on SQL or data practices, such as reviews, workshops or onboarding; answering occasional questions does not count",
+              "passed": false,
+              "evidence": "null"
+            }
+          ]
+        },
+        "devils_advocate": {
+          "title": "Devil's advocate",
+          "model": "qwen/qwen3.8-27b",
+          "status": "ok",
+          "decision": null,
+          "score": null,
+          "seconds": 0.8,
+          "objections": [
+            {
+              "requirement": "Own your pipelines in production: scheduling, data-quality checks and the on-call rota",
+              "severity": "medium",
+              "reason": "The CV shows ownership of scheduling and fixing failures, but lacks explicit mention of data-quality checks or participation in an on-call rota.",
+              "evidence": [
+                "Schedule and run my pipelines myself in Airflow and fix failed loads"
+              ]
+            }
+          ]
+        }
+      },
+      "chair": {
+        "verdict": "hire",
+        "confidence": "high",
+        "reasons": [
+          "the tech lead's decision is lean_hire"
+        ],
+        "dissent": [],
+        "objections": [
+          {
+            "text": "Has added automated data-quality checks to pipelines, such as tests on row counts, nulls or freshness; fixing bad data by hand after someone reports it does not count",
+            "severity": "low",
+            "kind": "gap",
+            "members": [
+              "Tech lead"
+            ]
+          },
+          {
+            "text": "Has taken part in an on-call rota for data pipelines or other production systems",
+            "severity": "low",
+            "kind": "gap",
+            "members": [
+              "Tech lead"
+            ]
+          },
+          {
+            "text": "Has built a streaming pipeline that processes events continuously; batch jobs that read from a message queue on a schedule do not count",
+            "severity": "low",
+            "kind": "gap",
+            "members": [
+              "Tech lead"
+            ]
+          },
+          {
+            "text": "Has coached other people on SQL or data practices, such as reviews, workshops or onboarding; answering occasional questions does not count",
+            "severity": "low",
+            "kind": "gap",
+            "members": [
+              "Tech lead"
+            ]
+          },
+          {
+            "text": "Has worked towards predicting delivery delays or a lower warehouse bill, at this or another company; other improvements, however good, do not count",
+            "severity": "low",
+            "kind": "gap",
+            "members": [
+              "Hiring manager"
+            ]
+          }
+        ]
+      },
+      "plan": {
+        "facts": [],
+        "fixable": [],
+        "gaps": []
+      }
+    }
+  ],
+  "stop_reason": "hire",
+  "gaps": [
+    "Has added automated data-quality checks to pipelines, such as tests on row counts, nulls or freshness; fixing bad data by hand after someone reports it does not count",
+    "Has taken part in an on-call rota for data pipelines or other production systems",
+    "Has built a streaming pipeline that processes events continuously; batch jobs that read from a message queue on a schedule do not count",
+    "Has coached other people on SQL or data practices, such as reviews, workshops or onboarding; answering occasional questions does not count",
+    "Has worked towards predicting delivery delays or a lower warehouse bill, at this or another company; other improvements, however good, do not count"
+  ],
+  "final_cv": "Data Engineer\nRewrote the slowest SQL transformations and cut the nightly run from 90 to 30 minutes\nBuilt, maintains Python pipelines for Snowflake parcel scan loading\n\nData Engineer, home delivery company (2020-present)\n- Member of the central data team\n- Build and maintain the Python pipelines that load parcel scans into Snowflake for the planning team\n- Designed the delivery warehouse models: chose the fact and dimension tables and how they join\n- Schedule and run my pipelines myself in Airflow and fix failed loads\n- Rewrote the slowest SQL transformations and cut the nightly run from 90 to 30 minutes\n\nData Analyst, retailer (2017-2020)\n- Built Excel reports for store managers",
+  "diff": "--- before\n+++ after\n@@ -1,3 +1,7 @@\n+Data Engineer\n+Rewrote the slowest SQL transformations and cut the nightly run from 90 to 30 minutes\n+Built, maintains Python pipelines for Snowflake parcel scan loading\n+\n Data Engineer, home delivery company (2020-present)\n - Member of the central data team\n - Build and maintain the Python pipelines that load parcel scans into Snowflake for the planning team",
+  "recorded": "2026-10-24"
+}
